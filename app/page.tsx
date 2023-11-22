@@ -1,23 +1,25 @@
 'use client';
 
-import { useState } from 'react';
-
-const notificationsSupported = () => 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
+import { useEffect, useState } from 'react';
 
 export default function Home() {
-    const [permission, setPermission] = useState(window?.Notification?.permission || 'default');
+    const [ok, setOk] = useState(false);
 
-    if (!notificationsSupported()) {
+    useEffect(() => {
+        const notificationsSupported = () => 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
+        setOk(notificationsSupported());
+    }, []);
+
+    if (!ok) {
         return <p>Please install this app on your home screen first!</p>;
     }
 
     const requestPermission = async () => {
-        if (!notificationsSupported()) {
+        if (!ok) {
             return;
         }
 
         const receivedPermission = await window?.Notification.requestPermission();
-        setPermission(receivedPermission);
 
         if (receivedPermission === 'granted') {
             subscribe();
