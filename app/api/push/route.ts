@@ -1,8 +1,9 @@
 import { NextResponse, NextRequest } from 'next/server';
+// @ts-ignore
 import { getSubscriptionsFromDb, saveSubscriptionToDb } from '@/utils/db/in-memory-db';
 import webpush, { PushSubscription } from 'web-push';
 
-webpush.setVapidDetails('mailto:hayashi.quan@gmail.com', process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!, process.env.VAPID_PRIVATE_KEY!);
+webpush.setVapidDetails('mailto:' + process.env.NEXT_PUBLIC_VAPID_EMAIL, process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
 
 export async function POST(request: NextRequest) {
     const subscription = (await request.json()) as PushSubscription | null;
@@ -18,6 +19,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(_: NextRequest) {
+    console.log(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY);
     const subscriptions = await getSubscriptionsFromDb();
 
     subscriptions.forEach((s) => {
