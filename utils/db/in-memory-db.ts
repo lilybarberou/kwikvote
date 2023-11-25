@@ -9,6 +9,7 @@ export const dummyDb: DummyDb = { subscriptions: [] };
 // fake Promise to simulate async call
 export const saveSubscriptionToDb = async (subscription: PushSubscription): Promise<DummyDb> => {
     dummyDb.subscriptions.push(subscription);
+    console.log(dummyDb.subscriptions);
     return Promise.resolve(dummyDb);
 };
 

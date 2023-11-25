@@ -8,6 +8,6 @@ export const unregisterServiceWorkers = async () => {
 };
 
 export const resetServiceWorker = async () => {
-    await unregisterServiceWorkers();
+    // await unregisterServiceWorkers();
     return registerServiceWorker();
 };
