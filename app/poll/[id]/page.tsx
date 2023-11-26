@@ -4,6 +4,7 @@ import { CompletePoll } from '@/app/api/poll/[id]/route';
 import PollComments from '@/components/PollComments';
 import PollSlots from '@/components/PollSlots';
 import fetcher from '@/utils/fetch';
+import { Loader2 } from 'lucide-react';
 import useSWR from 'swr';
 
 export default function PollPage({ params }: { params: { id: string } }) {
@@ -11,13 +12,16 @@ export default function PollPage({ params }: { params: { id: string } }) {
 
     if (isLoading)
         return (
-            <div>
-                <h1>Loading...</h1>
+            <div className="flex items-center justify-center h-screen">
+                <p className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading
+                </p>
             </div>
         );
     if (error || !poll) return <div>Ce sondage n&apos;existe pas</div>;
     return (
-        <div className="flex flex-col gap-10">
+        <div className="m-auto w-fit mt-4 flex flex-col gap-10">
             <h1 className="text-lg">{poll?.title}</h1>
             <p>{poll?.description}</p>
             <PollSlots slots={poll.slots} votes={poll.votes} pollId={params.id} />
