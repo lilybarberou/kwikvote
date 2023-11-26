@@ -4,12 +4,23 @@ import { CompletePoll } from '@/app/api/poll/[id]/route';
 import PollComments from '@/components/PollComments';
 import PollSlots from '@/components/PollSlots';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useVotesStore } from '@/lib/votesStore';
 import fetcher from '@/utils/fetch';
 import { Loader2, Megaphone } from 'lucide-react';
 import useSWR from 'swr';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function PollPage({ params }: { params: { id: string } }) {
-    const { data: poll, error, isLoading } = useSWR<CompletePoll>(`/api/poll/${params.id}`, fetcher);
+    const { initVotes } = useVotesStore();
+    const {
+        data: poll,
+        error,
+        isLoading,
+    } = useSWR<CompletePoll>(`/api/poll/${params.id}`, fetcher, {
+        onSuccess: (data) => {
+            initVotes(data.votes);
+        },
+    });
 
     if (isLoading)
         return (
@@ -30,8 +41,18 @@ export default function PollPage({ params }: { params: { id: string } }) {
                     <AlertDescription>{poll.description}</AlertDescription>
                 </Alert>
             )}
-            <PollSlots slots={poll.slots} votes={poll.votes} pollId={params.id} />
-            <PollComments comments={poll.comments} pollId={params.id} />
+            <Tabs defaultValue="comments" className="w-[500px]">
+                <TabsList>
+                    <TabsTrigger value="votes">Votes</TabsTrigger>
+                    <TabsTrigger value="comments">Commentaires ({poll.comments.length})</TabsTrigger>
+                </TabsList>
+                <TabsContent value="votes">
+                    <PollSlots slots={poll.slots} pollId={params.id} />
+                </TabsContent>
+                <TabsContent value="comments">
+                    <PollComments comments={poll.comments} pollId={params.id} />
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

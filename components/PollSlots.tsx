@@ -7,15 +7,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { getDate, sameDay } from '@/lib/utils';
 import { useToast } from './ui/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { CheckCircle, CircleUserRound, Edit, HelpCircle, XCircle } from 'lucide-react';
+import { CheckCircle, CircleUserRound, Edit, HelpCircle, Trash2, XCircle } from 'lucide-react';
+import { useState } from 'react';
+import { useVotesStore } from '@/lib/votesStore';
+import { v4 } from 'uuid';
 
 type Props = {
     slots: { id: string; startDate: Date; startTime: string; endDate: Date; endTime: string }[];
-    votes: { id: string; name: string; choices: { id: string; choice: number; slotId: string }[] }[];
     pollId: string;
 };
 
 export default function PollSlot(props: Props) {
+    const { removeVote: deleteVote, addVote, votes } = useVotesStore();
     const { toast } = useToast();
     const {
         register,
@@ -23,9 +26,11 @@ export default function PollSlot(props: Props) {
         control,
         formState: { errors },
     } = useForm<{ name: string; [key: string]: string }>();
+    const [currentVoteId, setCurrentVoteId] = useState('');
+    const [dialogOpen, setDialogOpen] = useState(false);
 
     const TotalUpvotes = ({ slotId }: { slotId: string }) => {
-        const total = props.votes.reduce(
+        const total = Object.values(votes).reduce(
             (acc, vote) => {
                 const choice = vote.choices.find((choice) => choice.slotId === slotId);
                 if (choice?.choice === 1) acc[0]++;
@@ -37,7 +42,7 @@ export default function PollSlot(props: Props) {
 
         return (
             <TableCell className="text-center">
-                <div className="flex items-center gap-1 text-green-400">
+                <div className="flex justify-center items-center gap-1 text-green-400">
                     {total[0]}
                     <VoteIcon choice={1} />
                     {total[1] > 0 && (
@@ -62,17 +67,27 @@ export default function PollSlot(props: Props) {
     };
 
     const submitVote = handleSubmit(async (data) => {
-        console.log(data);
+        const formattedData = {
+            id: currentVoteId || v4(),
+            name: data.name,
+            choices: props.slots.map((slot) => {
+                const choiceId = votes[currentVoteId]?.choices.find((choice) => choice.slotId === slot.id)?.id;
+                return { id: choiceId || v4(), slotId: slot.id, choice: parseInt(data[`choice-${slot.id}`]) };
+            }),
+        };
+
         const res = await fetch('/api/vote', {
             method: 'POST',
             body: JSON.stringify({
-                name: data.name,
                 pollId: props.pollId,
-                choices: props.slots.map((slot) => ({ slotId: slot.id, choice: parseInt(data[`choice-${slot.id}`]) })),
+                ...formattedData,
             }),
         });
 
-        if (!res.ok) {
+        if (res.ok) {
+            addVote(formattedData);
+            setDialogOpen(false);
+        } else {
             toast({
                 title: 'Erreur lors de la création du vote',
                 description: 'Veuillez réessayer plus tard',
@@ -81,22 +96,37 @@ export default function PollSlot(props: Props) {
         }
     });
 
-    console.log(props.slots);
-    console.log(props.votes);
+    const removeVote = async () => {
+        const res = await fetch(`/api/vote/${currentVoteId}`, { method: 'DELETE' });
+
+        if (res.ok) {
+            deleteVote(currentVoteId);
+            setDialogOpen(false);
+        } else {
+            toast({
+                title: 'Erreur lors de la suppression du vote',
+                description: 'Veuillez réessayer plus tard',
+                variant: 'destructive',
+            });
+        }
+    };
 
     return (
         <div>
-            <Dialog>
-                <DialogTrigger asChild>
-                    <Button>Nouveau vote</Button>
-                </DialogTrigger>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent className="max-w-fit">
                     <DialogTitle>Ajouter un vote</DialogTitle>
                     <form onSubmit={submitVote}>
                         <Label className="mt-4" htmlFor="name">
                             Nom
                         </Label>
-                        <Input autoFocus className="mt-2 mb-4" placeholder="John Doe" {...register('name', { required: true })} />
+                        <Input
+                            autoFocus
+                            className="mt-2 mb-4"
+                            defaultValue={votes[currentVoteId]?.name ?? ''}
+                            placeholder="John Doe"
+                            {...register('name', { required: true })}
+                        />
                         <div>
                             {props.slots.map((slot, index) => (
                                 <div key={slot.id} className={`py-2 grid grid-cols-2 items-center ${props.slots.length - 1 === index ? '' : 'border-b-2'}`}>
@@ -109,6 +139,7 @@ export default function PollSlot(props: Props) {
                                             control={control}
                                             rules={{ required: true }}
                                             name={`choice-${slot.id}`}
+                                            defaultValue={votes[currentVoteId]?.choices.find((choice) => choice.slotId === slot.id)?.choice.toString() ?? ''}
                                             render={({ field }) => (
                                                 <Select {...field} onValueChange={field.onChange}>
                                                     <SelectTrigger className="w-[180px]">
@@ -128,17 +159,28 @@ export default function PollSlot(props: Props) {
                             ))}
                         </div>
                         <DialogFooter className="mt-4">
-                            <DialogClose asChild>
-                                <Button variant="destructive">Annuler</Button>
-                            </DialogClose>
-                            <Button type="submit">Confirmer</Button>
+                            {currentVoteId && (
+                                <Button onClick={removeVote} type="button" size="icon" variant="destructive" className="mr-auto">
+                                    <Trash2 className="w-4 h-4" />
+                                </Button>
+                            )}
+                            <div className="flex gap-2">
+                                <DialogClose asChild>
+                                    <Button variant="outline">Annuler</Button>
+                                </DialogClose>
+                                <Button type="submit">Confirmer</Button>
+                            </div>
                         </DialogFooter>
                     </form>
                 </DialogContent>
-                <Table className="mt-4">
+                <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[120px]"></TableHead>
+                            <TableHead>
+                                <DialogTrigger asChild>
+                                    <Button onClick={() => setCurrentVoteId('')}>Nouveau vote</Button>
+                                </DialogTrigger>
+                            </TableHead>
                             {props.slots.map((slot) => (
                                 <TableHead key={slot.id} className="py-4">
                                     {sameDay(new Date(slot.startDate), new Date(slot.endDate)) ? (
@@ -165,7 +207,7 @@ export default function PollSlot(props: Props) {
                             <TableCell className="flex justify-between font-bold">
                                 Total{' '}
                                 <span className="flex gap-1">
-                                    {props.votes.length} <CircleUserRound className="w-5 h-5" />
+                                    {Object.keys(votes).length} <CircleUserRound className="w-5 h-5" />
                                 </span>
                             </TableCell>
                             {props.slots.map((slot) => (
@@ -173,7 +215,7 @@ export default function PollSlot(props: Props) {
                             ))}
                             <TableCell />
                         </TableRow>
-                        {props.votes.map((vote) => (
+                        {Object.values(votes).map((vote) => (
                             <TableRow key={vote.id}>
                                 <TableCell className="py-2">{vote.name}</TableCell>
                                 {vote.choices.map((choice) => (
@@ -183,7 +225,7 @@ export default function PollSlot(props: Props) {
                                 ))}
                                 <TableCell className="py-2">
                                     <DialogTrigger asChild>
-                                        <Button className="w-8 h-8" size="icon" variant="outline">
+                                        <Button onClick={() => setCurrentVoteId(vote.id)} className="w-8 h-8" size="icon" variant="outline">
                                             <Edit className="w-4 h-4" />
                                         </Button>
                                     </DialogTrigger>
