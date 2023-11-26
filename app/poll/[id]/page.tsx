@@ -3,8 +3,9 @@
 import { CompletePoll } from '@/app/api/poll/[id]/route';
 import PollComments from '@/components/PollComments';
 import PollSlots from '@/components/PollSlots';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import fetcher from '@/utils/fetch';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Megaphone } from 'lucide-react';
 import useSWR from 'swr';
 
 export default function PollPage({ params }: { params: { id: string } }) {
@@ -23,7 +24,12 @@ export default function PollPage({ params }: { params: { id: string } }) {
     return (
         <div className="m-auto w-fit mt-4 flex flex-col gap-10">
             <h1 className="text-lg">{poll?.title}</h1>
-            <p>{poll?.description}</p>
+            {poll.description && (
+                <Alert>
+                    <Megaphone className="h-4 w-4" />
+                    <AlertDescription>{poll.description}</AlertDescription>
+                </Alert>
+            )}
             <PollSlots slots={poll.slots} votes={poll.votes} pollId={params.id} />
             <PollComments comments={poll.comments} pollId={params.id} />
         </div>
