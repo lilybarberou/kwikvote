@@ -4,8 +4,10 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getDate, getTime, sameDay } from '@/lib/utils';
+import { getDate, sameDay } from '@/lib/utils';
 import { useToast } from './ui/use-toast';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { CheckCircle, CircleUserRound, Edit, HelpCircle, XCircle } from 'lucide-react';
 
 type Props = {
     slots: { id: string; startDate: Date; startTime: string; endDate: Date; endTime: string }[];
@@ -34,10 +36,29 @@ export default function PollSlot(props: Props) {
         );
 
         return (
-            <td className="text-green-400">
-                {total[0]} {total[1] > 0 && <span className="text-yellow-200">+ {total[1]}</span>}
-            </td>
+            <TableCell className="text-center">
+                <div className="flex items-center gap-1 text-green-400">
+                    {total[0]}
+                    <VoteIcon choice={1} />
+                    {total[1] > 0 && (
+                        <span className="ml-2 flex items-center gap-1 text-yellow-200">
+                            {total[1]} <VoteIcon choice={3} />
+                        </span>
+                    )}
+                </div>
+            </TableCell>
         );
+    };
+
+    const VoteIcon = ({ choice }: { choice: number }) => {
+        switch (choice) {
+            case 1:
+                return <CheckCircle className="w-4 h-4 inline-block text-green-400" />;
+            case 2:
+                return <XCircle className="w-4 h-4 inline-block text-red-400" />;
+            case 3:
+                return <HelpCircle className="w-4 h-4 inline-block text-yellow-200" />;
+        }
     };
 
     const submitVote = handleSubmit(async (data) => {
@@ -59,6 +80,9 @@ export default function PollSlot(props: Props) {
             });
         }
     });
+
+    console.log(props.slots);
+    console.log(props.votes);
 
     return (
         <div>
@@ -111,49 +135,63 @@ export default function PollSlot(props: Props) {
                         </DialogFooter>
                     </form>
                 </DialogContent>
-                <div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th></th>
-                                {props.slots.map((slot) => (
-                                    <th key={slot.id}>
-                                        {sameDay(new Date(slot.startDate), new Date(slot.endDate)) ? (
-                                            <div>
-                                                <p>{getDate(slot.startDate)}</p>
-                                                <p>{slot.startTime}</p>
-                                                <p>{slot.endTime}</p>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <p>{getDate(slot.startDate)}</p>
-                                                <p>{slot.startTime}</p>
-                                                <p>{getDate(slot.endDate)}</p>
-                                                <p>{slot.endTime}</p>
-                                            </>
-                                        )}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>{props.votes.length}</td>
-                                {props.slots.map((slot) => (
-                                    <TotalUpvotes slotId={slot.id} key={slot.id} />
-                                ))}
-                            </tr>
-                            {props.votes.map((vote) => (
-                                <tr key={vote.id}>
-                                    <td>{vote.name}</td>
-                                    {vote.choices.map((choice) => (
-                                        <td key={choice.id}>{choice.choice}</td>
-                                    ))}
-                                </tr>
+                <Table className="mt-4">
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[120px]"></TableHead>
+                            {props.slots.map((slot) => (
+                                <TableHead key={slot.id} className="py-4">
+                                    {sameDay(new Date(slot.startDate), new Date(slot.endDate)) ? (
+                                        <div className="text-center">
+                                            <p>{getDate(slot.startDate)}</p>
+                                            <p>{slot.startTime}</p>
+                                            <p>{slot.endTime}</p>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <p>{getDate(slot.startDate)}</p>
+                                            <p>{slot.startTime}</p>
+                                            <p>{getDate(slot.endDate)}</p>
+                                            <p>{slot.endTime}</p>
+                                        </>
+                                    )}
+                                </TableHead>
                             ))}
-                        </tbody>
-                    </table>
-                </div>
+                            <TableHead />
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        <TableRow>
+                            <TableCell className="flex justify-between font-bold">
+                                Total{' '}
+                                <span className="flex gap-1">
+                                    {props.votes.length} <CircleUserRound className="w-5 h-5" />
+                                </span>
+                            </TableCell>
+                            {props.slots.map((slot) => (
+                                <TotalUpvotes slotId={slot.id} key={slot.id} />
+                            ))}
+                            <TableCell />
+                        </TableRow>
+                        {props.votes.map((vote) => (
+                            <TableRow key={vote.id}>
+                                <TableCell className="py-2">{vote.name}</TableCell>
+                                {vote.choices.map((choice) => (
+                                    <TableCell className="py-2 text-center" key={choice.id}>
+                                        <VoteIcon choice={choice.choice} />
+                                    </TableCell>
+                                ))}
+                                <TableCell className="py-2">
+                                    <DialogTrigger asChild>
+                                        <Button className="w-8 h-8" size="icon" variant="outline">
+                                            <Edit className="w-4 h-4" />
+                                        </Button>
+                                    </DialogTrigger>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
             </Dialog>
         </div>
     );

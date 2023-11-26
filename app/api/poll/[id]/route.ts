@@ -19,6 +19,7 @@ const pollInclude = Prisma.validator<Prisma.PollInclude>()({
     comments: true,
     slots: {
         select: { id: true, startDate: true, startTime: true, endDate: true, endTime: true },
+        orderBy: { startDate: 'asc' },
     },
     votes: {
         select: {
@@ -26,6 +27,9 @@ const pollInclude = Prisma.validator<Prisma.PollInclude>()({
             name: true,
             choices: {
                 select: { id: true, choice: true, slotId: true },
+                orderBy: {
+                    slot: { startDate: 'asc' },
+                },
             },
         },
     },
