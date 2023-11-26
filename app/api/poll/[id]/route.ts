@@ -32,7 +32,9 @@ const pollInclude = Prisma.validator<Prisma.PollInclude>()({
                 },
             },
         },
+        orderBy: { createdAt: 'asc' },
     },
 });
 
 export type CompletePoll = Prisma.PollGetPayload<{ include: typeof pollInclude }>;
+export type PollVote = CompletePoll['votes'][0];

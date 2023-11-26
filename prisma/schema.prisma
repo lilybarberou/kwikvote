@@ -33,6 +33,7 @@ model Vote {
   name          String
   subscriptions Subscription[]
   choices       VoteChoice[]
+  createdAt     DateTime       @default(now())
   poll          Poll           @relation(fields: [pollId], references: [id])
 }
 
@@ -54,9 +55,10 @@ model Subscription {
 }
 
 model Comment {
-  id     String @id @default(uuid())
-  author String
-  text   String
-  pollId String
-  poll   Poll   @relation(fields: [pollId], references: [id])
+  id        String @id @default(uuid())
+  author    String
+  text      String
+  createdAt DateTime @default(now())
+  pollId    String
+  poll      Poll   @relation(fields: [pollId], references: [id])
 }
