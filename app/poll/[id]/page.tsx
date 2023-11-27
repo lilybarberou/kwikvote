@@ -33,15 +33,15 @@ export default function PollPage({ params }: { params: { id: string } }) {
         );
     if (error || !poll) return <div>Ce sondage n&apos;existe pas</div>;
     return (
-        <div className="m-auto w-fit mt-4 flex flex-col gap-10">
-            <h1 className="text-lg">{poll?.title}</h1>
+        <div className="m-auto w-fit mt-4">
+            <h1 className="mb-5 text-lg">{poll?.title}</h1>
             {poll.description && (
                 <Alert>
                     <Megaphone className="h-4 w-4" />
                     <AlertDescription>{poll.description}</AlertDescription>
                 </Alert>
             )}
-            <Tabs defaultValue="comments" className="w-[500px]">
+            <Tabs defaultValue="votes" className="mt-10 w-[500px]">
                 <TabsList>
                     <TabsTrigger value="votes">Votes</TabsTrigger>
                     <TabsTrigger value="comments">Commentaires ({poll.comments.length})</TabsTrigger>
