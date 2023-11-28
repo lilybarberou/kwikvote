@@ -55,6 +55,7 @@ export default function DialogVote(props: Props) {
         if (res.ok) {
             addVote(formattedData);
             closeDialog();
+            reset();
         } else {
             toast({
                 title: 'Erreur lors de la création du vote',
