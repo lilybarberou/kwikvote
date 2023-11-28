@@ -11,6 +11,12 @@ export async function GET(_: NextRequest) {
     const tomorrowMidnight = new Date(todayMidnight.getTime() + 24 * 60 * 60 * 1000);
     const tomorrowMidnightPlusOne = new Date(todayMidnight.getTime() + 2 * 24 * 60 * 60 * 1000);
 
+    return NextResponse.json({
+        todayMidnight,
+        tomorrowMidnight,
+        tomorrowMidnightPlusOne,
+    });
+
     const slots = await prisma.slot.findMany({
         where: {
             startDate: {
