@@ -6,14 +6,32 @@ import PollSlots from '@/components/PollSlots';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useVotesStore } from '@/lib/votesStore';
 import fetcher from '@/utils/fetch';
-import { BarChart3, Megaphone } from 'lucide-react';
+import { BarChart3, Bell, BellRing, Megaphone } from 'lucide-react';
 import useSWR from 'swr';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PollSkeleton from '@/components/PollSkeleton';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { useEffect } from 'react';
+import { useToast } from '@/components/ui/use-toast';
+import { useNotificationsStore } from '@/lib/notificationsStore';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 export default function PollPage({ params }: { params: { id: string } }) {
     const { initVotes } = useVotesStore();
+    const { notificationsSupported, notificationsPermission, init, setSubscriptionEndpoint } = useNotificationsStore();
+    const { toast } = useToast();
     const {
         data: poll,
         error,
@@ -23,6 +41,56 @@ export default function PollPage({ params }: { params: { id: string } }) {
             initVotes(data.votes);
         },
     });
+
+    // NOTIFICATIONS MANAGEMENT
+    useEffect(() => {
+        const initNotifications = async () => {
+            // CHECK IF NOTIFICATIONS ARE SUPPORTED AND ALREADY ASKED
+            const notificationsSupported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
+
+            // STORE SUBSCRIPTION ENDPOINT
+            let endpoint = '';
+            if (notificationsSupported && Notification.permission === 'granted') {
+                const sub = await navigator.serviceWorker.ready.then((registration) => {
+                    return registration.pushManager.getSubscription();
+                });
+                endpoint = sub?.endpoint || '';
+            }
+
+            init({ notificationsSupported, notificationsPermission: Notification.permission, endpoint });
+        };
+
+        initNotifications();
+    }, [init]);
+
+    const enableNotifications = async () => {
+        const receivedPermission = await Notification.requestPermission();
+        if (receivedPermission !== 'granted') return;
+
+        const swRegistration = await navigator.serviceWorker.register('/service.js');
+
+        const subscription = await swRegistration.pushManager.subscribe({
+            applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+            userVisibleOnly: true,
+        });
+
+        const res = await fetch('/api/subscription', {
+            method: 'POST',
+            body: JSON.stringify(subscription),
+        });
+
+        if (res.ok) {
+            init({
+                notificationsSupported,
+                notificationsPermission: Notification.permission,
+                endpoint: subscription.endpoint,
+            });
+            toast({
+                title: 'Notifications activées',
+                description: "Vous recevrez une notification lorsqu'un nouveau commentaire sera posté, ainsi qu'en cas de place disponible.",
+            });
+        } else toast({ title: 'Erreur', description: "Une erreur est survenue lors de l'activation des notifications." });
+    };
 
     if (isLoading) return <PollSkeleton />;
     if (error || !poll)
@@ -49,10 +117,57 @@ export default function PollPage({ params }: { params: { id: string } }) {
                 </Alert>
             )}
             <Tabs defaultValue="votes" className="mt-10">
-                <TabsList>
-                    <TabsTrigger value="votes">Votes</TabsTrigger>
-                    <TabsTrigger value="comments">Commentaires ({poll.comments.length})</TabsTrigger>
-                </TabsList>
+                <div className="flex gap-2">
+                    <TabsList>
+                        <TabsTrigger value="votes">Votes</TabsTrigger>
+                        <TabsTrigger value="comments">Commentaires ({poll.comments.length})</TabsTrigger>
+                    </TabsList>
+                    {notificationsSupported && notificationsPermission === 'default' && (
+                        <AlertDialog>
+                            <TooltipProvider>
+                                <Tooltip delayDuration={300}>
+                                    <TooltipTrigger asChild>
+                                        <AlertDialogTrigger asChild>
+                                            <Button className="w-10 h-10" size="icon">
+                                                <Bell className="w-5 h-5" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom">
+                                        <p>Activer les notifications</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Activer les notifications</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Vous recevrez une notification lorsqu&apos;un nouveau commentaire sera posté, ainsi que pour vous avertir de place
+                                        disponible.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Annuler</AlertDialogCancel>
+                                    <AlertDialogAction onClick={enableNotifications}>Confirmer</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    )}
+                    {notificationsPermission === 'granted' && (
+                        <TooltipProvider>
+                            <Tooltip delayDuration={300}>
+                                <TooltipTrigger asChild>
+                                    <div className="w-10 h-10 flex justify-center items-center border rounded-sm text-black bg-green-400">
+                                        <BellRing className="w-5 h-5" />
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="bottom">
+                                    <p>Notifications activées</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
+                </div>
                 <TabsContent value="votes">
                     <PollSlots slots={poll.slots} pollId={params.id} />
                 </TabsContent>

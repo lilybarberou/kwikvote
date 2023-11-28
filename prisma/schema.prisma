@@ -10,7 +10,7 @@ datasource db {
 model Poll {
   id             String @id @default(uuid())
   title          String
-  description    String
+  description    String @default("")
   slots          Slot[]
   comments       Comment[]
   votes          Vote[]
@@ -47,8 +47,7 @@ model VoteChoice {
 }
 
 model Subscription {
-  id       String @id @default(uuid())
-  endpoint String  @unique
+  endpoint String @id  @unique
   auth     String
   p256dh   String
   votes    Vote[]

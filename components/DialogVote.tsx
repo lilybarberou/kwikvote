@@ -11,6 +11,7 @@ import { DialogClose, DialogContent, DialogFooter, DialogTitle } from './ui/dial
 import { useToast } from './ui/use-toast';
 import { Button } from './ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useNotificationsStore } from '@/lib/notificationsStore';
 
 type Props = {
     slots: { id: string; startDate: Date; startTime: string; endDate: Date; endTime: string }[];
@@ -22,6 +23,7 @@ type Props = {
 export default function DialogVote(props: Props) {
     const { currentVoteId, slots, closeDialog, pollId } = props;
     const { removeVote: deleteVote, addVote, votes } = useVotesStore();
+    const { subscriptionEndpoint } = useNotificationsStore();
     const { toast } = useToast();
     const {
         register,
@@ -43,6 +45,7 @@ export default function DialogVote(props: Props) {
                 const choiceId = votes[currentVoteId]?.choices.find((choice) => choice.slotId === slot.id)?.id;
                 return { id: choiceId || v4(), slotId: slot.id, choice: parseInt(data[`choice-${slot.id}`]) };
             }),
+            subscriptionEndpoint: subscriptionEndpoint || '',
         };
 
         const res = await fetch('/api/vote', {

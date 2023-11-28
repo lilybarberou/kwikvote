@@ -5,8 +5,8 @@ import { z } from 'zod';
 // UPDATE VOTE
 export async function POST(request: NextRequest) {
     try {
-        const data = await request.json();
-        createVoteSchema.parse(data);
+        const body = await request.json();
+        const data = createVoteSchema.parse(body);
 
         const vote = await prisma.vote.upsert({
             where: {
@@ -33,6 +33,13 @@ export async function POST(request: NextRequest) {
                         },
                     })),
                 },
+                subscriptions: data.subscriptionEndpoint
+                    ? {
+                          connect: {
+                              endpoint: data.subscriptionEndpoint,
+                          },
+                      }
+                    : undefined,
             },
             create: {
                 id: data.id,
@@ -53,6 +60,13 @@ export async function POST(request: NextRequest) {
                         },
                     })),
                 },
+                subscriptions: data.subscriptionEndpoint
+                    ? {
+                          connect: {
+                              endpoint: data.subscriptionEndpoint,
+                          },
+                      }
+                    : undefined,
             },
         });
         return NextResponse.json(vote);
@@ -73,4 +87,5 @@ const createVoteSchema = z.object({
             choice: z.number(),
         })
     ),
+    subscriptionEndpoint: z.string().optional(),
 });
