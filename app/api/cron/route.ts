@@ -7,7 +7,7 @@ import webpush from 'web-push';
 webpush.setVapidDetails('mailto:' + process.env.NEXT_PUBLIC_VAPID_EMAIL, process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
 
 export async function GET(_: NextRequest) {
-    const todayMidnight = new Date(new Date().setHours(0, 0, 0, 0));
+    const todayMidnight = new Date(new Date().toLocaleDateString('en-US', { timeZone: 'Europe/Paris' }));
     const tomorrowMidnight = new Date(todayMidnight.getTime() + 24 * 60 * 60 * 1000);
     const tomorrowMidnightPlusOne = new Date(todayMidnight.getTime() + 2 * 24 * 60 * 60 * 1000);
 
