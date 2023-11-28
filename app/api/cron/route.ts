@@ -91,16 +91,15 @@ export async function GET(_: NextRequest) {
             count++;
             webpush
                 .sendNotification(subscription, payload)
-                .then((result) => {
-                    console.log(result);
-                })
-                .catch((err) => {
-                    console.log(err);
-                });
+                .then((res) => console.log(res))
+                .catch((err) => console.log(err));
         });
     });
 
-    return NextResponse.json(`Sent ${count} notifications`);
+    return NextResponse.json({
+        subscriptionsBySlot,
+        count: `Sent ${count} notifications`,
+    });
 }
 
 type SubscriptionsBySlot = {
