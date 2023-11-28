@@ -67,7 +67,7 @@ export default function CreatePoll() {
     });
 
     return (
-        <div className="m-auto w-fit">
+        <div className="m-auto">
             <h1 className="mb-10 text-3xl font-bold">Création du sondage</h1>
             <form onSubmit={submitPoll} className="flex flex-col gap-2">
                 <Label htmlFor="title">Titre du sondage*</Label>
@@ -75,33 +75,38 @@ export default function CreatePoll() {
                 <Label htmlFor="description">Description</Label>
                 <Textarea {...register('description')} />
                 <h2 className="my-4 text-2xl font-bold">Créneaux</h2>
-                {fields.map((field, index) => (
-                    <div key={field.id} className="flex flex-col gap-2 border p-4">
-                        {index > 0 && (
-                            <Button className="ml-auto w-7 h-7" variant="destructive" size="icon" onClick={() => remove(index)}>
-                                <X className="w-4 h-4" />
-                            </Button>
-                        )}
-                        <Label htmlFor="start">Date de début</Label>
-                        <div className="flex gap-2">
-                            <DatePicker control={control} name={`slots.${index}.startDate`} />
-                            <Controller
-                                name={`slots.${index}.startTime`}
-                                control={control}
-                                render={({ field }) => <Input type="time" className="w-fit" {...field} />}
-                            />
+                <div className="flex flex-wrap gap-4">
+                    {fields.map((field, index) => (
+                        <div key={field.id} className="flex flex-1 items-center flex-col justify-end border p-4">
+                            {index > 0 && (
+                                <Button className="ml-auto w-7 h-7" variant="destructive" size="icon" onClick={() => remove(index)}>
+                                    <X className="w-4 h-4" />
+                                </Button>
+                            )}
+                            <div className="flex flex-col gap-2">
+                                <Label htmlFor="start">Date de début</Label>
+                                <div className="flex flex-wrap gap-2">
+                                    <DatePicker control={control} name={`slots.${index}.startDate`} />
+                                    <Controller
+                                        name={`slots.${index}.startTime`}
+                                        control={control}
+                                        render={({ field }) => <Input type="time" className="w-fit" {...field} />}
+                                    />
+                                </div>
+                                <Label htmlFor="end">Date de fin</Label>
+                                <div className="flex flex-wrap gap-2">
+                                    <DatePicker control={control} name={`slots.${index}.endDate`} />
+                                    <Controller
+                                        name={`slots.${index}.endTime`}
+                                        control={control}
+                                        render={({ field }) => <Input type="time" className="w-fit" {...field} />}
+                                    />
+                                </div>
+                            </div>
                         </div>
-                        <Label htmlFor="end">Date de fin</Label>
-                        <div className="flex gap-2">
-                            <DatePicker control={control} name={`slots.${index}.endDate`} />
-                            <Controller
-                                name={`slots.${index}.endTime`}
-                                control={control}
-                                render={({ field }) => <Input type="time" className="w-fit" {...field} />}
-                            />
-                        </div>
-                    </div>
-                ))}
+                    ))}
+                    {fields.length % 2 !== 0 && <div className="hidden p-4 flex-1 sm:block" />}
+                </div>
                 <Button className="mt-2" type="button" variant="secondary" onClick={() => append(defaultValues)}>
                     Ajouter un créneau
                 </Button>
