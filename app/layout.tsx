@@ -10,8 +10,8 @@ export const fontSans = FontSans({
 });
 
 export const metadata: Metadata = {
-    title: 'Sondage',
-    description: 'jsp encore',
+    title: 'Kwikvote',
+    description: 'Créez un sondage en quelques secondes et partagez-le avec vos amis.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
