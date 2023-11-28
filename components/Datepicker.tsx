@@ -2,14 +2,12 @@
 
 import * as React from 'react';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/Popover';
-import { Calendar } from './ui/Calendar';
 import { fr } from 'date-fns/locale';
 import { Controller } from 'react-hook-form';
-import { cn } from '@/lib/utils';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 
 export default function DatePicker(props: any) {
     const [open, setOpen] = React.useState(false);
