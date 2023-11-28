@@ -11,12 +11,6 @@ export async function GET(_: NextRequest) {
     const tomorrowMidnight = new Date(todayMidnight.getTime() + 24 * 60 * 60 * 1000);
     const tomorrowMidnightPlusOne = new Date(todayMidnight.getTime() + 2 * 24 * 60 * 60 * 1000);
 
-    return NextResponse.json({
-        todayMidnight,
-        tomorrowMidnight,
-        tomorrowMidnightPlusOne,
-    });
-
     const slots = await prisma.slot.findMany({
         where: {
             startDate: {
@@ -84,7 +78,8 @@ export async function GET(_: NextRequest) {
     });
 
     // SEND NOTIF TO ALL SUBS
-    Object.entries(subscriptionsBySlot).forEach(([slotId, slot]) => {
+    let count = 0;
+    Object.values(subscriptionsBySlot).forEach((slot) => {
         const formattedDate = format(slot.startDate, 'eeee d', { locale: fr });
         const body = `Il reste des places disponibles pour le créneau du ${formattedDate} à ${slot.startTime} !`;
 
@@ -93,6 +88,7 @@ export async function GET(_: NextRequest) {
             body,
         });
         Object.values(slot.subscriptions).forEach((subscription) => {
+            count++;
             webpush
                 .sendNotification(subscription, payload)
                 .then((result) => {
@@ -104,7 +100,7 @@ export async function GET(_: NextRequest) {
         });
     });
 
-    return NextResponse.json(slots);
+    return NextResponse.json(`Sent ${count} notifications`);
 }
 
 type SubscriptionsBySlot = {
