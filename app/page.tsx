@@ -1,9 +1,13 @@
 'use client';
 
-import { resetServiceWorker, unregisterServiceWorkers } from '@/utils/service-worker';
-import { useEffect, useState } from 'react';
+import fetcher from '@/utils/fetch';
+import { CompletePoll } from './api/poll/[id]/route';
+import useSWR from 'swr';
+import Link from 'next/link';
 
 export default function Home() {
+    const { data: polls, error, isLoading } = useSWR<CompletePoll[]>(`/api/poll`, fetcher);
+
     const requestPermission = async () => {
         const notificationsSupported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
 
@@ -39,32 +43,16 @@ export default function Home() {
         return subscription?.endpoint ?? undefined;
     };
 
-    const createPoll = async () => {
-        const pollTitle = document.getElementById('test')?.value;
-        fetch('/api/poll', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ title: pollTitle }),
-        })
-            .then((res) => res.json())
-            .then((data) => console.log(data));
-    };
-
-    const getPollById = async () => {
-        const res = await fetch('/api/poll/042c020c-2443-4a2f-b75a-6d1e01c81119');
-        const data = await res.json();
-        console.log(data);
-    };
-
     return (
         <div className="flex flex-col w-fit">
+            {polls?.map((poll) => (
+                <Link key={poll.id} href={`/poll/${poll.id}`}>
+                    {poll.title}
+                </Link>
+            ))}
             <button onClick={enableNotifications}>Activer les notifications</button>
             <button onClick={getSubscriptionEndpoint}>Voir subscription ID</button>
             <input id="test" />
-            <button onClick={createPoll}>Créer poll</button>
-            <button onClick={getPollById}>Poll by id</button>
         </div>
     );
 }
