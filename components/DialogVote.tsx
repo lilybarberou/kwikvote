@@ -10,6 +10,7 @@ import { Label } from './ui/label';
 import { DialogClose, DialogContent, DialogFooter, DialogTitle } from './ui/dialog';
 import { useToast } from './ui/use-toast';
 import { Button } from './ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type Props = {
     slots: { id: string; startDate: Date; startTime: string; endDate: Date; endTime: string }[];
@@ -128,9 +129,18 @@ export default function DialogVote(props: Props) {
                 </div>
                 <DialogFooter className="mt-4">
                     {currentVoteId && (
-                        <Button onClick={removeVote} type="button" size="icon" variant="destructive" className="mr-auto">
-                            <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <TooltipProvider>
+                            <Tooltip delayDuration={300}>
+                                <TooltipTrigger asChild>
+                                    <Button onClick={removeVote} type="button" size="icon" variant="destructive" className="mr-auto">
+                                        <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Supprimer le vote</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     )}
                     <div className="flex gap-2">
                         <DialogClose asChild>
