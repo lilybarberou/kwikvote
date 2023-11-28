@@ -40,7 +40,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
             </div>
         );
     return (
-        <div className="mt-4">
+        <div>
             <h1 className="mb-5 text-lg">{poll?.title}</h1>
             {poll.description && (
                 <Alert className="w-fit">

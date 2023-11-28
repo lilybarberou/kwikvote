@@ -3,11 +3,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 
 export default function PollSkeleton() {
     return (
-        <div className="m-auto mt-4">
+        <div>
             <Skeleton className="mb-5 w-[200px] h-[28px] rounded-full" />
             <Skeleton className="w-[280px] h-[53.6px] rounded-sm" />
             <Skeleton className="mt-10 w-[203.86px] h-[40px] rounded-sm" />
-            <Table className="mt-2 w-fit">
+            <Table className="mt-2">
                 <TableHeader>
                     <TableRow>
                         <TableHead>

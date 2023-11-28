@@ -57,71 +57,69 @@ export default function PollSlot(props: Props) {
     const closeDialog = () => setDialogOpen(false);
 
     return (
-        <div>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogVote currentVoteId={currentVoteId} slots={props.slots} closeDialog={closeDialog} pollId={props.pollId} />
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>
-                                <DialogTrigger asChild>
-                                    <Button onClick={() => setCurrentVoteId('')}>Nouveau vote</Button>
-                                </DialogTrigger>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogVote currentVoteId={currentVoteId} slots={props.slots} closeDialog={closeDialog} pollId={props.pollId} />
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>
+                            <DialogTrigger asChild>
+                                <Button onClick={() => setCurrentVoteId('')}>Nouveau vote</Button>
+                            </DialogTrigger>
+                        </TableHead>
+                        {props.slots.map((slot) => (
+                            <TableHead key={slot.id} className="py-4">
+                                {sameDay(new Date(slot.startDate), new Date(slot.endDate)) ? (
+                                    <div className="text-center">
+                                        <p>{getDate(slot.startDate)}</p>
+                                        <p>{slot.startTime}</p>
+                                        <p>{slot.endTime}</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <p>{getDate(slot.startDate)}</p>
+                                        <p>{slot.startTime}</p>
+                                        <p>{getDate(slot.endDate)}</p>
+                                        <p>{slot.endTime}</p>
+                                    </>
+                                )}
                             </TableHead>
-                            {props.slots.map((slot) => (
-                                <TableHead key={slot.id} className="py-4">
-                                    {sameDay(new Date(slot.startDate), new Date(slot.endDate)) ? (
-                                        <div className="text-center">
-                                            <p>{getDate(slot.startDate)}</p>
-                                            <p>{slot.startTime}</p>
-                                            <p>{slot.endTime}</p>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <p>{getDate(slot.startDate)}</p>
-                                            <p>{slot.startTime}</p>
-                                            <p>{getDate(slot.endDate)}</p>
-                                            <p>{slot.endTime}</p>
-                                        </>
-                                    )}
-                                </TableHead>
-                            ))}
-                            <TableHead />
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        <TableRow>
-                            <TableCell className="flex justify-between font-bold">
-                                Total{' '}
-                                <span className="flex gap-1">
-                                    {Object.keys(votes).length} <CircleUserRound className="w-5 h-5" />
-                                </span>
-                            </TableCell>
-                            {props.slots.map((slot) => (
-                                <TotalUpvotes slotId={slot.id} key={slot.id} />
-                            ))}
-                            <TableCell />
-                        </TableRow>
-                        {Object.values(votes).map((vote) => (
-                            <TableRow key={vote.id}>
-                                <TableCell className="py-2">{vote.name}</TableCell>
-                                {vote.choices.map((choice) => (
-                                    <TableCell className="py-2 text-center" key={choice.id}>
-                                        <VoteIcon choice={choice.choice} />
-                                    </TableCell>
-                                ))}
-                                <TableCell className="py-2">
-                                    <DialogTrigger asChild>
-                                        <Button onClick={() => setCurrentVoteId(vote.id)} className="w-8 h-8" size="icon" variant="outline">
-                                            <Edit className="w-4 h-4" />
-                                        </Button>
-                                    </DialogTrigger>
-                                </TableCell>
-                            </TableRow>
                         ))}
-                    </TableBody>
-                </Table>
-            </Dialog>
-        </div>
+                        <TableHead />
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    <TableRow>
+                        <TableCell className="flex justify-between font-bold">
+                            Total{' '}
+                            <span className="flex gap-1">
+                                {Object.keys(votes).length} <CircleUserRound className="w-5 h-5" />
+                            </span>
+                        </TableCell>
+                        {props.slots.map((slot) => (
+                            <TotalUpvotes slotId={slot.id} key={slot.id} />
+                        ))}
+                        <TableCell />
+                    </TableRow>
+                    {Object.values(votes).map((vote) => (
+                        <TableRow key={vote.id}>
+                            <TableCell className="py-2">{vote.name}</TableCell>
+                            {vote.choices.map((choice) => (
+                                <TableCell className="py-2 text-center" key={choice.id}>
+                                    <VoteIcon choice={choice.choice} />
+                                </TableCell>
+                            ))}
+                            <TableCell className="py-2">
+                                <DialogTrigger asChild>
+                                    <Button onClick={() => setCurrentVoteId(vote.id)} className="w-8 h-8" size="icon" variant="outline">
+                                        <Edit className="w-4 h-4" />
+                                    </Button>
+                                </DialogTrigger>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </Dialog>
     );
 }

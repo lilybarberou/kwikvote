@@ -67,7 +67,7 @@ export default function CreatePoll() {
     });
 
     return (
-        <div className="pt-4 m-auto w-fit">
+        <div className="m-auto w-fit">
             <h1 className="mb-10 text-3xl font-bold">Création du sondage</h1>
             <form onSubmit={submitPoll} className="flex flex-col gap-2">
                 <Label htmlFor="title">Titre du sondage*</Label>
