@@ -9,8 +9,8 @@ export async function GET(_: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
-        const data = await request.json();
-        createPollSchema.parse(data);
+        const body = await request.json();
+        const data = createPollSchema.parse(body);
 
         const poll = await prisma.poll.create({
             data: {

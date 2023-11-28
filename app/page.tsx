@@ -6,7 +6,7 @@ import useSWR from 'swr';
 import Link from 'next/link';
 
 export default function Home() {
-    const { data: polls, error, isLoading } = useSWR<CompletePoll[]>(`/api/poll`, fetcher);
+    const { data: polls } = useSWR<CompletePoll[]>(`/api/poll`, fetcher);
 
     const requestPermission = async () => {
         const notificationsSupported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
@@ -36,10 +36,6 @@ export default function Home() {
             return registration.pushManager.getSubscription();
         });
 
-        console.log(
-            subscription?.endpoint ===
-                'https://fcm.googleapis.com/fcm/send/crcwQ1gSQM8:APA91bFGrz5Jju8gFqZA8_12GRXUmyjdZf6qxpuqd4VMwF2RuhVS2M6r0VlKzaogY3BVmMA1UgecYH_9ZlGhOdM-zwEXXFemdKhJ8GpmAlaRfWhYvoKyKKFVfwGD9kOKG6wsMfpBNMhr'
-        );
         return subscription?.endpoint ?? undefined;
     };
 
@@ -52,7 +48,6 @@ export default function Home() {
             ))}
             <button onClick={enableNotifications}>Activer les notifications</button>
             <button onClick={getSubscriptionEndpoint}>Voir subscription ID</button>
-            <input id="test" />
         </div>
     );
 }

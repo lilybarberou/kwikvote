@@ -10,7 +10,7 @@ export const fontSans = FontSans({
 });
 
 export const metadata: Metadata = {
-    title: 'Kwikvote',
+    title: 'KwikVote',
     description: 'Créez un sondage en quelques secondes et partagez-le avec vos amis.',
 };
 

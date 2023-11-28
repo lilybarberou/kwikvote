@@ -109,7 +109,7 @@ export default function PollSlot(props: Props) {
                                     <VoteIcon choice={choice.choice} />
                                 </TableCell>
                             ))}
-                            <TableCell className="py-2">
+                            <TableCell className="py-2 flex justify-center">
                                 <DialogTrigger asChild>
                                     <Button onClick={() => setCurrentVoteId(vote.id)} className="w-8 h-8" size="icon" variant="outline">
                                         <Edit className="w-4 h-4" />
