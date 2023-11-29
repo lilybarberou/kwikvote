@@ -85,7 +85,7 @@ export default function DialogVote(props: Props) {
     };
 
     return (
-        <DialogContent className="max-w-fit">
+        <DialogContent className="w-11/12 max-w-[360px]">
             <DialogTitle>Ajouter un vote</DialogTitle>
             <form onSubmit={submitVote}>
                 <Label className="mt-4" htmlFor="name">
@@ -101,12 +101,15 @@ export default function DialogVote(props: Props) {
                 />
                 <div>
                     {slots.map((slot, index) => (
-                        <div key={slot.id} className={`py-2 grid grid-cols-2 items-center ${slots.length - 1 === index ? '' : 'border-b-2'}`}>
-                            <div>
+                        <div
+                            key={slot.id}
+                            className={`py-4 flex flex-wrap gap-x-14 gap-y-3 items-center sm:py-2 ${slots.length - 1 === index ? '' : 'border-b-2'}`}
+                        >
+                            <div className="flex flex-wrap items-end gap-x-2 sm:flex-col sm:items-start">
                                 <p>{getDate(slot.startDate)}</p>
                                 <p className="text-sm text-muted-foreground">{slot.startTime}</p>
                             </div>
-                            <div>
+                            <div className="flex-1">
                                 <Controller
                                     control={control}
                                     rules={{ required: true }}
@@ -114,7 +117,7 @@ export default function DialogVote(props: Props) {
                                     defaultValue={votes[currentVoteId]?.choices.find((choice) => choice.slotId === slot.id)?.choice.toString() ?? ''}
                                     render={({ field }) => (
                                         <Select {...field} onValueChange={field.onChange}>
-                                            <SelectTrigger className="w-[180px]">
+                                            <SelectTrigger className="min-w-[180px]">
                                                 <SelectValue placeholder="À définir" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -145,7 +148,7 @@ export default function DialogVote(props: Props) {
                             </Tooltip>
                         </TooltipProvider>
                     )}
-                    <div className="flex gap-2">
+                    <div className="ml-auto flex gap-2">
                         <DialogClose asChild>
                             <Button variant="outline">Annuler</Button>
                         </DialogClose>

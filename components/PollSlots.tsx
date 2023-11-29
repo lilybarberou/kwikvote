@@ -70,7 +70,7 @@ export default function PollSlot(props: Props) {
                         {props.slots.map((slot) => (
                             <TableHead key={slot.id} className="py-4">
                                 {sameDay(new Date(slot.startDate), new Date(slot.endDate)) ? (
-                                    <div className="text-center">
+                                    <div className="text-center whitespace-nowrap">
                                         <p>{getDate(slot.startDate)}</p>
                                         <p>{slot.startTime}</p>
                                         <p>{slot.endTime}</p>

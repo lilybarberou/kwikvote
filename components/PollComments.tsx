@@ -46,7 +46,7 @@ export default function PollComments(props: Props) {
                     <p>{comment.text}</p>
                 </div>
             ))}
-            <form onSubmit={onCommentSubmit} className="mt-5 p-2 w-[350px] flex flex-col gap-2 rounded bg-muted">
+            <form onSubmit={onCommentSubmit} className="mt-5 p-2 max-w-[350px] flex flex-col gap-2 rounded bg-muted">
                 <Input className="w-[230px]" placeholder="Auteur" {...register('author', { required: true })} />
                 <Textarea placeholder="Message" {...register('text', { required: true })} />
                 <Button>Envoyer</Button>

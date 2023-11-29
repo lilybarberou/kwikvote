@@ -1,20 +1,20 @@
 'use client';
 
+import { useEffect } from 'react';
+import Link from 'next/link';
+import useSWR from 'swr';
+import { useNotificationsStore } from '@/lib/notificationsStore';
+import fetcher from '@/utils/fetch';
 import { CompletePoll } from '@/app/api/poll/[id]/route';
+import { BarChart3, Bell, BellRing, Megaphone } from 'lucide-react';
 import PollComments from '@/components/PollComments';
 import PollSlots from '@/components/PollSlots';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useVotesStore } from '@/lib/votesStore';
-import fetcher from '@/utils/fetch';
-import { BarChart3, Bell, BellRing, Megaphone } from 'lucide-react';
-import useSWR from 'swr';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PollSkeleton from '@/components/PollSkeleton';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { useNotificationsStore } from '@/lib/notificationsStore';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
     AlertDialog,
