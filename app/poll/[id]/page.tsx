@@ -27,10 +27,12 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { useHistoryStore } from '@/lib/historyStore';
 
 export default function PollPage({ params }: { params: { id: string } }) {
     const { initVotes } = useVotesStore();
-    const { notificationsSupported, notificationsPermission, init, setSubscriptionEndpoint } = useNotificationsStore();
+    const { addPollToHistory } = useHistoryStore();
+    const { notificationsSupported, notificationsPermission, init } = useNotificationsStore();
     const { toast } = useToast();
     const {
         data: poll,
@@ -60,8 +62,11 @@ export default function PollPage({ params }: { params: { id: string } }) {
             init({ notificationsSupported, notificationsPermission: Notification.permission, endpoint });
         };
 
+        // ADD POLL TO HISTORY
+        if (poll) addPollToHistory(params.id, poll?.title || '');
+
         initNotifications();
-    }, [init]);
+    }, [init, addPollToHistory, params.id, poll]);
 
     const enableNotifications = async () => {
         const receivedPermission = await Notification.requestPermission();
