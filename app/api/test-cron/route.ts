@@ -4,6 +4,8 @@ import { fr } from 'date-fns/locale';
 import { NextRequest, NextResponse } from 'next/server';
 import webpush from 'web-push';
 
+export const dynamic = 'force-dynamic';
+
 webpush.setVapidDetails('mailto:' + process.env.NEXT_PUBLIC_VAPID_EMAIL, process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
 
 export async function GET(_: NextRequest) {
