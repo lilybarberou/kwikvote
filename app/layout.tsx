@@ -3,6 +3,7 @@ import { Inter as FontSans } from 'next/font/google';
 import { Toaster } from '@/components/ui/toaster';
 import Navigation from '@/components/Navigation';
 import './globals.css';
+import Head from 'next/head';
 
 export const fontSans = FontSans({
     subsets: ['latin'],
@@ -12,11 +13,16 @@ export const fontSans = FontSans({
 export const metadata: Metadata = {
     title: 'KwikVote',
     description: 'Créez un sondage en quelques secondes et partagez-le avec vos amis.',
+    manifest: '/manifest.json',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="fr">
+            <Head>
+                <link rel="icon" href="/favicon.ico" />
+                <meta name="theme-color" content="#000000" />
+            </Head>
             <body className={`dark py-3 px-5 flex justify-center min-h-screen bg-background font-sans antialiased ${fontSans.variable}`}>
                 <main className="w-full max-w-3xl">
                     <Navigation />
