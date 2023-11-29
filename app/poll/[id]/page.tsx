@@ -57,7 +57,6 @@ export default function PollPage({ params }: { params: { id: string } }) {
                 endpoint = sub?.endpoint || '';
             }
 
-            console.log(notificationsSupported, Notification.permission, endpoint);
             init({ notificationsSupported, notificationsPermission: Notification.permission, endpoint });
         };
 
@@ -81,7 +80,6 @@ export default function PollPage({ params }: { params: { id: string } }) {
         });
 
         if (res.ok) {
-            console.log(notificationsSupported, Notification.permission, subscription.endpoint);
             init({
                 notificationsSupported,
                 notificationsPermission: Notification.permission,
