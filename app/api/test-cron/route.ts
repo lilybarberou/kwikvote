@@ -88,6 +88,7 @@ export async function GET(_: NextRequest) {
         const payload = JSON.stringify({
             title: 'Pensez à vous inscrire !',
             body,
+            link: `${process.env.DOMAIN}/poll/${slot.pollId}`,
         });
         Object.values(slot.subscriptions).forEach((subscription) => {
             count++;
