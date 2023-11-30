@@ -7,18 +7,15 @@ self.addEventListener('install', () => {
 
 self.addEventListener('push', async (event) => {
     if (event.data) {
-        const eventData = await event.data.json();
-        showLocalNotification(eventData.title, eventData.body, eventData.link, self.registration);
+        const data = await event.data.json();
+
+        self.registration.showNotification(data.title, {
+            body: data.body,
+            icon: '/icons/icon-192.png',
+            tag: data.link,
+        });
     }
 });
-
-const showLocalNotification = (title, body, link, swRegistration) => {
-    swRegistration.showNotification(title, {
-        body,
-        icon: '/icons/icon-192.png',
-        tag: link,
-    });
-};
 
 self.addEventListener('notificationclick', function (event) {
     event.notification.close();
