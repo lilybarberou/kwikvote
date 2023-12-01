@@ -5,7 +5,7 @@ import Link from 'next/link';
 import useSWR from 'swr';
 import { useNotificationsStore } from '@/lib/notificationsStore';
 import fetcher from '@/utils/fetch';
-import { CompletePoll } from '@/app/api/poll/[id]/route';
+import { CompletePoll } from '@/app/api/poll/id/[value]/route';
 import { BarChart3, Bell, BellRing, Megaphone } from 'lucide-react';
 import PollComments from '@/components/PollComments';
 import PollSlots from '@/components/PollSlots';
@@ -38,7 +38,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
         data: poll,
         error,
         isLoading,
-    } = useSWR<CompletePoll>(`/api/poll/${params.id}`, fetcher, {
+    } = useSWR<CompletePoll>(`/api/poll/id/${params.id}`, fetcher, {
         onSuccess: (data) => {
             initVotes(data.votes);
         },
@@ -100,10 +100,10 @@ export default function PollPage({ params }: { params: { id: string } }) {
     if (isLoading) return <PollSkeleton />;
     if (error || !poll)
         return (
-            <div className="mx-auto mt-20 h-full flex flex-col justify-center items-center">
+            <div className="mx-auto mt-32 flex flex-col justify-center items-center">
                 <BarChart3 className="mb-10 w-24 h-24" />
                 <p className="text-2xl font-bold">Ce sondage n&apos;existe pas</p>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground text-center">
                     Vous pouvez créer un sondage via la{' '}
                     <Link className="text-primary" href="/poll/create">
                         page de création

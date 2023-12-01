@@ -2,13 +2,13 @@ import { prisma } from '@/prisma/db';
 import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
-// GET /api/poll/:id
+// GET /api/poll/id/:id
 // GET POLL BY ID
-export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
-    if (!params.id) return NextResponse.json({ message: 'Missing poll id' }, { status: 400 });
+export async function GET(_: NextRequest, { params }: { params: { value: string } }) {
+    if (!params.value) return NextResponse.json({ message: 'Missing poll id' }, { status: 400 });
 
     const poll = await prisma.poll.findUnique({
-        where: { id: params.id },
+        where: { id: params.value },
         include: pollInclude,
     });
 
