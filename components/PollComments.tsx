@@ -6,6 +6,7 @@ import { Comment } from '@prisma/client';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Button } from './ui/button';
+import { useNotificationsStore } from '@/lib/notificationsStore';
 
 type Props = {
     comments: Comment[];
@@ -19,6 +20,7 @@ type CommentForm = {
 
 export default function PollComments(props: Props) {
     const { pollId } = props;
+    const { subscriptionEndpoint } = useNotificationsStore();
     const [comments, setComments] = useState<Comment[]>(props.comments);
     const { register, handleSubmit, reset } = useForm<CommentForm>();
 
@@ -26,7 +28,7 @@ export default function PollComments(props: Props) {
     const onCommentSubmit = handleSubmit(async (data) => {
         const res = await fetch('/api/comment', {
             method: 'POST',
-            body: JSON.stringify({ ...data, pollId }),
+            body: JSON.stringify({ comment: { ...data, pollId }, exceptEndpoint: subscriptionEndpoint }),
         });
         const comment = await res.json();
 
