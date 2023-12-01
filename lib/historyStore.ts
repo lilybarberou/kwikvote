@@ -11,14 +11,15 @@ export const useHistoryStore = create<Store>()(
         (set, get) => ({
             pollHistory: [],
             addPollToHistory: (pollId: string, title: string) => {
+                // slice is for max 5 items
                 if (get().pollHistory.find((poll) => poll.pollId === pollId)) {
                     // put it at the beginning of the array
                     set((state) => ({
-                        pollHistory: [{ pollId, title }, ...state.pollHistory.filter((poll) => poll.pollId !== pollId)],
+                        pollHistory: [{ pollId, title }, ...state.pollHistory.filter((poll) => poll.pollId !== pollId)].slice(0, 5),
                     }));
                 } else {
                     set((state) => ({
-                        pollHistory: [{ pollId, title }, ...state.pollHistory],
+                        pollHistory: [{ pollId, title }, ...state.pollHistory].slice(0, 5),
                     }));
                 }
             },
