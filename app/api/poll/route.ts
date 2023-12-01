@@ -16,6 +16,7 @@ export async function POST(request: NextRequest) {
             data: {
                 title: data.title,
                 description: data.description,
+                email: data.email,
                 slots: {
                     create: data.slots.map((slot: z.infer<typeof createSlotSchema>) => ({
                         ...slot,
@@ -43,5 +44,6 @@ const createSlotSchema = z.object({
 const createPollSchema = z.object({
     title: z.string(),
     description: z.string().optional(),
+    email: z.string().email().optional(),
     slots: z.array(createSlotSchema),
 });

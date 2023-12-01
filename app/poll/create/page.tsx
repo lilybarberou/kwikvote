@@ -15,6 +15,7 @@ import { z } from 'zod';
 const PollFormSchema = z.object({
     title: z.string().min(3),
     description: z.string().optional(),
+    email: z.string().email().optional(),
     slots: z.array(
         z.object({
             startDate: z.date(),
@@ -35,12 +36,7 @@ const defaultValues = {
 export default function CreatePoll() {
     const { toast } = useToast();
     const { push } = useRouter();
-    const {
-        register,
-        control,
-        handleSubmit,
-        formState: { errors },
-    } = useForm<z.infer<typeof PollFormSchema>>({
+    const { register, control, handleSubmit } = useForm<z.infer<typeof PollFormSchema>>({
         defaultValues: { slots: [defaultValues] },
         resolver: zodResolver(PollFormSchema),
     });
@@ -69,11 +65,16 @@ export default function CreatePoll() {
     return (
         <div className="m-auto">
             <h1 className="mb-10 text-3xl font-bold">Création du sondage</h1>
-            <form onSubmit={submitPoll} className="flex flex-col gap-2">
+            <form onSubmit={submitPoll} className="flex flex-col gap-3">
                 <Label htmlFor="title">Titre du sondage*</Label>
-                <Input {...register('title')} />
+                <Input {...register('title')} id="title" />
                 <Label htmlFor="description">Description</Label>
-                <Textarea {...register('description')} />
+                <Textarea {...register('description')} id="description" />
+                <Label htmlFor="email">
+                    Email
+                    <span className="ml-2 text-muted-foreground text-sm">(Servira uniquement à retrouver vos différents sondages)</span>
+                </Label>
+                <Input className="max-w-xs" {...register('email')} id="email" />
                 <h2 className="my-4 text-2xl font-bold">Créneaux</h2>
                 <div className="flex flex-wrap gap-4">
                     {fields.map((field, index) => (
