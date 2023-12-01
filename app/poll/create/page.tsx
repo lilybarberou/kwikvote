@@ -13,9 +13,9 @@ import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 const PollFormSchema = z.object({
-    title: z.string().min(3),
+    title: z.string(),
     description: z.string().optional(),
-    email: z.string().email().optional(),
+    email: z.string().email().optional().or(z.literal('')),
     slots: z.array(
         z.object({
             startDate: z.date(),

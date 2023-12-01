@@ -10,7 +10,7 @@ export async function GET(_: NextRequest) {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const data = createPollSchema.parse(body);
+        const data = CreatePollSchema.parse(body);
 
         const poll = await prisma.poll.create({
             data: {
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
                 description: data.description,
                 email: data.email,
                 slots: {
-                    create: data.slots.map((slot: z.infer<typeof createSlotSchema>) => ({
+                    create: data.slots.map((slot: z.infer<typeof CreateSlotSchema>) => ({
                         ...slot,
                         startDate: new Date(slot.startDate),
                         endDate: new Date(slot.endDate),
@@ -34,16 +34,16 @@ export async function POST(request: NextRequest) {
     }
 }
 
-const createSlotSchema = z.object({
+const CreateSlotSchema = z.object({
     startDate: z.string(),
     startTime: z.string(),
     endDate: z.string(),
     endTime: z.string(),
 });
 
-const createPollSchema = z.object({
+const CreatePollSchema = z.object({
     title: z.string(),
     description: z.string().optional(),
-    email: z.string().email().optional(),
-    slots: z.array(createSlotSchema),
+    email: z.string().email().optional().or(z.literal('')),
+    slots: z.array(CreateSlotSchema),
 });
