@@ -86,7 +86,7 @@ export default function DialogVote(props: Props) {
 
     return (
         <DialogContent className="w-11/12 max-w-[360px]">
-            <DialogTitle>Ajouter un vote</DialogTitle>
+            <DialogTitle>{currentVoteId ? 'Modifier le vote' : 'Ajouter un vote'}</DialogTitle>
             <form onSubmit={submitVote}>
                 <Label className="mt-4" htmlFor="name">
                     Nom
@@ -103,7 +103,9 @@ export default function DialogVote(props: Props) {
                     {slots.map((slot, index) => (
                         <div
                             key={slot.id}
-                            className={`py-4 flex flex-wrap gap-x-14 gap-y-3 items-center sm:py-2 ${slots.length - 1 === index ? '' : 'border-b-2'}`}
+                            className={`py-4 flex flex-wrap gap-x-14 gap-y-3 items-center sm:py-2 sm:grid sm:grid-cols-[max-content_auto] ${
+                                slots.length - 1 === index ? '' : 'border-b-2'
+                            }`}
                         >
                             <div className="flex flex-wrap items-end gap-x-2 sm:flex-col sm:items-start">
                                 <p>{getDate(slot.startDate)}</p>
@@ -133,12 +135,12 @@ export default function DialogVote(props: Props) {
                         </div>
                     ))}
                 </div>
-                <DialogFooter className="mt-4">
+                <DialogFooter className="mt-4 flex-row">
                     {currentVoteId && (
                         <TooltipProvider>
                             <Tooltip delayDuration={300}>
                                 <TooltipTrigger asChild>
-                                    <Button onClick={removeVote} type="button" size="icon" variant="destructive" className="mr-auto">
+                                    <Button className="mr-auto" onClick={removeVote} type="button" size="icon" variant="destructive">
                                         <Trash2 className="w-4 h-4" />
                                     </Button>
                                 </TooltipTrigger>
@@ -148,7 +150,7 @@ export default function DialogVote(props: Props) {
                             </Tooltip>
                         </TooltipProvider>
                     )}
-                    <div className="ml-auto flex gap-2">
+                    <div className="flex gap-2">
                         <DialogClose asChild>
                             <Button variant="outline">Annuler</Button>
                         </DialogClose>
