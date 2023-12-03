@@ -22,6 +22,7 @@ const PollFormSchema = z.object({
             startTime: z.string(),
             endDate: z.date(),
             endTime: z.string(),
+            maxParticipants: z.coerce.number().positive(),
         })
     ),
 });
@@ -31,6 +32,7 @@ const defaultValues = {
     startTime: '12:00',
     endDate: new Date(),
     endTime: '13:30',
+    maxParticipants: 10,
 };
 
 export default function CreatePoll() {
@@ -103,6 +105,12 @@ export default function CreatePoll() {
                                         render={({ field }) => <Input type="time" className="w-fit" {...field} />}
                                     />
                                 </div>
+                                <label htmlFor="maxParticipants">Maximum de participants</label>
+                                <Controller
+                                    name={`slots.${index}.maxParticipants`}
+                                    control={control}
+                                    render={({ field }) => <Input type="number" className="w-20" {...field} />}
+                                />
                             </div>
                         </div>
                     ))}

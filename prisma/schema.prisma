@@ -9,6 +9,7 @@ datasource db {
 
 model Poll {
   id             String @id @default(uuid())
+  type           Int    @default(1)
   title          String
   description    String @default("")
   email          String @default("")
@@ -18,14 +19,19 @@ model Poll {
 }
 
 model Slot {
-  id         String   @id @default(uuid())
-  pollId     String
-  startDate  DateTime
-  startTime  String
-  endDate    DateTime
-  endTime    String
-  choices    VoteChoice[]
-  poll       Poll     @relation(fields: [pollId], references: [id])
+  id                      String        @id @default(uuid())
+  pollId                  String
+  startDate               DateTime
+  startTime               String
+  endDate                 DateTime
+  endTime                 String
+  maxParticipants         Int           @default(0)
+  registered              String[]      @default([])
+  waitingList             String[]      @default([])
+  waitingListReregistered String[]      @default([])
+  notComing               String[]      @default([])
+  choices                 VoteChoice[]
+  poll                    Poll          @relation(fields: [pollId], references: [id])
 }
 
 model Vote {

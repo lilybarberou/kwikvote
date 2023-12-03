@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { SetStateAction, useEffect } from 'react';
 import { v4 } from 'uuid';
 import { Controller, useForm } from 'react-hook-form';
 import { useVotesStore } from '@/lib/votesStore';
@@ -12,12 +12,15 @@ import { useToast } from './ui/use-toast';
 import { Button } from './ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useNotificationsStore } from '@/lib/notificationsStore';
+import { PollSlot } from '@/app/api/poll/id/[value]/route';
 
 type Props = {
     slots: { id: string; startDate: Date; startTime: string; endDate: Date; endTime: string }[];
     pollId: string;
+    pollType: number;
     currentVoteId: string;
     closeDialog: () => void;
+    setSlots: React.Dispatch<SetStateAction<PollSlot[]>>;
 };
 
 export default function DialogVote(props: Props) {
@@ -38,6 +41,12 @@ export default function DialogVote(props: Props) {
     }, [currentVoteId, reset]);
 
     const submitVote = handleSubmit(async (data) => {
+        // if data has not been modified, do not submit
+        if (currentVoteId && votes[currentVoteId]?.choices.every((choice) => choice.choice === parseInt(data[`choice-${choice.slotId}`]))) {
+            closeDialog();
+            return;
+        }
+
         const formattedData = {
             id: currentVoteId || v4(),
             name: data.name,
@@ -52,11 +61,17 @@ export default function DialogVote(props: Props) {
             method: 'POST',
             body: JSON.stringify({
                 pollId,
+                pollType: props.pollType,
                 ...formattedData,
             }),
         });
 
         if (res.ok) {
+            if (props.pollType == 2) {
+                const resData = await res.json();
+                props.setSlots((prevSlots) => prevSlots.map((slot) => ({ ...slot, ...resData.newSlotsArrays[slot.id] })));
+            }
+
             addVote(formattedData);
             closeDialog();
             reset();
@@ -70,10 +85,25 @@ export default function DialogVote(props: Props) {
     });
 
     const removeVote = async () => {
-        const res = await fetch(`/api/vote/${currentVoteId}`, { method: 'DELETE' });
+        const res = await fetch(`/api/vote/${currentVoteId}`, {
+            method: 'DELETE',
+            body: JSON.stringify({ pollId, pollType: props.pollType }),
+        });
 
         if (res.ok) {
-            deleteVote(currentVoteId);
+            if (props.pollType == 1) deleteVote(currentVoteId);
+            else if (props.pollType == 2) {
+                props.setSlots((prevSlots) =>
+                    prevSlots.map((slot) => ({
+                        ...slot,
+                        registered: slot.registered.filter((id) => id !== currentVoteId),
+                        waitingList: slot.waitingList.filter((id) => id !== currentVoteId),
+                        waitingListReregistered: slot.waitingListReregistered.filter((id) => id !== currentVoteId),
+                        notComing: slot.notComing.filter((id) => id !== currentVoteId),
+                    }))
+                );
+            }
+
             closeDialog();
         } else {
             toast({
@@ -84,9 +114,20 @@ export default function DialogVote(props: Props) {
         }
     };
 
+    const DialogTitleBySlotType = () => {
+        let text = '';
+        if (props.pollType == 1) {
+            text = currentVoteId ? 'Modifier un vote' : 'Ajouter un vote';
+        } else if (props.pollType == 2) {
+            text = currentVoteId ? 'Modifier une inscription' : 'Ajouter une inscription';
+        }
+
+        return <DialogTitle>{text}</DialogTitle>;
+    };
+
     return (
         <DialogContent className="w-11/12 max-w-[360px]">
-            <DialogTitle>{currentVoteId ? 'Modifier le vote' : 'Ajouter un vote'}</DialogTitle>
+            <DialogTitleBySlotType />
             <form onSubmit={submitVote}>
                 <Label className="mt-4" htmlFor="name">
                     Nom
@@ -125,7 +166,7 @@ export default function DialogVote(props: Props) {
                                             <SelectContent>
                                                 <SelectItem value="1">Oui</SelectItem>
                                                 <SelectItem value="2">Non</SelectItem>
-                                                <SelectItem value="3">Ne sais pas</SelectItem>
+                                                {props.pollType == 1 && <SelectItem value="3">Ne sais pas</SelectItem>}
                                             </SelectContent>
                                         </Select>
                                     )}

@@ -58,7 +58,7 @@ export default function PollSlot(props: Props) {
 
     return (
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogVote currentVoteId={currentVoteId} slots={props.slots} closeDialog={closeDialog} pollId={props.pollId} />
+            <DialogVote pollType={1} currentVoteId={currentVoteId} slots={props.slots} closeDialog={closeDialog} pollId={props.pollId} />
             <Table>
                 <TableHeader>
                     <TableRow>

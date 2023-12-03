@@ -39,6 +39,7 @@ const CreateSlotSchema = z.object({
     startTime: z.string(),
     endDate: z.string(),
     endTime: z.string(),
+    maxParticipants: z.number().int().positive(),
 });
 
 const CreatePollSchema = z.object({

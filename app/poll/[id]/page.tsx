@@ -28,6 +28,7 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useHistoryStore } from '@/lib/historyStore';
+import RegistrationPoll from '@/components/RegistrationPoll';
 
 export default function PollPage({ params }: { params: { id: string } }) {
     const { initVotes } = useVotesStore();
@@ -174,7 +175,8 @@ export default function PollPage({ params }: { params: { id: string } }) {
                     )}
                 </div>
                 <TabsContent value="votes">
-                    <PollSlots slots={poll.slots} pollId={params.id} />
+                    {poll.type === 2 && <PollSlots slots={poll.slots} pollId={poll.id} />}
+                    {poll.type === 1 && <RegistrationPoll slots={poll.slots} pollId={poll.id} />}
                 </TabsContent>
                 <TabsContent value="comments">
                     <PollComments comments={poll.comments} pollId={params.id} />
