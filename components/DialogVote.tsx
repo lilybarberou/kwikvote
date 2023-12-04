@@ -163,7 +163,12 @@ export default function DialogVote(props: Props) {
                                             <SelectTrigger className="min-w-[180px]">
                                                 <SelectValue placeholder="À définir" />
                                             </SelectTrigger>
-                                            <SelectContent>
+                                            <SelectContent
+                                                ref={(ref) => {
+                                                    if (!ref) return;
+                                                    ref.ontouchstart = (e) => e.preventDefault();
+                                                }}
+                                            >
                                                 <SelectItem value="1">Oui</SelectItem>
                                                 <SelectItem value="2">Non</SelectItem>
                                                 {props.pollType == 1 && <SelectItem value="3">Ne sais pas</SelectItem>}
