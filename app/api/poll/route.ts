@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
 
         const poll = await prisma.poll.create({
             data: {
+                type: data.type,
                 title: data.title,
                 description: data.description,
                 email: data.email,
@@ -43,6 +44,7 @@ const CreateSlotSchema = z.object({
 });
 
 const CreatePollSchema = z.object({
+    type: z.number().int().positive().min(1).max(2),
     title: z.string(),
     description: z.string().optional(),
     email: z.string().email().optional().or(z.literal('')),

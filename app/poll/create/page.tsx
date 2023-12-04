@@ -11,9 +11,11 @@ import { X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 const PollFormSchema = z.object({
-    title: z.string(),
+    type: z.enum(['1', '2']),
+    title: z.string().min(1),
     description: z.string().optional(),
     email: z.string().email().optional().or(z.literal('')),
     slots: z.array(
@@ -38,10 +40,14 @@ const defaultValues = {
 export default function CreatePoll() {
     const { toast } = useToast();
     const { push } = useRouter();
-    const { register, control, handleSubmit } = useForm<z.infer<typeof PollFormSchema>>({
-        defaultValues: { slots: [defaultValues] },
+    const { register, control, handleSubmit, watch } = useForm<z.infer<typeof PollFormSchema>>({
+        defaultValues: {
+            type: '1',
+            slots: [defaultValues],
+        },
         resolver: zodResolver(PollFormSchema),
     });
+    const type = watch('type');
 
     const { fields, append, remove } = useFieldArray({
         control,
@@ -51,7 +57,7 @@ export default function CreatePoll() {
     const submitPoll = handleSubmit(async (data) => {
         const res = await fetch('/api/poll', {
             method: 'POST',
-            body: JSON.stringify(data),
+            body: JSON.stringify({ ...data, type: Number(data.type) }),
         });
 
         const poll = await res.json();
@@ -68,6 +74,28 @@ export default function CreatePoll() {
         <div className="m-auto">
             <h1 className="mb-10 text-3xl font-bold">Création du sondage</h1>
             <form onSubmit={submitPoll} className="flex flex-col gap-3">
+                <Controller
+                    control={control}
+                    name="type"
+                    render={({ field }) => (
+                        <RadioGroup className="mb-8 flex gap-4" defaultValue={String(field.value)} {...field} onValueChange={field.onChange}>
+                            <div>
+                                <RadioGroupItem value="1" id="type-1" className="peer hidden" />
+                                <Label htmlFor="type-1" className="!ml-0 p-2 cursor-pointer block border peer-data-[state=checked]:border-white">
+                                    <p className="mb-2">Sondage libre</p>
+                                    <div className="w-32 h-32 bg-primary"></div>
+                                </Label>
+                            </div>
+                            <div>
+                                <RadioGroupItem value="2" id="type-2" className="peer hidden" />
+                                <Label htmlFor="type-2" className="!ml-0 p-2 cursor-pointer block border peer-data-[state=checked]:border-white">
+                                    <p className="mb-2">Sondage avec liste d&apos;attente</p>
+                                    <div className="w-32 h-32 bg-primary"></div>
+                                </Label>
+                            </div>
+                        </RadioGroup>
+                    )}
+                />
                 <Label htmlFor="title">Titre du sondage*</Label>
                 <Input {...register('title')} id="title" />
                 <Label htmlFor="description">Description</Label>
@@ -105,12 +133,16 @@ export default function CreatePoll() {
                                         render={({ field }) => <Input type="time" className="w-fit" {...field} />}
                                     />
                                 </div>
-                                <label htmlFor="maxParticipants">Maximum de participants</label>
-                                <Controller
-                                    name={`slots.${index}.maxParticipants`}
-                                    control={control}
-                                    render={({ field }) => <Input type="number" className="w-20" {...field} />}
-                                />
+                                {type == '2' && (
+                                    <>
+                                        <label htmlFor="maxParticipants">Maximum de participants</label>
+                                        <Controller
+                                            name={`slots.${index}.maxParticipants`}
+                                            control={control}
+                                            render={({ field }) => <Input type="number" className="w-20" {...field} />}
+                                        />
+                                    </>
+                                )}
                             </div>
                         </div>
                     ))}
