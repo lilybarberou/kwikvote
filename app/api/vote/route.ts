@@ -2,15 +2,6 @@ import { prisma } from '@/prisma/db';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-type NewVoteArray = {
-    [slotId: string]: {
-        addInRegistered: boolean;
-        addInWaitingList: boolean;
-        addInWaitingListReregistered: boolean;
-        addInNotComing: boolean;
-    };
-};
-
 type NewSlotsArrays = {
     [slotId: string]: {
         registered: string[];
@@ -28,7 +19,6 @@ export async function POST(request: NextRequest) {
         let newSlotsArrays: NewSlotsArrays = {};
 
         if (data.pollType == 2) {
-            // CHECK IN WHICH ARRAY THE VOTE WILL BE
             const poll = await prisma.poll.findUnique({
                 where: {
                     id: data.pollId,
@@ -41,6 +31,7 @@ export async function POST(request: NextRequest) {
                             registered: true,
                             waitingList: true,
                             waitingListReregistered: true,
+                            notComing: true,
                         },
                         orderBy: { startDate: 'asc' },
                     },
@@ -49,69 +40,87 @@ export async function POST(request: NextRequest) {
 
             if (!poll) return NextResponse.json({ message: 'Sondage introuvable' }, { status: 404 });
 
-            let isRegisteredOnce = false;
-            const newVoteArray: NewVoteArray = {};
-
-            poll.slots.forEach((slot) => {
-                newVoteArray[slot.id] = {
-                    addInRegistered: false,
-                    addInWaitingList: false,
-                    addInWaitingListReregistered: false,
-                    addInNotComing: false,
-                };
-
-                const voteChoice = data.choices.find((choice) => choice.slotId === slot.id);
-                if (voteChoice?.choice == 2) {
-                    newVoteArray[slot.id].addInNotComing = true;
-                    return;
-                }
-
-                const isFull = slot.registered.length >= slot.maxParticipants;
-
-                // pas rempli -> on ajoute aux inscrits
-                if (!isFull && !isRegisteredOnce) {
-                    newVoteArray[slot.id].addInRegistered = true;
-                    isRegisteredOnce = true;
-                }
-                // rempli et inscrit nul part -> on ajoute en liste d'attente
-                else if (!isRegisteredOnce) {
-                    newVoteArray[slot.id].addInWaitingList = true;
-                }
-                // déjà inscrit quelque part -> on ajoute en liste d'attente des réinscrits
-                else newVoteArray[slot.id].addInWaitingListReregistered = true;
+            // CHECK IF VOTE EXISTS TO KNOW IF CREATING OR EDITING
+            const voteExists = await prisma.vote.findUnique({
+                where: {
+                    id: data.id,
+                },
+                include: {
+                    choices: {
+                        select: {
+                            id: true,
+                            slotId: true,
+                            choice: true,
+                        },
+                    },
+                },
             });
 
-            // UPDATE SLOTS
-            Object.entries(newVoteArray).forEach(async ([slotId, slotArrays]) => {
+            let isRegisteredOnce = false;
+
+            await poll.slots.forEach(async (slot) => {
+                const voteChoice = data.choices.find((choice) => choice.slotId === slot.id);
+                const isFull = slot.registered.length >= slot.maxParticipants;
+
+                if (voteExists) {
+                    const oldChoice = voteExists.choices.find((choice) => choice.slotId === slot.id);
+                    const choiceChanged = oldChoice?.choice !== voteChoice?.choice;
+
+                    if (choiceChanged) {
+                        slot.registered = slot.registered.filter((id) => id !== data.id);
+                        slot.waitingList = slot.waitingList.filter((id) => id !== data.id);
+                        slot.waitingListReregistered = slot.waitingListReregistered.filter((id) => id !== data.id);
+                        slot.notComing = slot.notComing.filter((id) => id !== data.id);
+                    } else {
+                        if (voteChoice?.choice == 1) {
+                            const isRegistered = slot.registered.includes(data.id);
+
+                            // premier créneau où il est inscrit, on le laisse inscrit
+                            if (isRegistered && !isRegisteredOnce) {
+                                isRegisteredOnce = true;
+                                return;
+                            }
+                            // déjà inscrit dans un créneau précédent, on l'enlève des inscrits
+                            // (passera en liste d'attente dans la logique suivante)
+                            else if (isRegistered && isRegisteredOnce) {
+                                slot.registered = slot.registered.filter((id) => id !== data.id);
+                            } else {
+                                // si pas encore inscrit dans les créneaux précédents et actuellement en
+                                // liste d'attente, on le passe en inscrit si registered pas au max
+                                if (!isFull) {
+                                    // on l'enlève des listes d'attentes, il sera inscrit dans la logique juste après
+                                    slot.waitingList = slot.waitingList.filter((id) => id !== data.id);
+                                    slot.waitingListReregistered = slot.waitingListReregistered.filter((id) => id !== data.id);
+                                }
+                            }
+                        }
+                        // aucun changement à faire si toujours non
+                        else return;
+                    }
+                }
+
+                if (voteChoice?.choice == 2) {
+                    slot.notComing.push(data.id);
+                } else {
+                    // pas rempli -> on ajoute aux inscrits
+                    if (!isFull && !isRegisteredOnce) {
+                        slot.registered.push(data.id);
+                        isRegisteredOnce = true;
+                    }
+                    // rempli et inscrit nul part -> on ajoute en liste d'attente
+                    else if (!isRegisteredOnce) {
+                        slot.waitingList.push(data.id);
+                    }
+                    // déjà inscrit quelque part -> on ajoute en liste d'attente des réinscrits
+                    else slot.waitingListReregistered.push(data.id);
+                }
+
                 const updatedSlot = await prisma.slot.update({
-                    where: {
-                        id: slotId,
-                    },
-                    data: {
-                        registered: slotArrays.addInRegistered
-                            ? {
-                                  push: data.id,
-                              }
-                            : undefined,
-                        waitingList: slotArrays.addInWaitingList
-                            ? {
-                                  push: data.id,
-                              }
-                            : undefined,
-                        waitingListReregistered: slotArrays.addInWaitingListReregistered
-                            ? {
-                                  push: data.id,
-                              }
-                            : undefined,
-                        notComing: slotArrays.addInNotComing
-                            ? {
-                                  push: data.id,
-                              }
-                            : undefined,
-                    },
+                    where: { id: slot.id },
+                    data: { ...slot },
                 });
 
-                newSlotsArrays[slotId] = {
+                newSlotsArrays[slot.id] = {
                     registered: updatedSlot.registered,
                     waitingList: updatedSlot.waitingList,
                     waitingListReregistered: updatedSlot.waitingListReregistered,
