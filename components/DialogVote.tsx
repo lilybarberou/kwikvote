@@ -20,11 +20,12 @@ type Props = {
     pollType: number;
     currentVoteId: string;
     closeDialog: () => void;
-    setSlots: React.Dispatch<SetStateAction<PollSlot[]>>;
+    setCurrentVoteId: React.Dispatch<SetStateAction<string>>;
+    setSlots?: React.Dispatch<SetStateAction<PollSlot[]>>;
 };
 
 export default function DialogVote(props: Props) {
-    const { currentVoteId, slots, closeDialog, pollId } = props;
+    const { currentVoteId, slots, closeDialog, pollId, setCurrentVoteId, pollType, setSlots } = props;
     const { removeVote: deleteVote, addVote, votes } = useVotesStore();
     const { subscriptionEndpoint } = useNotificationsStore();
     const { toast } = useToast();
@@ -61,20 +62,20 @@ export default function DialogVote(props: Props) {
             method: 'POST',
             body: JSON.stringify({
                 pollId,
-                pollType: props.pollType,
+                pollType,
                 ...formattedData,
             }),
         });
 
         if (res.ok) {
-            if (props.pollType == 2) {
+            if (pollType == 2 && setSlots) {
                 const resData = await res.json();
-                props.setSlots((prevSlots) => prevSlots.map((slot) => ({ ...slot, ...resData.newSlotsArrays[slot.id] })));
+                setSlots((prevSlots) => prevSlots.map((slot) => ({ ...slot, ...resData.newSlotsArrays[slot.id] })));
             }
-
             addVote(formattedData);
             closeDialog();
             reset();
+            setCurrentVoteId('edited'); // TODO FAIRE MIEUX
         } else {
             toast({
                 title: 'Erreur lors de la création du vote',
@@ -87,13 +88,13 @@ export default function DialogVote(props: Props) {
     const removeVote = async () => {
         const res = await fetch(`/api/vote/${currentVoteId}`, {
             method: 'DELETE',
-            body: JSON.stringify({ pollId, pollType: props.pollType }),
+            body: JSON.stringify({ pollId, pollType }),
         });
 
         if (res.ok) {
-            if (props.pollType == 1) deleteVote(currentVoteId);
-            else if (props.pollType == 2) {
-                props.setSlots((prevSlots) =>
+            if (pollType == 1) deleteVote(currentVoteId);
+            else if (pollType == 2 && setSlots) {
+                setSlots((prevSlots) =>
                     prevSlots.map((slot) => ({
                         ...slot,
                         registered: slot.registered.filter((id) => id !== currentVoteId),
@@ -116,9 +117,9 @@ export default function DialogVote(props: Props) {
 
     const DialogTitleBySlotType = () => {
         let text = '';
-        if (props.pollType == 1) {
+        if (pollType == 1) {
             text = currentVoteId ? 'Modifier un vote' : 'Ajouter un vote';
-        } else if (props.pollType == 2) {
+        } else if (pollType == 2) {
             text = currentVoteId ? 'Modifier une inscription' : 'Ajouter une inscription';
         }
 
@@ -171,7 +172,7 @@ export default function DialogVote(props: Props) {
                                             >
                                                 <SelectItem value="1">Oui</SelectItem>
                                                 <SelectItem value="2">Non</SelectItem>
-                                                {props.pollType == 1 && <SelectItem value="3">Ne sais pas</SelectItem>}
+                                                {pollType == 1 && <SelectItem value="3">Ne sais pas</SelectItem>}
                                             </SelectContent>
                                         </Select>
                                     )}

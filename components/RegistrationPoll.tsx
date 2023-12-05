@@ -47,7 +47,15 @@ export default function RegistrationPoll(props: Props) {
 
     return (
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogVote setSlots={setSlots} pollType={2} currentVoteId={currentVoteId} slots={slots} closeDialog={closeDialog} pollId={props.pollId} />
+            <DialogVote
+                setCurrentVoteId={setCurrentVoteId}
+                setSlots={setSlots}
+                pollType={2}
+                currentVoteId={currentVoteId}
+                slots={slots}
+                closeDialog={closeDialog}
+                pollId={props.pollId}
+            />
             <DialogTrigger asChild>
                 <Button className="mt-10 mb-2" onClick={() => setCurrentVoteId('')}>
                     Nouvelle inscription
