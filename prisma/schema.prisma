@@ -8,14 +8,16 @@ datasource db {
 }
 
 model Poll {
-  id             String @id @default(uuid())
-  type           Int    @default(1)
-  title          String
-  description    String @default("")
-  email          String @default("")
-  slots          Slot[]
-  comments       Comment[]
-  votes          Vote[]
+  id                     String     @id @default(uuid())
+  type                   Int        @default(1)
+  title                  String
+  description            String     @default("")
+  email                  String     @default("")
+  timeBeforeAllowedType  Int        @default(1)
+  msBeforeAllowed        Int        @default(0)
+  slots                  Slot[]
+  comments               Comment[]
+  votes                  Vote[]
 }
 
 model Slot {
@@ -41,6 +43,7 @@ model Vote {
   subscriptions Subscription[]
   choices       VoteChoice[]
   createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   poll          Poll           @relation(fields: [pollId], references: [id])
 }
 

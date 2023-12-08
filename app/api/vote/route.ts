@@ -104,8 +104,15 @@ export async function POST(request: NextRequest) {
 
             if (!poll) return NextResponse.json({ message: 'Sondage introuvable' }, { status: 404 });
 
+            const timeBeforeAllowedPassed = checkTimeBeforeAllow({
+                timeBeforeAllowedType: poll.timeBeforeAllowedType,
+                msBeforeAllowed: poll.msBeforeAllowed,
+                slots: poll.slots,
+            });
+
             newSlotsArrays = await updateSlotsArray({
                 poll,
+                timeBeforeAllowedPassed,
                 voteId: data.id,
                 initialVoteChoices: data.choices,
                 initialVoteOldChoices: voteInDB?.choices,
@@ -128,6 +135,7 @@ const updateSlotsArray = async ({
     initialVoteChoices,
     initialVoteOldChoices,
     voteExists,
+    timeBeforeAllowedPassed,
     firstCall,
 }: {
     poll: Poll;
@@ -135,6 +143,7 @@ const updateSlotsArray = async ({
     initialVoteChoices: Choice[];
     initialVoteOldChoices?: Choice[];
     voteExists: boolean;
+    timeBeforeAllowedPassed: Record<string, boolean>;
     firstCall?: boolean;
 }) => {
     let newSlotsArrays: NewSlotsArrays = {};
@@ -180,7 +189,13 @@ const updateSlotsArray = async ({
                     // déjà inscrit dans un créneau précédent, on l'enlève des inscrits
                     // (passera en liste d'attente dans la logique suivante)
                     else if (isRegistered && isRegisteredOnce) {
-                        slot.registered = slot.registered.filter((id) => id !== voteId);
+                        // if time passed and reregistered allowed we can leave it
+                        if (timeBeforeAllowedPassed[slot.id]) {
+                            isRegisteredOnce = true;
+                            continue;
+                        }
+                        // else remove from registered (will be in reregistered waiting list)
+                        else slot.registered = slot.registered.filter((id) => id !== voteId);
                     } else {
                         // si pas encore inscrit dans les créneaux précédents et actuellement en
                         // liste d'attente, on le passe en inscrit si registered pas au max
@@ -198,14 +213,14 @@ const updateSlotsArray = async ({
 
         if (currentVoteChoice?.choice == 2) slot.notComing.push(voteId);
         else {
-            // pas rempli -> on ajoute aux inscrits
-            if (!isFull && !isRegisteredOnce) {
+            // not full -> add to registered
+            if (!isFull && (!isRegisteredOnce || timeBeforeAllowedPassed[slot.id])) {
                 slot.registered.push(voteId);
                 isRegisteredOnce = true;
             }
-            // rempli et inscrit nul part -> on ajoute en liste d'attente
+            // full and not registered anywhere -> add to waiting list
             else if (!isRegisteredOnce) slot.waitingList.push(voteId);
-            // déjà inscrit quelque part -> on ajoute en liste d'attente des réinscrits
+            // already registered somewhere -> add to reregistered waiting list
             else slot.waitingListReregistered.push(voteId);
         }
 
@@ -235,7 +250,7 @@ const updateSlotsArray = async ({
     });
 
     if (voteIdToRegister) {
-        const resNewSlotsArrays = await updateSlotsArray({ poll, voteId: voteIdToRegister, initialVoteChoices, voteExists: true });
+        const resNewSlotsArrays = await updateSlotsArray({ poll, voteId: voteIdToRegister, initialVoteChoices, voteExists: true, timeBeforeAllowedPassed });
 
         // update newSlotsArrays
         Object.keys(resNewSlotsArrays).forEach((slotId) => {
@@ -245,10 +260,47 @@ const updateSlotsArray = async ({
     return newSlotsArrays;
 };
 
-const pollInclude = Prisma.validator<Prisma.PollInclude>()({
+const checkTimeBeforeAllow = ({
+    timeBeforeAllowedType,
+    msBeforeAllowed,
+    slots,
+}: {
+    timeBeforeAllowedType: number;
+    msBeforeAllowed: number;
+    slots: Poll['slots'];
+}) => {
+    return slots.reduce((obj, curr) => {
+        const now = new Date();
+
+        // date to compare is day before at 5pm
+        if (timeBeforeAllowedType == 1) {
+            const dateToCompare = new Date(curr.startDate);
+            dateToCompare.setDate(dateToCompare.getDate() - 1);
+            dateToCompare.setHours(17, 0, 0, 0);
+
+            obj[curr.id] = now.getTime() > dateToCompare.getTime();
+        }
+        // specific hours number before startDate
+        else {
+            const slotDate = new Date(curr.startDate);
+            const hours = curr.startTime.split(':')[0];
+            const minutes = curr.startTime.split(':')[1];
+            const slotDateTime = new Date(slotDate.setHours(+hours, +minutes));
+
+            obj[curr.id] = now.getTime() > slotDateTime.getTime() - msBeforeAllowed;
+        }
+        return obj;
+    }, {} as Record<string, boolean>);
+};
+
+const pollInclude = Prisma.validator<Prisma.PollSelect>()({
+    timeBeforeAllowedType: true,
+    msBeforeAllowed: true,
     slots: {
         select: {
             id: true,
+            startDate: true,
+            startTime: true,
             maxParticipants: true,
             registered: true,
             waitingList: true,

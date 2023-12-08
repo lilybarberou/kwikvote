@@ -18,6 +18,8 @@ const PollFormSchema = z.object({
     title: z.string().min(1),
     description: z.string().optional(),
     email: z.string().email().optional().or(z.literal('')),
+    timeBeforeAllowedType: z.enum(['1', '2']),
+    hoursBeforeAllowed: z.number().positive().optional().or(z.string().regex(/^\d+$/)),
     slots: z.array(
         z.object({
             startDate: z.date(),
@@ -43,6 +45,8 @@ export default function CreatePoll() {
     const { register, control, handleSubmit, watch } = useForm<z.infer<typeof PollFormSchema>>({
         defaultValues: {
             type: '1',
+            timeBeforeAllowedType: '1',
+            hoursBeforeAllowed: 1,
             slots: [defaultValues],
         },
         resolver: zodResolver(PollFormSchema),
@@ -55,9 +59,21 @@ export default function CreatePoll() {
     });
 
     const submitPoll = handleSubmit(async (data) => {
+        // convert hours to ms
+        let msBeforeAllowed = 0;
+        if (type === '2' && data.timeBeforeAllowedType === '2') {
+            msBeforeAllowed = Number(data.hoursBeforeAllowed) * 60 * 60 * 1000;
+            delete data.hoursBeforeAllowed;
+        }
+
         const res = await fetch('/api/poll', {
             method: 'POST',
-            body: JSON.stringify({ ...data, type: Number(data.type) }),
+            body: JSON.stringify({
+                ...data,
+                type: Number(data.type),
+                timeBeforeAllowedType: Number(data.timeBeforeAllowedType),
+                msBeforeAllowed,
+            }),
         });
 
         const poll = await res.json();
@@ -73,7 +89,7 @@ export default function CreatePoll() {
     return (
         <div className="m-auto">
             <h1 className="mb-10 text-3xl font-bold">Création du sondage</h1>
-            <form onSubmit={submitPoll} className="flex flex-col gap-3">
+            <form onSubmit={submitPoll} className="flex flex-col gap-4">
                 <Controller
                     control={control}
                     name="type"
@@ -96,15 +112,48 @@ export default function CreatePoll() {
                         </RadioGroup>
                     )}
                 />
-                <Label htmlFor="title">Titre du sondage*</Label>
-                <Input {...register('title')} id="title" />
-                <Label htmlFor="description">Description</Label>
-                <Textarea {...register('description')} id="description" />
-                <Label htmlFor="email">
-                    Email
-                    <span className="ml-2 text-muted-foreground text-sm">(Servira uniquement à retrouver vos différents sondages)</span>
-                </Label>
-                <Input className="max-w-xs" {...register('email')} id="email" />
+                <div className="flex flex-col gap-2">
+                    <Label htmlFor="title">Titre du sondage*</Label>
+                    <Input {...register('title')} id="title" />
+                </div>
+                <div className="flex flex-col gap-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea {...register('description')} id="description" />
+                </div>
+                <div className="flex flex-col gap-2">
+                    <Label htmlFor="email">
+                        Email
+                        <span className="ml-2 text-muted-foreground text-sm">(Servira uniquement à retrouver vos différents sondages)</span>
+                    </Label>
+                    <Input className="max-w-xs" {...register('email')} id="email" />
+                </div>
+                {type === '2' && (
+                    <div className="flex flex-col gap-3">
+                        <Label>Les réinscrits pourront être inscrits à partir de :</Label>
+                        <Controller
+                            control={control}
+                            name="timeBeforeAllowedType"
+                            render={({ field }) => (
+                                <RadioGroup className="flex flex-col gap-3" defaultValue={String(field.value)} {...field} onValueChange={field.onChange}>
+                                    <div className="flex gap-3 items-center">
+                                        <RadioGroupItem value="1" id="timeBeforeAllowedType-1" />
+                                        <Label htmlFor="timeBeforeAllowedType-1" className="font-normal">
+                                            La veille
+                                            <span className="ml-2 text-muted-foreground text-sm">(à 17h)</span>
+                                        </Label>
+                                    </div>
+                                    <div className="flex gap-3 items-center">
+                                        <RadioGroupItem value="2" id="timeBeforeAllowedType-2" />
+                                        <Label htmlFor="timeBeforeAllowedType-2" className="flex gap-2 items-center font-normal">
+                                            <Input onFocus={() => field.onChange(2)} className="w-14" type="number" {...register('hoursBeforeAllowed')} />
+                                            <p>h avant la date de début</p>
+                                        </Label>
+                                    </div>
+                                </RadioGroup>
+                            )}
+                        />
+                    </div>
+                )}
                 <h2 className="my-4 text-2xl font-bold">Créneaux</h2>
                 <div className="flex flex-wrap gap-4">
                     {fields.map((field, index) => (

@@ -18,6 +18,8 @@ export async function POST(request: NextRequest) {
                 title: data.title,
                 description: data.description,
                 email: data.email,
+                timeBeforeAllowedType: data.timeBeforeAllowedType,
+                msBeforeAllowed: data.msBeforeAllowed,
                 slots: {
                     create: data.slots.map((slot: z.infer<typeof CreateSlotSchema>) => ({
                         ...slot,
@@ -48,5 +50,7 @@ const CreatePollSchema = z.object({
     title: z.string(),
     description: z.string().optional(),
     email: z.string().email().optional().or(z.literal('')),
+    timeBeforeAllowedType: z.number(),
+    msBeforeAllowed: z.number(),
     slots: z.array(CreateSlotSchema),
 });
