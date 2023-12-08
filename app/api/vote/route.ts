@@ -2,6 +2,13 @@ import { prisma } from '@/prisma/db';
 import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import webpush from 'web-push';
+import fr from 'date-fns/locale/fr';
+import { format } from 'date-fns';
+
+export const dynamic = 'force-dynamic';
+
+webpush.setVapidDetails('mailto:' + process.env.NEXT_PUBLIC_VAPID_EMAIL, process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
 
 type NewSlotsArrays = {
     [slotId: string]: {
@@ -103,6 +110,7 @@ export async function POST(request: NextRequest) {
             });
 
             if (!poll) return NextResponse.json({ message: 'Sondage introuvable' }, { status: 404 });
+            const initialPoll = JSON.parse(JSON.stringify(poll.slots)) as Poll['slots'];
 
             const timeBeforeAllowedPassed = checkTimeBeforeAllow({
                 timeBeforeAllowedType: poll.timeBeforeAllowedType,
@@ -118,6 +126,79 @@ export async function POST(request: NextRequest) {
                 initialVoteOldChoices: voteInDB?.choices,
                 firstCall: true,
                 voteExists: !!voteInDB,
+            });
+
+            // get new people registered to send notifications
+            const votesNewlyRegistered = Object.entries(newSlotsArrays).reduce(
+                (obj, [slotId, newSlotArrays]) => {
+                    obj.votesBySlot[slotId] = [];
+                    const oldRegistered = initialPoll.find((slot) => slot.id === slotId)!.registered;
+
+                    // get id addded in registered
+                    const newRegistered = newSlotArrays.registered.filter((id) => !oldRegistered.includes(id));
+
+                    // push ids which are not in array yet
+                    newRegistered.forEach((id) => {
+                        if (!obj.votes.includes(id) && id !== data.id) {
+                            obj.votes.push(id);
+                            obj.votesBySlot[slotId].push(id);
+                        }
+                    });
+
+                    return obj;
+                },
+                { votesBySlot: {}, votes: [] } as { votesBySlot: { [slotId: string]: string[] }; votes: string[] }
+            );
+
+            // get subs from all the votes
+            const votesWithSub = await prisma.vote.findMany({
+                where: {
+                    id: { in: votesNewlyRegistered.votes },
+                },
+                select: {
+                    id: true,
+                    subscriptions: {
+                        select: {
+                            auth: true,
+                            endpoint: true,
+                            p256dh: true,
+                        },
+                    },
+                },
+            });
+
+            // send notifications
+            Object.entries(votesNewlyRegistered.votesBySlot).forEach(([slotId, votes]) => {
+                const slot = poll.slots.find((slot) => slot.id === slotId)!;
+                const formattedDate = format(slot.startDate, 'eeee d', { locale: fr });
+                const formattedTime = slot.startTime.replace(':', 'h');
+
+                const payload = JSON.stringify({
+                    title: 'Vous êtes inscrit !',
+                    body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${formattedTime} !`,
+                    link: `${process.env.DOMAIN}/poll/${data.pollId}`,
+                });
+
+                votes.forEach((vote) => {
+                    const voteSubs = votesWithSub.find((voteWithSub) => voteWithSub.id === vote)?.subscriptions;
+                    if (!voteSubs) return;
+
+                    voteSubs.forEach((sub) => {
+                        webpush
+                            .sendNotification(
+                                {
+                                    endpoint: sub.endpoint,
+                                    keys: {
+                                        auth: sub.auth,
+                                        p256dh: sub.p256dh,
+                                    },
+                                },
+                                payload
+                            )
+                            .then((res) => console.log(res))
+                            .catch((err) => console.log(err));
+                    });
+                });
             });
         }
 
@@ -294,6 +375,7 @@ const checkTimeBeforeAllow = ({
 };
 
 const pollInclude = Prisma.validator<Prisma.PollSelect>()({
+    title: true,
     timeBeforeAllowedType: true,
     msBeforeAllowed: true,
     slots: {
