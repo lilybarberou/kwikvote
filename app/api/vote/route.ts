@@ -1,9 +1,11 @@
 import { prisma } from '@/prisma/db';
+import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 type NewSlotsArrays = {
     [slotId: string]: {
+        maxParticipants: number;
         registered: string[];
         waitingList: string[];
         waitingListReregistered: string[];
@@ -18,117 +20,20 @@ export async function POST(request: NextRequest) {
         const data = createVoteSchema.parse(body);
         let newSlotsArrays: NewSlotsArrays = {};
 
-        if (data.pollType == 2) {
-            const poll = await prisma.poll.findUnique({
-                where: {
-                    id: data.pollId,
-                },
-                select: {
-                    slots: {
-                        select: {
-                            id: true,
-                            maxParticipants: true,
-                            registered: true,
-                            waitingList: true,
-                            waitingListReregistered: true,
-                            notComing: true,
-                        },
-                        orderBy: { startDate: 'asc' },
+        const voteInDB = await prisma.vote.findUnique({
+            where: { id: data.id },
+            select: {
+                choices: {
+                    select: {
+                        id: true,
+                        slotId: true,
+                        choice: true,
                     },
                 },
-            });
+            },
+        });
 
-            if (!poll) return NextResponse.json({ message: 'Sondage introuvable' }, { status: 404 });
-
-            // CHECK IF VOTE EXISTS TO KNOW IF CREATING OR EDITING
-            const voteExists = await prisma.vote.findUnique({
-                where: {
-                    id: data.id,
-                },
-                include: {
-                    choices: {
-                        select: {
-                            id: true,
-                            slotId: true,
-                            choice: true,
-                        },
-                    },
-                },
-            });
-
-            let isRegisteredOnce = false;
-
-            await poll.slots.forEach(async (slot) => {
-                const voteChoice = data.choices.find((choice) => choice.slotId === slot.id);
-                const isFull = slot.registered.length >= slot.maxParticipants;
-
-                if (voteExists) {
-                    const oldChoice = voteExists.choices.find((choice) => choice.slotId === slot.id);
-                    const choiceChanged = oldChoice?.choice !== voteChoice?.choice;
-
-                    if (choiceChanged) {
-                        slot.registered = slot.registered.filter((id) => id !== data.id);
-                        slot.waitingList = slot.waitingList.filter((id) => id !== data.id);
-                        slot.waitingListReregistered = slot.waitingListReregistered.filter((id) => id !== data.id);
-                        slot.notComing = slot.notComing.filter((id) => id !== data.id);
-                    } else {
-                        if (voteChoice?.choice == 1) {
-                            const isRegistered = slot.registered.includes(data.id);
-
-                            // premier créneau où il est inscrit, on le laisse inscrit
-                            if (isRegistered && !isRegisteredOnce) {
-                                isRegisteredOnce = true;
-                                return;
-                            }
-                            // déjà inscrit dans un créneau précédent, on l'enlève des inscrits
-                            // (passera en liste d'attente dans la logique suivante)
-                            else if (isRegistered && isRegisteredOnce) {
-                                slot.registered = slot.registered.filter((id) => id !== data.id);
-                            } else {
-                                // si pas encore inscrit dans les créneaux précédents et actuellement en
-                                // liste d'attente, on le passe en inscrit si registered pas au max
-                                if (!isFull) {
-                                    // on l'enlève des listes d'attentes, il sera inscrit dans la logique juste après
-                                    slot.waitingList = slot.waitingList.filter((id) => id !== data.id);
-                                    slot.waitingListReregistered = slot.waitingListReregistered.filter((id) => id !== data.id);
-                                }
-                            }
-                        }
-                        // aucun changement à faire si toujours non
-                        else return;
-                    }
-                }
-
-                if (voteChoice?.choice == 2) {
-                    slot.notComing.push(data.id);
-                } else {
-                    // pas rempli -> on ajoute aux inscrits
-                    if (!isFull && !isRegisteredOnce) {
-                        slot.registered.push(data.id);
-                        isRegisteredOnce = true;
-                    }
-                    // rempli et inscrit nul part -> on ajoute en liste d'attente
-                    else if (!isRegisteredOnce) {
-                        slot.waitingList.push(data.id);
-                    }
-                    // déjà inscrit quelque part -> on ajoute en liste d'attente des réinscrits
-                    else slot.waitingListReregistered.push(data.id);
-                }
-
-                const updatedSlot = await prisma.slot.update({
-                    where: { id: slot.id },
-                    data: { ...slot },
-                });
-
-                newSlotsArrays[slot.id] = {
-                    registered: updatedSlot.registered,
-                    waitingList: updatedSlot.waitingList,
-                    waitingListReregistered: updatedSlot.waitingListReregistered,
-                    notComing: updatedSlot.notComing,
-                };
-            });
-        }
-
+        // UPDATE VOTE IN DB
         await prisma.vote.upsert({
             where: {
                 id: data.id,
@@ -191,6 +96,24 @@ export async function POST(request: NextRequest) {
             },
         });
 
+        if (data.pollType == 2) {
+            const poll = await prisma.poll.findUnique({
+                where: { id: data.pollId },
+                select: { ...pollInclude },
+            });
+
+            if (!poll) return NextResponse.json({ message: 'Sondage introuvable' }, { status: 404 });
+
+            newSlotsArrays = await updateSlotsArray({
+                poll,
+                voteId: data.id,
+                initialVoteChoices: data.choices,
+                initialVoteOldChoices: voteInDB?.choices,
+                firstCall: true,
+                voteExists: !!voteInDB,
+            });
+        }
+
         return NextResponse.json({ newSlotsArrays });
     } catch (e) {
         console.log(e);
@@ -198,6 +121,152 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: "Le vote n'a pas pu être créé" }, { status: 500 });
     }
 }
+
+const updateSlotsArray = async ({
+    poll,
+    voteId,
+    initialVoteChoices,
+    initialVoteOldChoices,
+    voteExists,
+    firstCall,
+}: {
+    poll: Poll;
+    voteId: string;
+    initialVoteChoices: Choice[];
+    initialVoteOldChoices?: Choice[];
+    voteExists: boolean;
+    firstCall?: boolean;
+}) => {
+    let newSlotsArrays: NewSlotsArrays = {};
+    let isRegisteredOnce = false;
+
+    // check si le vote existe (uniquement pour celui reçu dans l'api)
+    const currentVoteData = await prisma.vote.findUnique({
+        where: { id: voteId },
+        select: {
+            choices: {
+                select: {
+                    id: true,
+                    slotId: true,
+                    choice: true,
+                },
+            },
+        },
+    });
+
+    for (const slot of poll.slots) {
+        const isFull = slot.registered.length >= slot.maxParticipants;
+        const currentVoteChoice = [...(firstCall ? initialVoteChoices : currentVoteData!.choices)].find((choice) => choice.slotId === slot.id);
+
+        // if its an edit
+        if (voteExists) {
+            const oldChoice = firstCall ? initialVoteOldChoices!.find((choice) => choice.slotId === slot.id)! : undefined;
+            const choiceChanged = firstCall ? oldChoice?.choice !== currentVoteChoice?.choice : false;
+
+            if (choiceChanged) {
+                slot.registered = slot.registered.filter((id) => id !== voteId);
+                slot.waitingList = slot.waitingList.filter((id) => id !== voteId);
+                slot.waitingListReregistered = slot.waitingListReregistered.filter((id) => id !== voteId);
+                slot.notComing = slot.notComing.filter((id) => id !== voteId);
+            } else {
+                if (currentVoteChoice?.choice == 1) {
+                    const isRegistered = slot.registered.includes(voteId);
+
+                    // premier créneau où il est inscrit, on le laisse inscrit
+                    if (isRegistered && !isRegisteredOnce) {
+                        isRegisteredOnce = true;
+                        continue;
+                    }
+                    // déjà inscrit dans un créneau précédent, on l'enlève des inscrits
+                    // (passera en liste d'attente dans la logique suivante)
+                    else if (isRegistered && isRegisteredOnce) {
+                        slot.registered = slot.registered.filter((id) => id !== voteId);
+                    } else {
+                        // si pas encore inscrit dans les créneaux précédents et actuellement en
+                        // liste d'attente, on le passe en inscrit si registered pas au max
+                        if (!isFull) {
+                            // on l'enlève des listes d'attentes, il sera inscrit dans la logique juste après
+                            slot.waitingList = slot.waitingList.filter((id) => id !== voteId);
+                            slot.waitingListReregistered = slot.waitingListReregistered.filter((id) => id !== voteId);
+                        }
+                    }
+                }
+                // aucun changement à faire si toujours non
+                else continue;
+            }
+        }
+
+        if (currentVoteChoice?.choice == 2) slot.notComing.push(voteId);
+        else {
+            // pas rempli -> on ajoute aux inscrits
+            if (!isFull && !isRegisteredOnce) {
+                slot.registered.push(voteId);
+                isRegisteredOnce = true;
+            }
+            // rempli et inscrit nul part -> on ajoute en liste d'attente
+            else if (!isRegisteredOnce) slot.waitingList.push(voteId);
+            // déjà inscrit quelque part -> on ajoute en liste d'attente des réinscrits
+            else slot.waitingListReregistered.push(voteId);
+        }
+
+        const updatedSlot = await prisma.slot.update({
+            where: { id: slot.id },
+            data: { ...slot },
+        });
+
+        newSlotsArrays[slot.id] = {
+            maxParticipants: slot.maxParticipants,
+            registered: updatedSlot.registered,
+            waitingList: updatedSlot.waitingList,
+            waitingListReregistered: updatedSlot.waitingListReregistered,
+            notComing: updatedSlot.notComing,
+        };
+    }
+
+    // ----- CHECK SI IL RESTE DE LA PLACE DANS LES INSCRITS D'UN CRENEAU -----
+    let voteIdToRegister = '';
+    Object.values(newSlotsArrays).forEach((slot) => {
+        if (slot.registered.length < slot.maxParticipants) {
+            if (slot.waitingList.length > 0) {
+                voteIdToRegister = slot.waitingList[0];
+                return;
+            }
+        }
+    });
+
+    if (voteIdToRegister) {
+        const resNewSlotsArrays = await updateSlotsArray({ poll, voteId: voteIdToRegister, initialVoteChoices, voteExists: true });
+
+        // update newSlotsArrays
+        Object.keys(resNewSlotsArrays).forEach((slotId) => {
+            newSlotsArrays[slotId] = resNewSlotsArrays[slotId];
+        });
+    }
+    return newSlotsArrays;
+};
+
+const pollInclude = Prisma.validator<Prisma.PollInclude>()({
+    slots: {
+        select: {
+            id: true,
+            maxParticipants: true,
+            registered: true,
+            waitingList: true,
+            waitingListReregistered: true,
+            notComing: true,
+        },
+        orderBy: {
+            startDate: 'asc',
+        },
+    },
+});
+
+type Poll = Prisma.PollGetPayload<{ select: typeof pollInclude }>;
+type Choice = {
+    id: string;
+    slotId: string;
+    choice: number;
+};
 
 const createVoteSchema = z.object({
     id: z.string(),
