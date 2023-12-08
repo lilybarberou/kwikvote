@@ -3,8 +3,8 @@ import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import webpush from 'web-push';
-import fr from 'date-fns/locale/fr';
 import { format } from 'date-fns';
+import fr from 'date-fns/locale/fr';
 
 export const dynamic = 'force-dynamic';
 
@@ -277,17 +277,39 @@ const updateSlotsArray = async ({
                         }
                         // else remove from registered (will be in reregistered waiting list)
                         else slot.registered = slot.registered.filter((id) => id !== voteId);
-                    } else {
-                        // si pas encore inscrit dans les créneaux précédents et actuellement en
-                        // liste d'attente, on le passe en inscrit si registered pas au max
-                        if (!isFull) {
-                            // on l'enlève des listes d'attentes, il sera inscrit dans la logique juste après
-                            slot.waitingList = slot.waitingList.filter((id) => id !== voteId);
-                            slot.waitingListReregistered = slot.waitingListReregistered.filter((id) => id !== voteId);
+                    }
+                    // not registered yet -> actually in wl or wlr
+                    else {
+                        const isWaitingList = slot.waitingList.includes(voteId);
+                        const isWaitingListReregistered = slot.waitingListReregistered.includes(voteId);
+                        const isAllowedToRegister = !isRegisteredOnce || timeBeforeAllowedPassed[slot.id];
+
+                        if (isFull) {
+                            // if allowed to reregister -> must be in wl
+                            if (isAllowedToRegister) {
+                                if (isWaitingListReregistered) slot.waitingListReregistered = slot.waitingListReregistered.filter((id) => id !== voteId);
+                                else continue;
+                            }
+                            // else -> must be in wlr
+                            else {
+                                if (isWaitingList) slot.waitingList = slot.waitingList.filter((id) => id !== voteId);
+                                else continue;
+                            }
+                        } else {
+                            // if allowed to reregister -> remove from all wl -> will be in registered
+                            if (isAllowedToRegister) {
+                                slot.waitingListReregistered = slot.waitingListReregistered.filter((id) => id !== voteId);
+                                slot.waitingList = slot.waitingList.filter((id) => id !== voteId);
+                            }
+                            // else -> must be in wlr
+                            else {
+                                if (isWaitingList) slot.waitingList = slot.waitingList.filter((id) => id !== voteId);
+                                else continue;
+                            }
                         }
                     }
                 }
-                // aucun changement à faire si toujours non
+                // no changes if still no
                 else continue;
             }
         }
