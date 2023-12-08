@@ -1,6 +1,6 @@
 import { prisma } from '@/prisma/db';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import fr from 'date-fns/locale/fr';
 import { NextRequest, NextResponse } from 'next/server';
 import webpush from 'web-push';
 

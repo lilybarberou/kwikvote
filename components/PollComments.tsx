@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import fr from 'date-fns/locale/fr';
 import { useForm } from 'react-hook-form';
 import { Comment } from '@prisma/client';
 import { Input } from './ui/input';
