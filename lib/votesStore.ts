@@ -1,4 +1,4 @@
-import { PollVote } from '@/app/api/poll/[pollKey]/[value]/route';
+import { PollVote } from '@/app/api/poll/id/[value]/route';
 import { create } from 'zustand';
 
 type Store = {
