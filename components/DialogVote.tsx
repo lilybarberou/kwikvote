@@ -1,9 +1,9 @@
-import { SetStateAction, useEffect } from 'react';
+import { SetStateAction, useEffect, useState } from 'react';
 import { v4 } from 'uuid';
 import { Controller, useForm } from 'react-hook-form';
 import { useVotesStore } from '@/lib/votesStore';
 import { getDate } from '@/lib/utils';
-import { Trash2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -25,6 +25,7 @@ type Props = {
 };
 
 export default function DialogVote(props: Props) {
+    const [loading, setLoading] = useState(false);
     const { currentVoteId, slots, closeDialog, pollId, setCurrentVoteId, pollType, setSlots } = props;
     const { removeVote: deleteVote, addVote, votes } = useVotesStore();
     const { subscriptionEndpoint } = useNotificationsStore();
@@ -58,6 +59,7 @@ export default function DialogVote(props: Props) {
             subscriptionEndpoint: subscriptionEndpoint || '',
         };
 
+        setLoading(true);
         const res = await fetch('/api/vote', {
             method: 'POST',
             body: JSON.stringify({
@@ -66,11 +68,12 @@ export default function DialogVote(props: Props) {
                 ...formattedData,
             }),
         });
+        setLoading(false);
 
         if (res.ok) {
             if (pollType == 2 && setSlots) {
                 const resData = await res.json();
-                setSlots((prevSlots) => prevSlots.map((slot) => ({ ...slot, ...resData.newSlotsArrays[slot.id] })));
+                setSlots((prevSlots) => prevSlots.map((slot) => ({ ...slot, ...(resData.newSlotsArrays[slot.id] || {}) })));
             }
             addVote(formattedData);
             closeDialog();
@@ -201,7 +204,10 @@ export default function DialogVote(props: Props) {
                         <DialogClose asChild>
                             <Button variant="outline">Annuler</Button>
                         </DialogClose>
-                        <Button type="submit">Confirmer</Button>
+                        <Button type="submit" disabled={loading}>
+                            Confirmer
+                            {loading && <Loader2 className="ml-2 w-5 h-5 animate-spin" />}
+                        </Button>
                     </div>
                 </DialogFooter>
             </form>
