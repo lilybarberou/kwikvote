@@ -52,15 +52,26 @@ export default function PollPage({ params }: { params: { id: string } }) {
             const notificationsSupported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
 
             // STORE SUBSCRIPTION ENDPOINT
-            let endpoint = '';
+            let sub: PushSubscriptionJSON | undefined;
             if (notificationsSupported && Notification.permission === 'granted') {
-                const sub = await navigator.serviceWorker.ready.then((registration) => {
-                    return registration.pushManager.getSubscription();
-                });
-                endpoint = sub?.endpoint || '';
+                sub = await navigator.serviceWorker.ready
+                    .then((registration) => {
+                        return registration.pushManager.getSubscription();
+                    })
+                    .then((sub) => sub?.toJSON());
             }
 
-            init({ notificationsSupported, notificationsPermission: Notification.permission, endpoint });
+            init({
+                notificationsSupported,
+                notificationsPermission: Notification.permission,
+                subscription: sub
+                    ? {
+                          endpoint: sub.endpoint!,
+                          auth: sub.keys!.auth,
+                          p256dh: sub.keys!.p256dh,
+                      }
+                    : null,
+            });
         };
 
         // ADD POLL TO HISTORY
@@ -75,10 +86,12 @@ export default function PollPage({ params }: { params: { id: string } }) {
 
         const swRegistration = await navigator.serviceWorker.register('/service.js');
 
-        const subscription = await swRegistration.pushManager.subscribe({
-            applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-            userVisibleOnly: true,
-        });
+        const subscription = await swRegistration.pushManager
+            .subscribe({
+                applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+                userVisibleOnly: true,
+            })
+            .then((sub) => sub.toJSON());
 
         const res = await fetch('/api/subscription', {
             method: 'POST',
@@ -89,7 +102,11 @@ export default function PollPage({ params }: { params: { id: string } }) {
             init({
                 notificationsSupported,
                 notificationsPermission: Notification.permission,
-                endpoint: subscription.endpoint,
+                subscription: {
+                    endpoint: subscription.endpoint!,
+                    auth: subscription.keys!.auth,
+                    p256dh: subscription.keys!.p256dh,
+                },
             });
             toast({
                 title: 'Notifications activées',
