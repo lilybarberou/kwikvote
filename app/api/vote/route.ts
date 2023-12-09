@@ -66,10 +66,13 @@ export async function POST(request: NextRequest) {
                         },
                     })),
                 },
-                subscriptions: data.subscriptionEndpoint
+                subscriptions: data.subscription
                     ? {
-                          connect: {
-                              endpoint: data.subscriptionEndpoint,
+                          connectOrCreate: {
+                              where: { endpoint: data.subscription.endpoint },
+                              create: {
+                                  ...data.subscription,
+                              },
                           },
                       }
                     : undefined,
@@ -93,10 +96,13 @@ export async function POST(request: NextRequest) {
                         },
                     })),
                 },
-                subscriptions: data.subscriptionEndpoint
+                subscriptions: data.subscription
                     ? {
-                          connect: {
-                              endpoint: data.subscriptionEndpoint,
+                          connectOrCreate: {
+                              where: { endpoint: data.subscription.endpoint },
+                              create: {
+                                  ...data.subscription,
+                              },
                           },
                       }
                     : undefined,
@@ -436,5 +442,11 @@ const createVoteSchema = z.object({
             choice: z.number(),
         })
     ),
-    subscriptionEndpoint: z.string().optional(),
+    subscription: z
+        .object({
+            endpoint: z.string(),
+            auth: z.string(),
+            p256dh: z.string(),
+        })
+        .optional(),
 });
