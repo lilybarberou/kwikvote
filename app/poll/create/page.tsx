@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import Image from 'next/image';
 
 const PollFormSchema = z.object({
     type: z.enum(['1', '2']),
@@ -97,16 +98,22 @@ export default function CreatePoll() {
                         <RadioGroup className="mb-8 flex gap-4" defaultValue={String(field.value)} {...field} onValueChange={field.onChange}>
                             <div>
                                 <RadioGroupItem value="1" id="type-1" className="peer hidden" />
-                                <Label htmlFor="type-1" className="!ml-0 p-2 cursor-pointer block border peer-data-[state=checked]:border-white">
+                                <Label
+                                    htmlFor="type-1"
+                                    className="!ml-0 p-3 h-44 flex flex-col items-center cursor-pointer bg-secondary rounded border peer-data-[state=checked]:bg-primary"
+                                >
                                     <p className="mb-2">Sondage libre</p>
-                                    <div className="w-32 h-32 bg-primary"></div>
+                                    <Image className="w-32 h-full object-cover" width={128} height={176} src="/poll-1.png" alt="Sondage libre" />
                                 </Label>
                             </div>
                             <div>
                                 <RadioGroupItem value="2" id="type-2" className="peer hidden" />
-                                <Label htmlFor="type-2" className="!ml-0 p-2 cursor-pointer block border peer-data-[state=checked]:border-white">
+                                <Label
+                                    htmlFor="type-2"
+                                    className="!ml-0 p-3 h-44 flex flex-col items-center cursor-pointer bg-secondary rounded border peer-data-[state=checked]:bg-primary"
+                                >
                                     <p className="mb-2">Sondage avec liste d&apos;attente</p>
-                                    <div className="w-32 h-32 bg-primary"></div>
+                                    <Image className="w-44 h-full object-cover" width={176} height={176} src="/poll-2.png" alt="Sondage libre" />
                                 </Label>
                             </div>
                         </RadioGroup>
