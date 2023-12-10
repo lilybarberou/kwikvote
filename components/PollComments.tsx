@@ -9,6 +9,7 @@ import { Button } from './ui/button';
 import { useNotificationsStore } from '@/lib/notificationsStore';
 import { Loader2 } from 'lucide-react';
 import { useToast } from './ui/use-toast';
+import { useCommentsStore } from '@/lib/commentsStore';
 
 type Props = {
     comments: Comment[];
@@ -24,7 +25,7 @@ export default function PollComments(props: Props) {
     const { toast } = useToast();
     const { pollId } = props;
     const { subscription } = useNotificationsStore();
-    const [comments, setComments] = useState<Comment[]>(props.comments);
+    const { comments, addComment } = useCommentsStore();
     const [submitLoading, setSubmitLoading] = useState(false);
     const { register, handleSubmit, reset } = useForm<CommentForm>();
 
@@ -46,7 +47,7 @@ export default function PollComments(props: Props) {
                 variant: 'destructive',
             });
         } else {
-            setComments([...comments, comment]);
+            addComment(comment);
             reset();
         }
     });

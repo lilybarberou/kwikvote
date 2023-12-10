@@ -29,11 +29,13 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useHistoryStore } from '@/lib/historyStore';
 import RegistrationPoll from '@/components/RegistrationPoll';
+import { useCommentsStore } from '@/lib/commentsStore';
 
 export default function PollPage({ params }: { params: { id: string } }) {
     const { initVotes } = useVotesStore();
     const { addPollToHistory } = useHistoryStore();
     const { notificationsSupported, notificationsPermission, init } = useNotificationsStore();
+    const { comments, initComments } = useCommentsStore();
     const { toast } = useToast();
     const {
         data: poll,
@@ -42,6 +44,8 @@ export default function PollPage({ params }: { params: { id: string } }) {
     } = useSWR<CompletePoll>(`/api/poll/id/${params.id}`, fetcher, {
         onSuccess: (data) => {
             initVotes(data.votes);
+            initComments(data.comments);
+            addPollToHistory(params.id, poll?.title || '');
         },
     });
 
@@ -73,9 +77,6 @@ export default function PollPage({ params }: { params: { id: string } }) {
                     : null,
             });
         };
-
-        // ADD POLL TO HISTORY
-        if (poll) addPollToHistory(params.id, poll?.title || '');
 
         initNotifications();
     }, [init, addPollToHistory, params.id, poll]);
@@ -143,7 +144,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
                 <div className="flex gap-2">
                     <TabsList>
                         <TabsTrigger value="votes">Votes</TabsTrigger>
-                        <TabsTrigger value="comments">Commentaires ({poll.comments.length})</TabsTrigger>
+                        <TabsTrigger value="comments">Commentaires ({comments.length})</TabsTrigger>
                     </TabsList>
                     {notificationsSupported && notificationsPermission === 'default' && (
                         <AlertDialog>
