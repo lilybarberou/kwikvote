@@ -30,8 +30,13 @@ import {
 import { useHistoryStore } from '@/lib/historyStore';
 import RegistrationPoll from '@/components/RegistrationPoll';
 import { useCommentsStore } from '@/lib/commentsStore';
+import { useSearchParams } from 'next/navigation';
 
 export default function PollPage({ params }: { params: { id: string } }) {
+    const searchParams = useSearchParams();
+    const tabParam = searchParams.get('tab');
+    const defaultTab = tabParam === 'comments' ? 'comments' : 'votes';
+
     const { initVotes } = useVotesStore();
     const { addPollToHistory } = useHistoryStore();
     const { notificationsSupported, notificationsPermission, init } = useNotificationsStore();
@@ -140,7 +145,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
                     <AlertDescription>{poll.description}</AlertDescription>
                 </Alert>
             )}
-            <Tabs defaultValue="votes" className="mt-10">
+            <Tabs defaultValue={defaultTab} className="mt-10">
                 <div className="flex gap-2">
                     <TabsList>
                         <TabsTrigger value="votes">Votes</TabsTrigger>

@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         const payload = JSON.stringify({
             title: 'Nouveau commentaire !',
             body: `Il y a un nouveau commentaire de ${comment.author} sur le sondage ${votes[0].poll.title}`,
-            link: `${process.env.DOMAIN}/poll/${comment.pollId}`,
+            link: `${process.env.DOMAIN}/poll/${comment.pollId}?tab=comments`,
         });
 
         // OBJECT TO GET UNIQUE SUBS
