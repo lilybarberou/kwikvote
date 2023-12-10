@@ -7,12 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { X } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import Image from 'next/image';
+import { useState } from 'react';
 
 const PollFormSchema = z.object({
     type: z.enum(['1', '2']),
@@ -41,6 +42,7 @@ const defaultValues = {
 };
 
 export default function CreatePoll() {
+    const [submitLoading, setSubmitLoading] = useState(false);
     const { toast } = useToast();
     const { push } = useRouter();
     const { register, control, handleSubmit, watch } = useForm<z.infer<typeof PollFormSchema>>({
@@ -67,6 +69,7 @@ export default function CreatePoll() {
             delete data.hoursBeforeAllowed;
         }
 
+        setSubmitLoading(true);
         const res = await fetch('/api/poll', {
             method: 'POST',
             body: JSON.stringify({
@@ -80,6 +83,7 @@ export default function CreatePoll() {
         const poll = await res.json();
 
         if (!res.ok) {
+            setSubmitLoading(false);
             toast({
                 title: poll.message,
                 description: 'Veuillez réessayer plus tard',
@@ -207,7 +211,10 @@ export default function CreatePoll() {
                 <Button className="mt-2" type="button" variant="secondary" onClick={() => append(defaultValues)}>
                     Ajouter un créneau
                 </Button>
-                <Button className="mt-4">Créer</Button>
+                <Button disabled={submitLoading} className="mt-4">
+                    Créer
+                    {submitLoading && <Loader2 className="ml-2 w-5 h-5 animate-spin" />}
+                </Button>
             </form>
         </div>
     );
