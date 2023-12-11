@@ -10,22 +10,13 @@ export const dynamic = 'force-dynamic';
 
 webpush.setVapidDetails('mailto:' + process.env.NEXT_PUBLIC_VAPID_EMAIL, process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
 
-type NewSlotsArrays = {
-    [slotId: string]: {
-        maxParticipants: number;
-        registered: string[];
-        waitingList: string[];
-        waitingListReregistered: string[];
-        notComing: string[];
-    };
-};
-
 // UPDATE VOTE
 export async function POST(request: NextRequest) {
     try {
+        let newPoll: Poll | undefined = undefined;
+
         const body = await request.json();
         const data = createVoteSchema.parse(body);
-        let newSlotsArrays: NewSlotsArrays = {};
 
         const voteInDB = await prisma.vote.findUnique({
             where: { id: data.id },
@@ -124,7 +115,7 @@ export async function POST(request: NextRequest) {
                 slots: poll.slots,
             });
 
-            newSlotsArrays = await updateSlotsArray({
+            newPoll = await updateSlotsArray({
                 poll,
                 timeBeforeAllowedPassed,
                 voteId: data.id,
@@ -134,20 +125,27 @@ export async function POST(request: NextRequest) {
                 voteExists: !!voteInDB,
             });
 
+            // update slots in db
+            for (const slot of newPoll.slots) {
+                await prisma.slot.update({
+                    where: { id: slot.id },
+                    data: slot,
+                });
+            }
+
             // get new people registered to send notifications
-            const votesNewlyRegistered = Object.entries(newSlotsArrays).reduce(
-                (obj, [slotId, newSlotArrays]) => {
-                    obj.votesBySlot[slotId] = [];
-                    const oldRegistered = initialPoll.find((slot) => slot.id === slotId)!.registered;
+            const votesNewlyRegistered = newPoll.slots.reduce(
+                (obj, slot) => {
+                    obj.votesBySlot[slot.id] = [];
 
+                    const oldRegistered = initialPoll.find((initialSlot) => initialSlot.id === slot.id)!.registered;
                     // get id addded in registered
-                    const newRegistered = newSlotArrays.registered.filter((id) => !oldRegistered.includes(id));
-
+                    const newRegistered = slot.registered.filter((id) => !oldRegistered.includes(id));
                     // push ids which are not in array yet
                     newRegistered.forEach((id) => {
                         if (!obj.votes.includes(id) && id !== data.id) {
                             obj.votes.push(id);
-                            obj.votesBySlot[slotId].push(id);
+                            obj.votesBySlot[slot.id].push(id);
                         }
                     });
 
@@ -201,14 +199,20 @@ export async function POST(request: NextRequest) {
                                 },
                                 payload
                             )
-                            .then((res) => console.log(res))
+                            .then((res) => console.log('notif envoyée: ', res.statusCode))
                             .catch((err) => console.log(err));
                     });
                 });
             });
         }
 
-        return NextResponse.json({ newSlotsArrays });
+        // obj slot by id
+        const slotsByID = newPoll?.slots.reduce((obj, slot) => {
+            obj[slot.id] = slot;
+            return obj;
+        }, {} as Record<string, Poll['slots'][0]>);
+
+        return NextResponse.json({ slots: slotsByID }, { status: 200 });
     } catch (e) {
         console.log(e);
         if (e instanceof z.ZodError) return NextResponse.json({ message: 'Données incorrectes' }, { status: 400 });
@@ -232,8 +236,7 @@ const updateSlotsArray = async ({
     voteExists: boolean;
     timeBeforeAllowedPassed: Record<string, boolean>;
     firstCall?: boolean;
-}) => {
-    let newSlotsArrays: NewSlotsArrays = {};
+}): Promise<Poll> => {
     let isRegisteredOnce = false;
 
     // check si le vote existe (uniquement pour celui reçu dans l'api)
@@ -332,41 +335,23 @@ const updateSlotsArray = async ({
             // already registered somewhere -> add to reregistered waiting list
             else slot.waitingListReregistered.push(voteId);
         }
-
-        const updatedSlot = await prisma.slot.update({
-            where: { id: slot.id },
-            data: { ...slot },
-        });
-
-        newSlotsArrays[slot.id] = {
-            maxParticipants: slot.maxParticipants,
-            registered: updatedSlot.registered,
-            waitingList: updatedSlot.waitingList,
-            waitingListReregistered: updatedSlot.waitingListReregistered,
-            notComing: updatedSlot.notComing,
-        };
     }
 
     // ----- CHECK SI IL RESTE DE LA PLACE DANS LES INSCRITS D'UN CRENEAU -----
     let voteIdToRegister = '';
-    Object.values(newSlotsArrays).forEach((slot) => {
+    poll.slots.forEach((slot) => {
         if (slot.registered.length < slot.maxParticipants) {
             if (slot.waitingList.length > 0) {
                 voteIdToRegister = slot.waitingList[0];
-                return;
             }
         }
     });
 
     if (voteIdToRegister) {
-        const resNewSlotsArrays = await updateSlotsArray({ poll, voteId: voteIdToRegister, initialVoteChoices, voteExists: true, timeBeforeAllowedPassed });
-
-        // update newSlotsArrays
-        Object.keys(resNewSlotsArrays).forEach((slotId) => {
-            newSlotsArrays[slotId] = resNewSlotsArrays[slotId];
-        });
+        poll = await updateSlotsArray({ poll, voteId: voteIdToRegister, initialVoteChoices, voteExists: true, timeBeforeAllowedPassed });
     }
-    return newSlotsArrays;
+
+    return poll;
 };
 
 const checkTimeBeforeAllow = ({

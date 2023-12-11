@@ -73,7 +73,7 @@ export default function DialogVote(props: Props) {
         if (res.ok) {
             if (pollType == 2 && setSlots) {
                 const resData = await res.json();
-                setSlots((prevSlots) => prevSlots.map((slot) => ({ ...slot, ...(resData.newSlotsArrays[slot.id] || {}) })));
+                setSlots((prevSlots) => prevSlots.map((slot) => ({ ...slot, ...(resData.slots[slot.id] || {}) })));
             }
             addVote(formattedData);
             closeDialog();
@@ -97,15 +97,10 @@ export default function DialogVote(props: Props) {
         if (res.ok) {
             if (pollType == 1) deleteVote(currentVoteId);
             else if (pollType == 2 && setSlots) {
-                setSlots((prevSlots) =>
-                    prevSlots.map((slot) => ({
-                        ...slot,
-                        registered: slot.registered.filter((id) => id !== currentVoteId),
-                        waitingList: slot.waitingList.filter((id) => id !== currentVoteId),
-                        waitingListReregistered: slot.waitingListReregistered.filter((id) => id !== currentVoteId),
-                        notComing: slot.notComing.filter((id) => id !== currentVoteId),
-                    }))
-                );
+                const resData = await res.json();
+                if (resData.slots) {
+                    setSlots((prevSlots) => prevSlots.map((slot) => ({ ...slot, ...(resData.slots[slot.id] || {}) })));
+                }
             }
 
             closeDialog();
