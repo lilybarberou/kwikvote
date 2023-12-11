@@ -170,7 +170,7 @@ export default function CreatePoll() {
                     {fields.map((field, index) => (
                         <div key={field.id} className="flex flex-1 items-center flex-col justify-end border p-4">
                             {index > 0 && (
-                                <Button className="ml-auto w-7 h-7" variant="destructive" size="icon" onClick={() => remove(index)}>
+                                <Button className="ml-auto w-7 h-7" type="button" variant="destructive" size="icon" onClick={() => remove(index)}>
                                     <X className="w-4 h-4" />
                                 </Button>
                             )}
