@@ -1,55 +1,70 @@
 'use client';
 
-import Link from 'next/link';
-import useSWR from 'swr';
-import fetcher from '@/utils/fetch';
-import { CompletePoll } from './api/poll/id/[value]/route';
-import dynamic from 'next/dynamic';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
-
-const ConsultedHistory = dynamic(() => import('../components/ConsultedHistory'), {
-    ssr: false,
-});
+import { HelpCircle, List, ListTodo } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Image from 'next/image';
+import FAQ from './faq/page';
+import Footer from '@/components/Footer';
 
 const SearchSchema = z.object({
     email: z.string().email(),
 });
 
 export default function Home() {
-    const { data: polls } = useSWR<CompletePoll[]>(`/api/poll`, fetcher);
     const router = useRouter();
     const { register, handleSubmit } = useForm<z.infer<typeof SearchSchema>>({
         resolver: zodResolver(SearchSchema),
     });
 
     const onSubmit = handleSubmit(({ email }) => {
-        router.push(`/search?email=${email}`);
+        router.push(`/mes-sondages?email=${email}`);
     });
 
     return (
-        <div>
-            <form onSubmit={onSubmit} className="mb-10 flex items-end gap-2">
-                <div className="flex flex-col gap-3">
-                    <Label htmlFor="email">Rechercher mes sondages</Label>
-                    <Input placeholder="Email" id="email" {...register('email')} />
+        <div className="w-full flex flex-col items-center">
+            <div className="absolute -z-10 top-0 w-full h-screen" style={{ background: ' radial-gradient(88.74% 100% at 50% 0%, #41A4C3 0%, #020817 100%)' }} />
+            <h1 className="mb-6 max-w-xl text-4xl font-semibold text-center">Créez un sondage en quelques secondes et partagez-le avec vos amis.</h1>
+            <h2 className="mb-4 text-muted-foreground">C&apos;est simple, gratuit, et aucun compte n&apos;est requis.</h2>
+            <div className="mb-10 flex gap-2">
+                <Button variant="secondary">Let&apos;s go</Button>
+                <Button variant="outline" className="bg-transparent border-secondary hover:bg-transparent" size="icon">
+                    <HelpCircle className="w-5 h-5" />
+                </Button>
+            </div>
+            <Tabs defaultValue="free" className="mb-32 w-full flex flex-col items-center gap-4">
+                <TabsList className="bg-[#00000029]">
+                    <TabsTrigger value="free" className="flex items-center gap-2">
+                        <ListTodo className="w-5 h-5" />
+                        Libre
+                    </TabsTrigger>
+                    <TabsTrigger value="waitlist" className="flex items-center gap-2">
+                        <List className="w-5 h-5" />
+                        Liste d&apos;attente
+                    </TabsTrigger>
+                </TabsList>
+                <div className="w-full border-[6px] aspect-auto">
+                    <TabsContent value="free" className="mt-0">
+                        <Image className="w-full h-full object-cover" width={1000} height={500} src="/poll-1.png" alt="Sondage libre" />
+                    </TabsContent>
+                    <TabsContent value="waitlist" className="mt-0">
+                        <Image className="w-full h-full object-cover" width={1000} height={500} src="/poll-2.png" alt="Sondage libre" />
+                    </TabsContent>
                 </div>
+            </Tabs>
+            <h3 className="mb-2 text-3xl font-semibold text-center">Vous avez déjà des sondages ?</h3>
+            <p className="mb-8 text-muted-foreground">Si vous avez lié vos sondages à votre adresse mail, vous pourrez en retrouver un historique.</p>
+            <form onSubmit={onSubmit} className="mb-32 flex items-end gap-2">
+                <Input className="w-64" placeholder="Votre email..." {...register('email')} />
                 <Button>Rechercher</Button>
             </form>
-            <ConsultedHistory />
-            <div className="mt-10 flex flex-col w-fit">
-                <p className="mb-2 text-3xl font-bold">Tout</p>
-                {polls?.map((poll) => (
-                    <Link key={poll.id} href={`/poll/${poll.id}`}>
-                        {poll.title}
-                    </Link>
-                ))}
-            </div>
+            <FAQ displayTitle={false} />
+            <Footer />
         </div>
     );
 }

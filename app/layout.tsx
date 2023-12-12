@@ -23,9 +23,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <link rel="icon" href="/favicon.ico" />
                 <meta name="theme-color" content="#000000" />
             </Head>
-            <body className={`dark py-3 px-5 flex justify-center min-h-screen bg-background font-sans antialiased ${fontSans.variable}`}>
-                <main className="w-full max-w-3xl">
-                    <Navigation />
+            <body className={`dark pb-3 flex flex-col items-center bg-background font-sans antialiased ${fontSans.variable}`}>
+                <Navigation />
+                <main className="w-full max-w-6xl">
                     {children}
                     <Toaster />
                 </main>

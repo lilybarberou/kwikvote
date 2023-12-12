@@ -6,9 +6,8 @@ export default function ConsultedHistory() {
 
     return (
         <div className="flex flex-col w-fit">
-            <h1 className="mb-2 text-3xl font-bold">Historique</h1>
-            {pollHistory.map((poll) => (
-                <Link key={poll.pollId} href={`/poll/${poll.pollId}`}>
+            {pollHistory.map((poll, index) => (
+                <Link className={index !== pollHistory.length - 1 ? 'border-b' : ''} key={poll.pollId} href={`/poll/${poll.pollId}`}>
                     {poll.title}
                 </Link>
             ))}

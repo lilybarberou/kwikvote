@@ -1,9 +1,9 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
-export default function FAQ() {
+export default function FAQ({ displayTitle = true }: { displayTitle?: boolean }) {
     return (
-        <div>
-            <h1 className="mb-5 text-3xl font-bold">FAQ</h1>
+        <div className="m-auto w-full max-w-3xl">
+            {displayTitle && <h1 className="mb-5 text-3xl font-bold">FAQ</h1>}
             <Accordion type="single" collapsible>
                 <AccordionItem value="item-1">
                     <AccordionTrigger>Comment recevoir les notifications ?</AccordionTrigger>
