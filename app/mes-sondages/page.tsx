@@ -72,7 +72,7 @@ export default function SearchPollsByEmail() {
             <h1 className="mb-4 text-3xl font-bold">Mes sondages</h1>
             <p className="mb-6 text-muted-foreground">Si vous avez lié vos sondages à votre adresse mail, vous pourrez retrouver la liste de vos sondages.</p>
             <form onSubmit={onSubmit} className="flex items-end gap-2">
-                <Input className="w-64" placeholder="Votre email..." {...register('email')} />
+                <Input className="flex-1 sm:flex-initial sm:w-64" placeholder="Votre email..." {...register('email')} />
                 <Button disabled={isLoading || loading}>
                     Rechercher
                     {(isLoading || loading) && <Loader2 className="ml-2 w-5 h-5 animate-spin" />}
