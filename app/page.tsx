@@ -12,6 +12,7 @@ import Image from 'next/image';
 import Footer from '@/components/Footer';
 import FAQContent from '@/components/FAQContent';
 import Link from 'next/link';
+import ProcessSteps from '@/components/ProcessSteps';
 
 const SearchSchema = z.object({
     email: z.string().email(),
@@ -36,7 +37,7 @@ export default function Home() {
             <h2 className="mb-4 text-muted-foreground text-center">C&apos;est simple, gratuit, et aucun compte n&apos;est requis.</h2>
             <div className="mb-14 flex gap-2">
                 <Button asChild variant="secondary">
-                    <Link href="/poll/create">Let&apos;s go</Link>
+                    <Link href="/poll/create">Créer mon sondage</Link>
                 </Button>
                 <Button asChild variant="outline" className="bg-transparent border-[#ffffff36] hover:bg-transparent" size="icon">
                     <Link href="#faq">
@@ -72,6 +73,7 @@ export default function Home() {
                     </div>
                 </div>
             </Tabs>
+            <ProcessSteps />
             <h3 className="mb-2 text-2xl font-semibold text-center sm:text-3xl">Vous avez déjà des sondages ?</h3>
             <p className="mb-8 text-muted-foreground text-center">
                 Si vous avez lié vos sondages à votre adresse mail, vous pourrez en retrouver un historique.
