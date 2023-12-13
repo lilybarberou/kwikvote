@@ -96,6 +96,7 @@ export default function CreatePoll() {
         <div className="m-auto">
             <h1 className="mb-10 text-3xl font-bold">Création du sondage</h1>
             <form onSubmit={submitPoll} className="flex flex-col gap-4">
+                <p className="text-sm font-semibold">Je choisis mon type de sondage...</p>
                 <Controller
                     control={control}
                     name="type"
@@ -108,7 +109,7 @@ export default function CreatePoll() {
                                     className="!ml-0 p-3 min-w-[150px] h-44 flex flex-col justify-center items-center cursor-pointer rounded border border-[#ffffff33] peer-data-[state=checked]:bg-[#ffffff1a]"
                                 >
                                     <p className="mb-2">Sondage libre</p>
-                                    <Image className="w-32 h-full object-cover" width={400} height={400} src="/poll-11.png" alt="Sondage libre" />
+                                    <Image className="w-32 object-cover" width={400} height={400} src="/poll-11.png" alt="Sondage libre" />
                                 </Label>
                             </div>
                             <div>
@@ -118,13 +119,7 @@ export default function CreatePoll() {
                                     className="!ml-0 p-3 h-44 flex flex-col justify-center items-center cursor-pointer rounded border border-[#ffffff33] text-center peer-data-[state=checked]:bg-[#ffffff1a]"
                                 >
                                     <p className="mb-2">Sondage avec liste d&apos;attente</p>
-                                    <Image
-                                        className="w-32 h-full object-cover"
-                                        width={400}
-                                        height={400}
-                                        src="/poll-22.png"
-                                        alt="Sondage avec liste d'attente"
-                                    />
+                                    <Image className="w-32 object-cover" width={400} height={400} src="/poll-22.png" alt="Sondage avec liste d'attente" />
                                 </Label>
                             </div>
                         </RadioGroup>
@@ -132,7 +127,7 @@ export default function CreatePoll() {
                 />
                 <div className="flex flex-col gap-2">
                     <Label htmlFor="title">Titre du sondage*</Label>
-                    <Input {...register('title')} id="title" />
+                    <Input className="max-w-[550px] lg:w-1/2" {...register('title')} id="title" />
                 </div>
                 <div className="flex flex-col gap-2">
                     <Label htmlFor="description">Description</Label>
