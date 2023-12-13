@@ -50,7 +50,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
         onSuccess: (data) => {
             initVotes(data.votes);
             initComments(data.comments);
-            addPollToHistory(params.id, poll?.title || '');
+            addPollToHistory(params.id, data.title || '');
         },
     });
 
@@ -84,7 +84,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
         };
 
         initNotifications();
-    }, [init, addPollToHistory, params.id, poll]);
+    }, [init]);
 
     const enableNotifications = async () => {
         const receivedPermission = await Notification.requestPermission();
