@@ -46,11 +46,11 @@ export default function Home() {
             </div>
             <Tabs defaultValue="free" className="mb-32 w-full flex flex-col items-center gap-4">
                 <TabsList className="mb-2 bg-[#00000029]">
-                    <TabsTrigger value="free" className="flex items-center gap-2 data-[state='active']:bg-[#ffffff26]">
+                    <TabsTrigger value="free" className="flex items-center gap-2 data-[state='active']:bg-[#ffffff29]">
                         <ListTodo className="w-5 h-5" />
                         Libre
                     </TabsTrigger>
-                    <TabsTrigger value="waitlist" className="flex items-center gap-2 data-[state='active']:bg-[#ffffff26]">
+                    <TabsTrigger value="waitlist" className="flex items-center gap-2 data-[state='active']:bg-[#ffffff29]">
                         <List className="w-5 h-5" />
                         Liste d&apos;attente
                     </TabsTrigger>
@@ -61,7 +61,13 @@ export default function Home() {
                             <Image className="w-full h-full object-cover rounded-sm" width={1000} height={500} src="/poll-1.png" alt="Sondage libre" />
                         </TabsContent>
                         <TabsContent value="waitlist" className="mt-0">
-                            <Image className="w-full h-full object-cover rounded-sm" width={1000} height={500} src="/poll-2.png" alt="Sondage libre" />
+                            <Image
+                                className="w-full h-full object-cover rounded-sm"
+                                width={1000}
+                                height={500}
+                                src="/poll-2.png"
+                                alt="Sondage avec liste d'attente"
+                            />
                         </TabsContent>
                     </div>
                 </div>
