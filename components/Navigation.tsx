@@ -44,7 +44,7 @@ export default function Navigation() {
                                     fill="#267EE6"
                                 />
                             </svg>
-                            Kwikvote
+                            KwikVote
                         </div>
                     </Link>
                     <ActiveLink label="Accueil" href="/" />
