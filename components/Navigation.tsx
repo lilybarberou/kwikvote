@@ -7,24 +7,17 @@ import { History, Menu, PlusCircle } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './ui/tooltip';
 import ConsultedHistory from '../components/ConsultedHistory';
-import { useState } from 'react';
-import { Card } from './ui/card';
+import { PopoverClose } from '@radix-ui/react-popover';
 
 export default function Navigation() {
-    const [mobileNavOpen, setMobileNavOpen] = useState(false);
     const pathname = usePathname();
 
-    const ActiveLink = (props: { href: string; label: string; mobileItem?: boolean }) => {
-        const closeMenu = () => {
-            if (props.mobileItem) {
-                setMobileNavOpen(false);
-            }
-        };
-
+    const ActiveLink = (props: { href: string; label: string; mobileItem?: boolean; hasBorder?: boolean }) => {
         return (
             <Link
-                onClick={closeMenu}
-                className={`${props.mobileItem ? 'p-2' : 'hidden'} sm:block ${pathname === props.href ? 'font-semibold' : ''}`}
+                className={`${props.mobileItem ? 'py-2' : 'hidden'} ${props.hasBorder ? 'border-b border-[#ffffff29]' : ''} sm:block ${
+                    pathname === props.href ? 'font-semibold' : ''
+                }`}
                 href={props.href}
             >
                 {props.label}
@@ -65,7 +58,7 @@ export default function Navigation() {
                                 <TooltipContent className="hidden sm:block">Sondages consultés</TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
-                        <PopoverContent className="p-0 bg-[#0000000d] border border-[#ffffff29] rounded backdrop-blur-sm" align="end">
+                        <PopoverContent className="p-0 max-w-[200px] bg-[#00000001f] border border-[#ffffff29] rounded backdrop-blur-sm" align="end">
                             <ConsultedHistory />
                         </PopoverContent>
                     </Popover>
@@ -75,21 +68,28 @@ export default function Navigation() {
                             <span className="hidden sm:block">Créer un sondage</span>
                         </Link>
                     </Button>
-                    <Button onClick={() => setMobileNavOpen(true)} className="sm:hidden" size="icon">
-                        <Menu className="w-5 h-5" />
-                    </Button>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button className="sm:hidden" variant="secondary" size="icon">
+                                <Menu className="w-5 h-5" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="p-0 bg-[#0000001f] border border-[#ffffff29] rounded backdrop-blur-sm" align="end">
+                            <div className="py-2 px-3 flex flex-col">
+                                <PopoverClose asChild>
+                                    <ActiveLink mobileItem={true} hasBorder={true} label="Accueil" href="/" />
+                                </PopoverClose>
+                                <PopoverClose asChild>
+                                    <ActiveLink mobileItem={true} hasBorder={true} label="Mes sondages" href="/mes-sondages" />
+                                </PopoverClose>
+                                <PopoverClose asChild>
+                                    <ActiveLink mobileItem={true} label="FAQ" href="/faq" />
+                                </PopoverClose>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                 </div>
             </div>
-            {mobileNavOpen && (
-                <>
-                    <div className="fixed inset-0 h-screen bg-[#0000004c] sm:hidden" onClick={() => setMobileNavOpen(false)} />
-                    <Card className="absolute z-50 top-[64px] left-4 py-2 px-4 w-[calc(100%-32px)] flex flex-col sm:hidden">
-                        <ActiveLink mobileItem={true} label="Accueil" href="/" />
-                        <ActiveLink mobileItem={true} label="Mes sondages" href="/mes-sondages" />
-                        <ActiveLink mobileItem={true} label="FAQ" href="/faq" />
-                    </Card>
-                </>
-            )}
         </nav>
     );
 }
