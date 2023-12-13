@@ -57,7 +57,7 @@ export default function Navigation() {
                             <Tooltip delayDuration={300}>
                                 <PopoverTrigger asChild>
                                     <TooltipTrigger asChild>
-                                        <Button variant="secondary" size="icon">
+                                        <Button className="bg-transparent border-[#ffffff36] hover:bg-transparent" variant="outline" size="icon">
                                             <History className="w-5 h-5" />
                                         </Button>
                                     </TooltipTrigger>

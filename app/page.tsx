@@ -38,7 +38,7 @@ export default function Home() {
                 <Button asChild variant="secondary">
                     <Link href="/poll/create">Let&apos;s go</Link>
                 </Button>
-                <Button asChild variant="outline" className="bg-transparent border-secondary hover:bg-transparent" size="icon">
+                <Button asChild variant="outline" className="bg-transparent border-[#ffffff36] hover:bg-transparent" size="icon">
                     <Link href="#faq">
                         <HelpCircle className="w-5 h-5" />
                     </Link>
