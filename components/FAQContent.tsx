@@ -6,7 +6,7 @@ type Props = {
 
 export default function FAQContent(props: Props) {
     return (
-        <Accordion className="w-full max-w-3xl" type="single" collapsible>
+        <Accordion className="w-full max-w-3xl" id="faq" type="single" collapsible>
             {props.faqPage && (
                 <AccordionItem value="item-1">
                     <AccordionTrigger>Comment recevoir les notifications ?</AccordionTrigger>
