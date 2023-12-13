@@ -33,30 +33,32 @@ export default function Home() {
                 Créez un sondage en quelques secondes et partagez-le avec vos amis.
             </h1>
             <h2 className="mb-4 text-muted-foreground text-center">C&apos;est simple, gratuit, et aucun compte n&apos;est requis.</h2>
-            <div className="mb-10 flex gap-2">
+            <div className="mb-14 flex gap-2">
                 <Button variant="secondary">Let&apos;s go</Button>
                 <Button variant="outline" className="bg-transparent border-secondary hover:bg-transparent" size="icon">
                     <HelpCircle className="w-5 h-5" />
                 </Button>
             </div>
             <Tabs defaultValue="free" className="mb-32 w-full flex flex-col items-center gap-4">
-                <TabsList className="bg-[#00000029]">
-                    <TabsTrigger value="free" className="flex items-center gap-2">
+                <TabsList className="mb-2 bg-[#00000029]">
+                    <TabsTrigger value="free" className="flex items-center gap-2 data-[state='active']:bg-[#ffffff26]">
                         <ListTodo className="w-5 h-5" />
                         Libre
                     </TabsTrigger>
-                    <TabsTrigger value="waitlist" className="flex items-center gap-2">
+                    <TabsTrigger value="waitlist" className="flex items-center gap-2 data-[state='active']:bg-[#ffffff26]">
                         <List className="w-5 h-5" />
                         Liste d&apos;attente
                     </TabsTrigger>
                 </TabsList>
-                <div className="w-full border-[6px] aspect-auto">
-                    <TabsContent value="free" className="mt-0">
-                        <Image className="w-full h-full object-cover" width={1000} height={500} src="/poll-1.png" alt="Sondage libre" />
-                    </TabsContent>
-                    <TabsContent value="waitlist" className="mt-0">
-                        <Image className="w-full h-full object-cover" width={1000} height={500} src="/poll-2.png" alt="Sondage libre" />
-                    </TabsContent>
+                <div className="p-[10px] w-full border border-[#ffffff38] border-b-0 rounded-lg aspect-auto">
+                    <div className="border border-[#ffffff38] border-b-0 rounded-sm">
+                        <TabsContent value="free" className="mt-0">
+                            <Image className="w-full h-full object-cover rounded-sm" width={1000} height={500} src="/poll-1.png" alt="Sondage libre" />
+                        </TabsContent>
+                        <TabsContent value="waitlist" className="mt-0">
+                            <Image className="w-full h-full object-cover rounded-sm" width={1000} height={500} src="/poll-2.png" alt="Sondage libre" />
+                        </TabsContent>
+                    </div>
                 </div>
             </Tabs>
             <h3 className="mb-2 text-2xl font-semibold text-center sm:text-3xl">Vous avez déjà des sondages ?</h3>

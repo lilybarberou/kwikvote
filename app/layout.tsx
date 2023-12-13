@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Head>
             <body className={`dark pb-3 flex flex-col items-center bg-background font-sans antialiased ${fontSans.variable}`}>
                 <Navigation />
-                <main className="w-full max-w-6xl">
+                <main className="w-full px-4 max-w-6xl">
                     {children}
                     <Toaster />
                 </main>

@@ -3,25 +3,38 @@
 import Link from 'next/link';
 import { Button } from './ui/button';
 import { usePathname } from 'next/navigation';
-import { History } from 'lucide-react';
+import { History, Menu, PlusCircle } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from './ui/popover';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './ui/tooltip';
 import ConsultedHistory from '../components/ConsultedHistory';
+import { useState } from 'react';
+import { Card } from './ui/card';
 
 export default function Navigation() {
+    const [mobileNavOpen, setMobileNavOpen] = useState(false);
     const pathname = usePathname();
 
-    const ActiveLink = (props: { href: string; label: string }) => {
+    const ActiveLink = (props: { href: string; label: string; mobileItem?: boolean }) => {
+        const closeMenu = () => {
+            if (props.mobileItem) {
+                setMobileNavOpen(false);
+            }
+        };
+
         return (
-            <Link className={pathname === props.href ? 'font-semibold' : ''} href={props.href}>
+            <Link
+                onClick={closeMenu}
+                className={`${props.mobileItem ? 'p-2' : 'hidden'} sm:block ${pathname === props.href ? 'font-semibold' : ''}`}
+                href={props.href}
+            >
                 {props.label}
             </Link>
         );
     };
 
     return (
-        <nav className="sticky top-0 py-2 mb-20 w-full backdrop-blur-sm bg-[#00000026]">
-            <div className="m-auto max-w-6xl flex justify-between items-center">
+        <nav className="sticky top-0 py-2 mb-12 w-full backdrop-blur-sm bg-[#00000026] border-b-[0.5px] border-b-[#ffffff21] sm:mb-20">
+            <div className="m-auto px-4 max-w-6xl flex justify-between items-center">
                 <div className="flex items-center gap-6">
                     <Link href="/">
                         <div className="mr-4 flex gap-3 items-center text-xl font-semibold">
@@ -49,18 +62,34 @@ export default function Navigation() {
                                         </Button>
                                     </TooltipTrigger>
                                 </PopoverTrigger>
-                                <TooltipContent>Sondages consultés</TooltipContent>
+                                <TooltipContent className="hidden sm:block">Sondages consultés</TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
                         <PopoverContent>
                             <ConsultedHistory />
                         </PopoverContent>
                     </Popover>
-                    <Button asChild>
-                        <Link href="/poll/create">Créer un sondage</Link>
+                    <Button className="h-10 w-10 p-0 sm:h-auto sm:w-auto sm:py-2 sm:px-4" asChild>
+                        <Link href="/poll/create">
+                            <PlusCircle className="sm:hidden w-5 h-5" />
+                            <span className="hidden sm:block">Créer un sondage</span>
+                        </Link>
+                    </Button>
+                    <Button onClick={() => setMobileNavOpen(true)} className="sm:hidden" size="icon">
+                        <Menu className="w-5 h-5" />
                     </Button>
                 </div>
             </div>
+            {mobileNavOpen && (
+                <>
+                    <div className="fixed inset-0 h-screen bg-[#0000004c] sm:hidden" onClick={() => setMobileNavOpen(false)} />
+                    <Card className="absolute z-50 top-[64px] left-4 py-2 px-4 w-[calc(100%-32px)] flex flex-col sm:hidden">
+                        <ActiveLink mobileItem={true} label="Accueil" href="/" />
+                        <ActiveLink mobileItem={true} label="Mes sondages" href="/mes-sondages" />
+                        <ActiveLink mobileItem={true} label="FAQ" href="/faq" />
+                    </Card>
+                </>
+            )}
         </nav>
     );
 }
