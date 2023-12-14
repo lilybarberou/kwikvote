@@ -31,6 +31,7 @@ import { useHistoryStore } from '@/lib/historyStore';
 import RegistrationPoll from '@/components/RegistrationPoll';
 import { useCommentsStore } from '@/lib/commentsStore';
 import { useSearchParams } from 'next/navigation';
+import DialogPollLink from '@/components/DialogPollLink';
 
 export default function PollPage({ params }: { params: { id: string } }) {
     const searchParams = useSearchParams();
@@ -138,6 +139,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
         );
     return (
         <div>
+            <DialogPollLink />
             <h1 className="mb-5 text-lg">{poll?.title}</h1>
             {poll.description && (
                 <Alert className="w-fit">

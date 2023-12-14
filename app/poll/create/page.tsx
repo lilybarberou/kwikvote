@@ -14,7 +14,6 @@ import { z } from 'zod';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import Image from 'next/image';
 import { useState } from 'react';
-import { Card } from '@/components/ui/card';
 
 const PollFormSchema = z.object({
     type: z.enum(['1', '2']),
@@ -89,7 +88,7 @@ export default function CreatePoll() {
                 title: poll.message,
                 description: 'Veuillez réessayer plus tard',
             });
-        } else push(`/poll/${poll.id}`);
+        } else push(`/poll/${poll.id}?created=true`);
     });
 
     return (
