@@ -6,6 +6,7 @@ import { Dialog, DialogTrigger } from './ui/dialog';
 import { Button } from './ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import DialogVote from './DialogVote';
+import RegistrationPollHelp from './RegistrationPollHelp';
 
 type Props = {
     slots: PollSlot[];
@@ -57,14 +58,16 @@ export default function RegistrationPoll(props: Props) {
                 pollId={props.pollId}
             />
             <DialogTrigger asChild>
-                <Button className="mt-10 mb-2" onClick={() => setCurrentVoteId('')}>
+                <Button className="mt-7 mb-2" onClick={() => setCurrentVoteId('')}>
                     Nouvelle inscription
                 </Button>
             </DialogTrigger>
             <Table>
                 <TableHeader>
                     <TableRow className="!border-0 hover:bg-transparent">
-                        <TableHead className="w-[190px] min-w-[130px]" />
+                        <TableHead className="pl-2 w-[190px] min-w-[130px]">
+                            <RegistrationPollHelp />
+                        </TableHead>
                         {slots.map((slot) => (
                             <TableHead key={slot.id} className="py-4 min-w-[140px]">
                                 <div className="text-center whitespace-nowrap">
