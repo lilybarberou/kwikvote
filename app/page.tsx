@@ -40,7 +40,7 @@ export default function Home() {
                     <Link href="/poll/create">Créer mon sondage</Link>
                 </Button>
                 <Button asChild variant="outline" className="bg-transparent border-[#ffffff36] hover:bg-transparent" size="icon">
-                    <Link href="#faq">
+                    <Link href="#faq" aria-label="FAQ">
                         <HelpCircle className="w-5 h-5" />
                     </Link>
                 </Button>
