@@ -4,7 +4,7 @@ import Image from 'next/image';
 export default function Footer() {
     return (
         <footer className="mt-auto w-full">
-            <div className="mt-32 py-2 border-t-[0.5px] border-t-[#ffffff21]">
+            <div className="mt-20 py-2 border-t-[0.5px] border-t-[#ffffff21]">
                 <div className="mx-auto px-4 max-w-6xl flex justify-between items-center">
                     <a
                         className="py-2 px-3 flex gap-2 items-center border border-[#3b82f6a3] rounded-md"
@@ -12,7 +12,7 @@ export default function Footer() {
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        <p>Support</p>
+                        <p className="text-sm">Support</p>
                         <Coffee className="w-5 h-5" />
                     </a>
                     <div className="flex gap-2 items-center">

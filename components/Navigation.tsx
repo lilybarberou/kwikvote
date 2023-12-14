@@ -31,7 +31,7 @@ export default function Navigation() {
         <>
             <nav
                 className={`sticky top-0 py-2 mb-12 w-full backdrop-blur-sm bg-[#00000026] border-b-[0.5px] border-b-[#ffffff21] sm:mb-20 ${
-                    mobileNavOpen ? 'bg-[#00000068]' : ''
+                    mobileNavOpen ? 'bg-[#00000068] backdrop-blur-lg' : ''
                 }`}
             >
                 <div className="m-auto px-4 max-w-6xl flex justify-between items-center">
@@ -82,7 +82,7 @@ export default function Navigation() {
                 </div>
             </nav>
             {mobileNavOpen && (
-                <div className="fixed top-[57px] left-0 h-screen w-full flex flex-col bg-[#00000068] backdrop-blur-sm">
+                <div className="fixed top-[56px] left-0 h-screen w-full flex flex-col bg-[#00000068] backdrop-blur-lg">
                     <ActiveLink mobileItem={true} hasBorder={true} label="Accueil" href="/" />
                     <ActiveLink mobileItem={true} hasBorder={true} label="Mes sondages" href="/mes-sondages" />
                     <ActiveLink mobileItem={true} hasBorder={true} label="FAQ" href="/faq" />
