@@ -43,10 +43,39 @@ export default function DialogVote(props: Props) {
     }, [currentVoteId, reset]);
 
     const submitVote = handleSubmit(async (data) => {
-        // if data has not been modified, do not submit
+        // check if choices have been modified
         if (currentVoteId && votes[currentVoteId]?.choices.every((choice) => choice.choice === parseInt(data[`choice-${choice.slotId}`]))) {
-            closeDialog();
-            return;
+            // check if name has been modified
+            if (votes[currentVoteId]?.name === data.name) {
+                // do not submit  if nothing has changed
+                closeDialog();
+                return;
+            } else {
+                // submit name only
+                setLoading(true);
+                const res = await fetch('/api/vote/name', {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        voteId: currentVoteId,
+                        name: data.name,
+                    }),
+                });
+                setLoading(false);
+
+                if (res.ok) {
+                    addVote({ ...votes[currentVoteId], name: data.name });
+                    closeDialog();
+                    reset();
+                    setCurrentVoteId('edited'); // TODO FAIRE MIEUX
+                    return;
+                } else {
+                    toast({
+                        title: 'Erreur lors de la modification du vote',
+                        description: 'Veuillez réessayer plus tard',
+                        variant: 'destructive',
+                    });
+                }
+            }
         }
 
         const formattedData = {

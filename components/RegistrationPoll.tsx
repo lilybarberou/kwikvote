@@ -63,43 +63,53 @@ export default function RegistrationPoll(props: Props) {
             </DialogTrigger>
             <Table>
                 <TableHeader>
-                    <TableRow>
+                    <TableRow className="!border-0 hover:bg-transparent">
+                        <TableHead className="w-[190px] min-w-[130px]" />
                         {slots.map((slot) => (
-                            <TableHead key={slot.id} className="py-4">
-                                {sameDay(new Date(slot.startDate), new Date(slot.endDate)) ? (
-                                    <div className="text-center whitespace-nowrap">
-                                        <p>{getDate(slot.startDate)}</p>
-                                        <p>{slot.startTime}</p>
-                                        <p>{slot.endTime}</p>
-                                        <p className={slot.registered.length == slot.maxParticipants ? 'text-red-500' : ''}>
-                                            {slot.registered.length}/{slot.maxParticipants}
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <p>{getDate(slot.startDate)}</p>
-                                        <p>{slot.startTime}</p>
-                                        <p>{getDate(slot.endDate)}</p>
-                                        <p>{slot.endTime}</p>
-                                        <p className={slot.registered.length == slot.maxParticipants ? 'text-red-500' : ''}>
-                                            {slot.registered.length}/{slot.maxParticipants}
-                                        </p>
-                                    </>
-                                )}
+                            <TableHead key={slot.id} className="py-4 min-w-[140px]">
+                                <div className="text-center whitespace-nowrap">
+                                    {sameDay(new Date(slot.startDate), new Date(slot.endDate)) ? (
+                                        <>
+                                            <p>{getDate(slot.startDate)}</p>
+                                            <p>
+                                                {slot.startTime} - {slot.endTime}
+                                            </p>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p>{getDate(slot.startDate)}</p>
+                                            <p>{slot.startTime}</p>
+                                            <p>{getDate(slot.endDate)}</p>
+                                            <p>{slot.endTime}</p>
+                                        </>
+                                    )}
+                                </div>
                             </TableHead>
                         ))}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {slotArraysLabel.map((array) => (
+                    {slotArraysLabel.map((array, index) => (
                         <>
-                            <TableRow key={array.key}>
-                                <TableCell colSpan={slots.length} className="py-2 font-bold bg-slate-800">
-                                    {array.label}
-                                </TableCell>
+                            <TableRow className={`mt-4 bg-[#101929] border-0 border-transparent ${index !== 0 ? 'border-t-8' : ''}`} key={array.key}>
+                                <TableCell className="py-2 font-bold rounded-tl-lg rounded-bl-lg">{array.label}</TableCell>
+                                {slots.map((slot, index) => (
+                                    <TableCell
+                                        className={`text-center ${
+                                            array.key === 'registered' && slot.registered.length == slot.maxParticipants
+                                                ? 'text-red-500'
+                                                : 'text-muted-foreground'
+                                        } ${index === slots.length - 1 ? 'rounded-tr-lg rounded-br-lg' : ''}`}
+                                        key={slot.id}
+                                    >
+                                        {array.key === 'registered' && `${slot.registered.length}/${slot.maxParticipants}`}
+                                        {array.key !== 'registered' && slot[array.key].length}
+                                    </TableCell>
+                                ))}
                             </TableRow>
+                            <TableRow className="table-cell border-0 hover:bg-transparent" />
                             {slots.map((slot) => (
-                                <TableRow className="table-cell hover:bg-transparent text-center" key={slot.id}>
+                                <TableRow className="table-cell border-0 hover:bg-transparent text-center" key={slot.id}>
                                     {slot[array.key].map((voteId) => (
                                         <DialogTrigger key={voteId} asChild>
                                             <TableCell className="py-1 px-0 block bg-background" onClick={() => setCurrentVoteId(voteId)}>
