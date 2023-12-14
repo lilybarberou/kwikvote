@@ -4,6 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import Navigation from '@/components/Navigation';
 import './globals.css';
 import Head from 'next/head';
+import Footer from '@/components/Footer';
 
 export const fontSans = FontSans({
     subsets: ['latin'],
@@ -23,12 +24,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <link rel="icon" href="/favicon.ico" />
                 <meta name="theme-color" content="#000000" />
             </Head>
-            <body className={`dark pb-3 flex flex-col items-center bg-background font-sans antialiased ${fontSans.variable}`}>
+            <body className={`dark min-h-screen flex flex-col items-center bg-background font-sans antialiased ${fontSans.variable}`}>
                 <Navigation />
                 <main className="w-full px-4 max-w-6xl">
                     {children}
                     <Toaster />
                 </main>
+                <Footer />
             </body>
         </html>
     );

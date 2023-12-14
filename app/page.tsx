@@ -83,7 +83,6 @@ export default function Home() {
                 <Button>Rechercher</Button>
             </form>
             <FAQContent />
-            <Footer />
         </div>
     );
 }
