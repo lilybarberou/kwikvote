@@ -16,9 +16,9 @@ export default function Footer() {
                         <Coffee className="w-5 h-5" />
                     </a>
                     <div className="flex gap-2 items-center">
-                        <p className="text-sm">
+                        <p className="text-sm text-muted-foreground">
                             Créé par{' '}
-                            <a className="font-semibold" href="https:lilybarberou.fr" target="_blank" rel="noopener noreferrer">
+                            <a className="font-semibold text-white" href="https:lilybarberou.fr" target="_blank" rel="noopener noreferrer">
                                 Lily Barberou
                             </a>
                         </p>
