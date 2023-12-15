@@ -9,16 +9,28 @@ import { useRouter } from 'next/navigation';
 import { HelpCircle, List, ListTodo } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Image from 'next/image';
-import Footer from '@/components/Footer';
 import FAQContent from '@/components/FAQContent';
 import Link from 'next/link';
 import ProcessSteps from '@/components/ProcessSteps';
+import { motion, useAnimationControls } from 'framer-motion';
+import { useEffect } from 'react';
 
 const SearchSchema = z.object({
     email: z.string().email(),
 });
 
 export default function Home() {
+    const controls = useAnimationControls();
+
+    useEffect(() => {
+        controls.start({ opacity: 1, y: 0 });
+    }, [controls]);
+
+    const handleTabAnimSequence = async () => {
+        await controls.start('exit');
+        controls.start('show');
+    };
+
     const router = useRouter();
     const { register, handleSubmit } = useForm<z.infer<typeof SearchSchema>>({
         resolver: zodResolver(SearchSchema),
@@ -45,7 +57,7 @@ export default function Home() {
                     </Link>
                 </Button>
             </div>
-            <Tabs defaultValue="free" className="mb-32 w-full flex flex-col items-center gap-4">
+            <Tabs onValueChange={handleTabAnimSequence} defaultValue="free" className="mb-32 w-full flex flex-col items-center gap-4">
                 <TabsList className="mb-2 bg-[#00000029]">
                     <TabsTrigger value="free" className="flex items-center gap-2 data-[state='active']:bg-[#ffffff28]">
                         <ListTodo className="w-5 h-5" />
@@ -56,7 +68,17 @@ export default function Home() {
                         Liste d&apos;attente
                     </TabsTrigger>
                 </TabsList>
-                <div className="p-2 w-full border border-[#ffffff38] border-b-0 rounded-lg aspect-auto sm:p-[10px]">
+                <motion.div
+                    className="p-2 w-full border border-[#ffffff38] border-b-0 rounded-lg aspect-auto sm:p-[10px]"
+                    variants={{
+                        init: { opacity: 0, y: -20 },
+                        show: { opacity: 1, y: 0 },
+                        exit: { opacity: 0, y: -20, transition: { duration: 0 } },
+                    }}
+                    initial="init"
+                    animate={controls}
+                    transition={{ duration: 0.5 }}
+                >
                     <div className="border border-[#ffffff38] border-b-0 rounded-sm">
                         <TabsContent value="free" className="mt-0">
                             <Image className="w-full h-full object-cover rounded-sm" width={1000} height={500} src="/poll-1.png" alt="Sondage libre" />
@@ -71,7 +93,7 @@ export default function Home() {
                             />
                         </TabsContent>
                     </div>
-                </div>
+                </motion.div>
             </Tabs>
             <ProcessSteps />
             <h3 className="mb-2 text-2xl font-semibold text-center sm:text-3xl">Vous avez déjà des sondages ?</h3>

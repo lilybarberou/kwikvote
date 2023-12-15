@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { motion } from 'framer-motion';
 
 const SearchSchema = z.object({
     email: z.string().email(),
@@ -28,6 +29,7 @@ export default function SearchPollsByEmail() {
         resolver: zodResolver(SearchSchema),
         defaultValues: { email: email ?? '' },
     });
+    const LinkMotion = motion(Link);
 
     const onSubmit = handleSubmit(async ({ email }) => {
         setLoading(true);
@@ -57,13 +59,24 @@ export default function SearchPollsByEmail() {
                 </div>
             );
         return (
-            <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <motion.div
+                className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                variants={{ init: { opacity: 0 }, anim: { opacity: 1 } }}
+                transition={{ staggerChildren: 0.1 }}
+                initial="init"
+                animate="anim"
+            >
                 {polls?.map((poll) => (
-                    <Link className="p-2 border rounded" key={poll.id} href={`/poll/${poll.id}`}>
+                    <LinkMotion
+                        className="p-2 block border rounded hover:bg-accent transition-all"
+                        href={`/poll/${poll.id}`}
+                        variants={{ init: { opacity: 0 }, anim: { opacity: 1 } }}
+                        key={poll.id}
+                    >
                         {poll.title}
-                    </Link>
+                    </LinkMotion>
                 ))}
-            </div>
+            </motion.div>
         );
     };
 
