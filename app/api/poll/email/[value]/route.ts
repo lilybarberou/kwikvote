@@ -11,7 +11,9 @@ export async function GET(_: NextRequest, { params }: { params: { value: string 
         select: {
             id: true,
             title: true,
+            createdAt: true,
         },
+        orderBy: { createdAt: 'desc' },
     });
 
     return NextResponse.json(poll);

@@ -18,6 +18,7 @@ model Poll {
   slots                  Slot[]
   comments               Comment[]
   votes                  Vote[]
+  createdAt              DateTime   @default(now())
 }
 
 model Slot {
