@@ -79,8 +79,9 @@ export default function PollSlot(props: Props) {
                                 {sameDay(new Date(slot.startDate), new Date(slot.endDate)) ? (
                                     <div className="text-center whitespace-nowrap">
                                         <p>{getDate(slot.startDate)}</p>
-                                        <p>{slot.startTime}</p>
-                                        <p>{slot.endTime}</p>
+                                        <p>
+                                            {slot.startTime} - {slot.endTime}
+                                        </p>
                                     </div>
                                 ) : (
                                     <>
@@ -110,7 +111,7 @@ export default function PollSlot(props: Props) {
                     </TableRow>
                     {Object.values(votes).map((vote) => (
                         <TableRow key={vote.id}>
-                            <TableCell className="py-2">{vote.name}</TableCell>
+                            <TableCell className="py-2 max-w-[220px] text-ellipsis overflow-hidden whitespace-nowrap">{vote.name}</TableCell>
                             {vote.choices.map((choice) => (
                                 <TableCell className="py-2 text-center" key={choice.id}>
                                     <VoteIcon choice={choice.choice} />
