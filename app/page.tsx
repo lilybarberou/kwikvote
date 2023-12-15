@@ -46,7 +46,7 @@ export default function Home() {
             <h1 className="mb-6 max-w-xl text-3xl font-semibold text-center sm:text-4xl">
                 Créez un sondage en quelques secondes et partagez-le avec vos amis.
             </h1>
-            <h2 className="mb-4 text-muted-foreground text-center">C&apos;est simple, gratuit, et aucun compte n&apos;est requis.</h2>
+            <h2 className="mb-4 text-[#d5d5d5] text-center">C&apos;est simple, gratuit, et aucun compte n&apos;est requis.</h2>
             <div className="mb-14 flex gap-2">
                 <Button asChild variant="secondary">
                     <Link href="/poll/create">Créer mon sondage</Link>
