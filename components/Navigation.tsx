@@ -65,7 +65,7 @@ export default function Navigation() {
                                     <TooltipContent className="hidden sm:block">Sondages consultés</TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
-                            <PopoverContent className="p-0 max-w-[200px] bg-[#00000026] border border-[#ffffff29] rounded backdrop-blur-sm" align="end">
+                            <PopoverContent className="p-0 max-w-[200px] bg-[#00000026] border border-[#ffffff29] rounded backdrop-blur-lg" align="end">
                                 <ConsultedHistory />
                             </PopoverContent>
                         </Popover>
