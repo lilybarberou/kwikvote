@@ -59,11 +59,11 @@ export default function Home() {
             </div>
             <Tabs onValueChange={handleTabAnimSequence} defaultValue="free" className="mb-32 w-full flex flex-col items-center gap-4">
                 <TabsList className="mb-2 bg-[#00000029]">
-                    <TabsTrigger value="free" className="flex items-center gap-2 data-[state='active']:bg-[#ffffff28]">
+                    <TabsTrigger value="free" className="flex items-center gap-2 data-[state=active]:bg-[#ffffff28]">
                         <ListTodo className="w-5 h-5" />
                         Libre
                     </TabsTrigger>
-                    <TabsTrigger value="waitlist" className="flex items-center gap-2 data-[state='active']:bg-[#ffffff28]">
+                    <TabsTrigger value="waitlist" className="flex items-center gap-2 data-[state=active]:bg-[#ffffff28]">
                         <List className="w-5 h-5" />
                         Liste d&apos;attente
                     </TabsTrigger>
