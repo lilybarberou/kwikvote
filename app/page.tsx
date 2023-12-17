@@ -80,10 +80,10 @@ export default function Home() {
                     transition={{ duration: 0.5 }}
                 >
                     <div className="border border-[#ffffff38] border-b-0 rounded-sm">
-                        <TabsContent value="free" className="mt-0">
+                        <TabsContent value="free" className="mt-0 pt-3 bg-background">
                             <Image className="w-full h-full object-cover rounded-sm" width={1000} height={500} src="/poll-1.png" alt="Sondage libre" />
                         </TabsContent>
-                        <TabsContent value="waitlist" className="mt-0">
+                        <TabsContent value="waitlist" className="mt-0 pt-3 bg-background">
                             <Image
                                 className="w-full h-full object-cover rounded-sm"
                                 width={1000}
