@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import useSWR from 'swr';
 import { useNotificationsStore } from '@/lib/notificationsStore';
@@ -32,15 +32,20 @@ import RegistrationPoll from '@/components/RegistrationPoll';
 import { useCommentsStore } from '@/lib/commentsStore';
 import { useSearchParams } from 'next/navigation';
 import DialogPollLink from '@/components/DialogPollLink';
+import { Card, CardDescription, CardTitle } from '@/components/ui/card';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export default function PollPage({ params }: { params: { id: string } }) {
     const searchParams = useSearchParams();
     const tabParam = searchParams.get('tab');
     const defaultTab = tabParam === 'comments' ? 'comments' : 'votes';
 
+    const alreadyVisited = typeof window !== 'undefined' ? localStorage.getItem('alreadyVisited') : null;
+    const [dialogWarnNotifOpen, setDialogWarnNotifOpen] = useState(!alreadyVisited);
+    const { notificationsSupported, notificationsPermission, init } = useNotificationsStore();
+
     const { initVotes } = useVotesStore();
     const { addPollToHistory } = useHistoryStore();
-    const { notificationsSupported, notificationsPermission, init } = useNotificationsStore();
     const { comments, initComments } = useCommentsStore();
     const { toast } = useToast();
     const {
@@ -83,9 +88,8 @@ export default function PollPage({ params }: { params: { id: string } }) {
                     : null,
             });
         };
-
         initNotifications();
-    }, [init]);
+    }, [init, toast]);
 
     const enableNotifications = async () => {
         const receivedPermission = await Notification.requestPermission();
@@ -122,6 +126,11 @@ export default function PollPage({ params }: { params: { id: string } }) {
         } else toast({ title: 'Erreur', description: "Une erreur est survenue lors de l'activation des notifications." });
     };
 
+    const dismissNotif = () => {
+        localStorage.setItem('alreadyVisited', 'true');
+        setDialogWarnNotifOpen(false);
+    };
+
     if (isLoading) return <PollSkeleton />;
     if (error || !poll)
         return (
@@ -139,6 +148,33 @@ export default function PollPage({ params }: { params: { id: string } }) {
         );
     return (
         <div>
+            <AnimatePresence>
+                {dialogWarnNotifOpen && notificationsSupported && notificationsPermission === 'default' && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                        className="fixed w-11/12 z-50 bottom-[58px] min-[400px]:max-w-[400px] min-[400px]:right-4"
+                    >
+                        <Card className="p-4">
+                            <CardTitle className="text-lg">Activer les notifications</CardTitle>
+                            <CardDescription>
+                                <p>
+                                    {' '}
+                                    Vous recevrez une notification lorsqu&apos;un nouveau commentaire sera posté, ainsi que pour vous avertir de place
+                                    disponible.
+                                </p>
+                                <div className="mt-2 flex justify-end gap-2">
+                                    <Button onClick={dismissNotif} variant="outline">
+                                        Non merci
+                                    </Button>
+                                    <Button onClick={enableNotifications}>Activer</Button>
+                                </div>
+                            </CardDescription>
+                        </Card>
+                    </motion.div>
+                )}
+            </AnimatePresence>
             <DialogPollLink />
             <h1 className="mb-5 text-lg">{poll?.title}</h1>
             {poll.description && (
@@ -169,7 +205,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
-                            <AlertDialogContent>
+                            <AlertDialogContent className="w-11/12 max-w-[400px]">
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>Activer les notifications</AlertDialogTitle>
                                     <AlertDialogDescription>
