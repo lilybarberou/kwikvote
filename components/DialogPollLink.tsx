@@ -26,7 +26,7 @@ export default function DialogPollLink() {
 
     return (
         <AlertDialog defaultOpen={createdParam === 'true'}>
-            <AlertDialogContent className="w-11/12 max-w-[350px]">
+            <AlertDialogContent className="w-11/12 max-w-[350px]" onEscapeKeyDown={removeQueryParams}>
                 <AlertDialogTitle>Sondage créé !</AlertDialogTitle>
                 <AlertDialogDescription>
                     <p className="mb-2">Conservez bien votre lien :</p>
