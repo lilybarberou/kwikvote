@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
         });
 
         // REMOVE ENDPOINT FROM MESSAGE AUTHOR
-        delete subscriptions[data.exceptEndpoint];
+        if (data.exceptEndpoint) delete subscriptions[data.exceptEndpoint];
 
         // SEND NOTIFICATION TO ALL SUBS
         Object.values(subscriptions).forEach((sub) => {
@@ -81,7 +81,7 @@ const bodySchema = z.object({
         text: z.string(),
         pollId: z.string(),
     }),
-    exceptEndpoint: z.string(),
+    exceptEndpoint: z.string().optional(),
 });
 
 type Subscriptions = {
