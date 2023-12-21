@@ -12,13 +12,13 @@ export default function Footer() {
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        <p className="text-sm">Support</p>
+                        <p className="text-sm">Don</p>
                         <Coffee className="w-5 h-5" />
                     </a>
                     <div className="flex gap-2 items-center">
                         <p className="text-sm text-muted-foreground">
                             Créé par{' '}
-                            <a className="font-semibold text-white" href="https:lilybarberou.fr" target="_blank" rel="noopener noreferrer">
+                            <a className="font-semibold text-white" href="https://lilybarberou.fr" target="_blank" rel="noopener noreferrer">
                                 Lily Barberou
                             </a>
                         </p>
