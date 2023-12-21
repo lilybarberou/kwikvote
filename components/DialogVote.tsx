@@ -85,7 +85,7 @@ export default function DialogVote(props: Props) {
                 const choiceId = votes[currentVoteId]?.choices.find((choice) => choice.slotId === slot.id)?.id;
                 return { id: choiceId || v4(), slotId: slot.id, choice: parseInt(data[`choice-${slot.id}`]) };
             }),
-            subscription,
+            subscription: subscription || undefined,
         };
 
         setLoading(true);
