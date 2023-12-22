@@ -30,7 +30,7 @@ export default function Navigation() {
     return (
         <>
             <nav
-                className={`sticky top-0 py-2 mb-12 w-full backdrop-blur-sm bg-[#00000026] border-b-[0.5px] border-b-[#ffffff21] sm:mb-20 ${
+                className={`sticky z-50 top-0 py-2 mb-12 w-full backdrop-blur-sm bg-[#00000026] border-b-[0.5px] border-b-[#ffffff21] sm:mb-20 ${
                     mobileNavOpen ? 'bg-[#00000068] backdrop-blur-lg' : ''
                 }`}
             >
