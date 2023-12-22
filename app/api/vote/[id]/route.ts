@@ -1,3 +1,4 @@
+import { getTime } from '@/lib/utils';
 import { prisma } from '@/prisma/db';
 import { Prisma } from '@prisma/client';
 import { format } from 'date-fns';
@@ -58,7 +59,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
             const votesNewlyRegistered = newPoll.slots.reduce(
                 (obj, slot) => {
                     obj.votesBySlot[slot.id] = [];
-                    const oldRegistered = initialPoll.find((slot) => slot.id === slot.id)!.registered;
+                    const oldRegistered = initialPoll.find((initialSlot) => initialSlot.id === slot.id)!.registered;
 
                     // get id addded in registered
                     const newRegistered = slot.registered.filter((id) => !oldRegistered.includes(id));
@@ -97,11 +98,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
             Object.entries(votesNewlyRegistered.votesBySlot).forEach(([slotId, votes]) => {
                 const slot = poll.slots.find((slot) => slot.id === slotId)!;
                 const formattedDate = format(slot.startDate, 'eeee d', { locale: fr });
-                const formattedTime = slot.startTime.replace(':', 'h');
 
                 const payload = JSON.stringify({
                     title: 'Vous êtes inscrit !',
-                    body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${formattedTime} !`,
+                    body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${getTime(slot.startDate)} !`,
                     link: `${process.env.DOMAIN}/poll/${body.pollId}`,
                 });
 
@@ -239,7 +239,7 @@ const updateSlotsArray = async ({
             isRegisteredOnce = true;
         }
         // full and not registered anywhere -> add to waiting list
-        else if (!isRegisteredOnce) slot.waitingList.push(voteId);
+        else if (!isRegisteredOnce || timeBeforeAllowedPassed[slot.id]) slot.waitingList.push(voteId);
         // already registered somewhere -> add to reregistered waiting list
         else slot.waitingListReregistered.push(voteId);
     }
@@ -284,12 +284,7 @@ const checkTimeBeforeAllow = ({
         }
         // specific hours number before startDate
         else {
-            const slotDate = new Date(curr.startDate);
-            const hours = curr.startTime.split(':')[0];
-            const minutes = curr.startTime.split(':')[1];
-            const slotDateTime = new Date(slotDate.setHours(+hours, +minutes));
-
-            obj[curr.id] = now.getTime() > slotDateTime.getTime() - msBeforeAllowed;
+            obj[curr.id] = now.getTime() > curr.startDate.getTime() - msBeforeAllowed;
         }
         return obj;
     }, {} as Record<string, boolean>);
@@ -303,7 +298,6 @@ const pollInclude = Prisma.validator<Prisma.PollSelect>()({
         select: {
             id: true,
             startDate: true,
-            startTime: true,
             maxParticipants: true,
             registered: true,
             waitingList: true,

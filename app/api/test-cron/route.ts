@@ -1,3 +1,4 @@
+import { getTime } from '@/lib/utils';
 import { prisma } from '@/prisma/db';
 import { format } from 'date-fns';
 import fr from 'date-fns/locale/fr';
@@ -27,7 +28,6 @@ export async function GET(_: NextRequest) {
         },
         select: {
             startDate: true,
-            startTime: true,
             pollId: true,
             id: true,
             choices: {
@@ -62,7 +62,6 @@ export async function GET(_: NextRequest) {
         subscriptionsBySlot[slot.id] = {
             pollId: slot.pollId,
             startDate: slot.startDate,
-            startTime: slot.startTime,
             subscriptions: {},
         };
 
@@ -83,7 +82,7 @@ export async function GET(_: NextRequest) {
     let count = 0;
     Object.values(subscriptionsBySlot).forEach((slot) => {
         const formattedDate = format(slot.startDate, 'eeee d', { locale: fr });
-        const body = `Il reste des places disponibles pour le créneau du ${formattedDate} à ${slot.startTime} !`;
+        const body = `Il reste des places disponibles pour le créneau du ${formattedDate} à ${getTime(slot.startDate)} !`;
 
         const payload = JSON.stringify({
             title: 'Pensez à vous inscrire !',
@@ -109,7 +108,6 @@ type SubscriptionsBySlot = {
     [slotId: string]: {
         pollId: string;
         startDate: Date;
-        startTime: string;
         subscriptions: {
             [endpoint: string]: {
                 endpoint: string;

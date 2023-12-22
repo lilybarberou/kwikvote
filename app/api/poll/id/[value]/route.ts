@@ -21,9 +21,7 @@ const pollInclude = Prisma.validator<Prisma.PollInclude>()({
         select: {
             id: true,
             startDate: true,
-            startTime: true,
             endDate: true,
-            endTime: true,
             maxParticipants: true,
             registered: true,
             waitingList: true,
