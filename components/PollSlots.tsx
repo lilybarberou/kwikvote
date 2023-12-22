@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getDate, sameDay } from '@/lib/utils';
+import { getDate, getTime, sameDay } from '@/lib/utils';
 import { useVotesStore } from '@/lib/votesStore';
 import { CheckCircle, CircleUserRound, Edit, HelpCircle, XCircle } from 'lucide-react';
 import { Dialog, DialogTrigger } from './ui/dialog';
@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import DialogVote from './DialogVote';
 
 type Props = {
-    slots: { id: string; startDate: Date; startTime: string; endDate: Date; endTime: string }[];
+    slots: { id: string; startDate: Date; endDate: Date }[];
     pollId: string;
 };
 
@@ -80,15 +80,15 @@ export default function PollSlot(props: Props) {
                                     <div className="text-center whitespace-nowrap">
                                         <p>{getDate(slot.startDate)}</p>
                                         <p>
-                                            {slot.startTime} - {slot.endTime}
+                                            {getTime(slot.startDate)} - {getTime(slot.endDate)}
                                         </p>
                                     </div>
                                 ) : (
                                     <>
                                         <p>{getDate(slot.startDate)}</p>
-                                        <p>{slot.startTime}</p>
+                                        <p>{getTime(slot.startDate)}</p>
                                         <p>{getDate(slot.endDate)}</p>
-                                        <p>{slot.endTime}</p>
+                                        <p>{getTime(slot.endDate)}</p>
                                     </>
                                 )}
                             </TableHead>

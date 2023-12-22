@@ -5,6 +5,7 @@ import { z } from 'zod';
 import webpush from 'web-push';
 import { format } from 'date-fns';
 import fr from 'date-fns/locale/fr';
+import { getTime } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -175,11 +176,10 @@ export async function POST(request: NextRequest) {
             Object.entries(votesNewlyRegistered.votesBySlot).forEach(([slotId, votes]) => {
                 const slot = poll.slots.find((slot) => slot.id === slotId)!;
                 const formattedDate = format(slot.startDate, 'eeee d', { locale: fr });
-                const formattedTime = slot.startTime.replace(':', 'h');
 
                 const payload = JSON.stringify({
                     title: 'Vous êtes inscrit !',
-                    body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${formattedTime} !`,
+                    body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${getTime(slot.startDate)} !`,
                     link: `${process.env.DOMAIN}/poll/${data.pollId}`,
                 });
 
@@ -331,7 +331,7 @@ const updateSlotsArray = async ({
                 isRegisteredOnce = true;
             }
             // full and not registered anywhere -> add to waiting list
-            else if (!isRegisteredOnce) slot.waitingList.push(voteId);
+            else if (!isRegisteredOnce || timeBeforeAllowedPassed[slot.id]) slot.waitingList.push(voteId);
             // already registered somewhere -> add to reregistered waiting list
             else slot.waitingListReregistered.push(voteId);
         }
@@ -376,12 +376,7 @@ const checkTimeBeforeAllow = ({
         }
         // specific hours number before startDate
         else {
-            const slotDate = new Date(curr.startDate);
-            const hours = curr.startTime.split(':')[0];
-            const minutes = curr.startTime.split(':')[1];
-            const slotDateTime = new Date(slotDate.setHours(+hours, +minutes));
-
-            obj[curr.id] = now.getTime() > slotDateTime.getTime() - msBeforeAllowed;
+            obj[curr.id] = now.getTime() > curr.startDate.getTime() - msBeforeAllowed;
         }
         return obj;
     }, {} as Record<string, boolean>);
@@ -395,7 +390,6 @@ const pollInclude = Prisma.validator<Prisma.PollSelect>()({
         select: {
             id: true,
             startDate: true,
-            startTime: true,
             maxParticipants: true,
             registered: true,
             waitingList: true,
