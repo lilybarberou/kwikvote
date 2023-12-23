@@ -40,7 +40,7 @@ export default function DialogPollLink() {
                     </div>
                 </AlertDialogDescription>
                 <AlertDialogFooter>
-                    <AlertDialogAction onClick={removeQueryParams} tabIndex={2}>
+                    <AlertDialogAction autoFocus onClick={removeQueryParams} tabIndex={2}>
                         Fermer
                     </AlertDialogAction>
                 </AlertDialogFooter>

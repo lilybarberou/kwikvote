@@ -154,14 +154,14 @@ export default function DialogVote(props: Props) {
     };
 
     return (
-        <DialogContent className="w-11/12 max-w-[360px]">
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="w-11/12 max-w-[360px]">
             <DialogTitleBySlotType />
             <form onSubmit={submitVote}>
                 <Label className="mt-4" htmlFor="name">
                     Nom
                 </Label>
                 <Input
-                    autoFocus
+                    autoFocus={!Boolean(currentVoteId)}
                     className="mt-2 mb-4"
                     id="name"
                     defaultValue={votes[currentVoteId]?.name ?? ''}
@@ -188,7 +188,7 @@ export default function DialogVote(props: Props) {
                                     defaultValue={votes[currentVoteId]?.choices.find((choice) => choice.slotId === slot.id)?.choice.toString() ?? ''}
                                     render={({ field }) => (
                                         <Select {...field} onValueChange={field.onChange}>
-                                            <SelectTrigger className="min-w-[180px]">
+                                            <SelectTrigger autoFocus={currentVoteId ? index == 0 : false} className="min-w-[180px]">
                                                 <SelectValue placeholder="À définir" />
                                             </SelectTrigger>
                                             <SelectContent
