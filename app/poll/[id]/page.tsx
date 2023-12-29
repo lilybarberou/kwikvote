@@ -154,7 +154,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 20 }}
-                        className="fixed w-11/12 z-50 bottom-[58px] min-[400px]:max-w-[400px] min-[400px]:right-4"
+                        className="fixed w-11/12 z-50 bottom-[20px] min-[400px]:max-w-[400px] min-[400px]:right-4"
                     >
                         <Card className="p-4">
                             <CardTitle className="text-lg">Activer les notifications</CardTitle>
