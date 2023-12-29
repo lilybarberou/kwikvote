@@ -5,6 +5,12 @@ import { PopoverClose } from '@radix-ui/react-popover';
 export default function ConsultedHistory() {
     const { pollHistory } = useHistoryStore();
 
+    if (!pollHistory.length)
+        return (
+            <div className="w-full min-w-[200px] flex flex-col">
+                <span className="py-2 px-3 text-sm text-ellipsis overflow-hidden">Aucun sondage consulté pour le moment.</span>
+            </div>
+        );
     return (
         <div className="w-full min-w-[200px] flex flex-col">
             {pollHistory.map((poll, index) => (
