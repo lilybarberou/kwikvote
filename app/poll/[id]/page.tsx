@@ -96,6 +96,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
         if (receivedPermission !== 'granted') return;
 
         const swRegistration = await navigator.serviceWorker.register('/service.js');
+        await navigator.serviceWorker.ready; // waits for service worker to be ready = status active for sure
 
         const subscription = await swRegistration.pushManager
             .subscribe({
