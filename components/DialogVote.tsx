@@ -2,7 +2,7 @@ import { SetStateAction, useEffect, useState } from 'react';
 import { v4 } from 'uuid';
 import { Controller, useForm } from 'react-hook-form';
 import { useVotesStore } from '@/lib/votesStore';
-import { getDate, getTime } from '@/lib/utils';
+import { getDate, timeTwoDigit } from '@/lib/utils';
 import { Loader2, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from './ui/input';
@@ -178,7 +178,7 @@ export default function DialogVote(props: Props) {
                         >
                             <div className="flex flex-wrap items-end gap-x-2 sm:flex-col sm:items-start">
                                 <p>{getDate(slot.startDate)}</p>
-                                <p className="text-sm text-muted-foreground">{getTime(slot.startDate)}</p>
+                                <p className="text-sm text-muted-foreground">{timeTwoDigit(slot.startDate)}</p>
                             </div>
                             <div className="flex-1">
                                 <Controller

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getDate, getTime, sameDay } from '@/lib/utils';
+import { getDate, timeTwoDigit, sameDay } from '@/lib/utils';
 import { useVotesStore } from '@/lib/votesStore';
 import { PollSlot } from '@/app/api/poll/id/[value]/route';
 import { Dialog, DialogTrigger } from './ui/dialog';
@@ -75,15 +75,15 @@ export default function RegistrationPoll(props: Props) {
                                         <>
                                             <p>{getDate(slot.startDate)}</p>
                                             <p>
-                                                {getTime(slot.startDate)} - {getTime(slot.endDate)}
+                                                {timeTwoDigit(slot.startDate)} - {timeTwoDigit(slot.endDate)}
                                             </p>
                                         </>
                                     ) : (
                                         <>
                                             <p>{getDate(slot.startDate)}</p>
-                                            <p>{getTime(slot.startDate)}</p>
+                                            <p>{timeTwoDigit(slot.startDate)}</p>
                                             <p>{getDate(slot.endDate)}</p>
-                                            <p>{getTime(slot.endDate)}</p>
+                                            <p>{timeTwoDigit(slot.endDate)}</p>
                                         </>
                                     )}
                                 </div>
