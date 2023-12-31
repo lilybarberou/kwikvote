@@ -5,7 +5,7 @@ import { z } from 'zod';
 import webpush from 'web-push';
 import { format } from 'date-fns';
 import fr from 'date-fns/locale/fr';
-import { getTime } from '@/lib/utils';
+import { timeTwoDigit } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
 
                 const payload = JSON.stringify({
                     title: 'Vous êtes inscrit !',
-                    body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${getTime(slot.startDate)} !`,
+                    body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${timeTwoDigit(slot.startDate)} !`,
                     link: `${process.env.DOMAIN}/poll/${data.pollId}`,
                 });
 

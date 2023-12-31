@@ -1,4 +1,4 @@
-import { getTime } from '@/lib/utils';
+import { timeTwoDigit } from '@/lib/utils';
 import { prisma } from '@/prisma/db';
 import { format } from 'date-fns';
 import fr from 'date-fns/locale/fr';
@@ -82,7 +82,7 @@ export async function GET(_: NextRequest) {
     let count = 0;
     Object.values(subscriptionsBySlot).forEach((slot) => {
         const formattedDate = format(slot.startDate, 'eeee d', { locale: fr });
-        const body = `Il reste des places disponibles pour le créneau du ${formattedDate} à ${getTime(slot.startDate)} !`;
+        const body = `Il reste des places disponibles pour le créneau du ${formattedDate} à ${timeTwoDigit(slot.startDate)} !`;
 
         const payload = JSON.stringify({
             title: 'Pensez à vous inscrire !',

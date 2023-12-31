@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import webpush from 'web-push';
 import { format } from 'date-fns';
 import fr from 'date-fns/locale/fr';
-import { getTime } from '@/lib/utils';
+import { timeTwoDigit } from '@/lib/utils';
 
 webpush.setVapidDetails('mailto:' + process.env.NEXT_PUBLIC_VAPID_EMAIL, process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
 
@@ -97,7 +97,7 @@ export async function GET() {
 
                     const payload = JSON.stringify({
                         title: 'Vous êtes inscrit !',
-                        body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${getTime(slot.startDate)} !`,
+                        body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${timeTwoDigit(slot.startDate)} !`,
                         link: `${process.env.DOMAIN}/poll/${poll.id}`,
                     });
 

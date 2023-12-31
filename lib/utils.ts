@@ -1,4 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
 import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
@@ -10,16 +12,9 @@ export const sameDay = (d1: Date, d2: Date) => {
 };
 
 export const getDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('fr-FR', {
-        weekday: 'short',
-        day: '2-digit',
-        month: '2-digit',
-    });
+    return format(new Date(date), 'eee dd/MM', { locale: fr });
 };
 
-export const getTime = (date: Date) => {
-    return new Date(date).toLocaleTimeString('fr-FR', {
-        hour: '2-digit',
-        minute: '2-digit',
-    });
+export const timeTwoDigit = (date: Date) => {
+    return format(new Date(date), 'HH:mm');
 };

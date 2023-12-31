@@ -1,4 +1,4 @@
-import { getTime } from '@/lib/utils';
+import { timeTwoDigit } from '@/lib/utils';
 import { prisma } from '@/prisma/db';
 import { Prisma } from '@prisma/client';
 import { format } from 'date-fns';
@@ -101,7 +101,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
 
                 const payload = JSON.stringify({
                     title: 'Vous êtes inscrit !',
-                    body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${getTime(slot.startDate)} !`,
+                    body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${timeTwoDigit(slot.startDate)} !`,
                     link: `${process.env.DOMAIN}/poll/${body.pollId}`,
                 });
 
