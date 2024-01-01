@@ -137,7 +137,7 @@ export default function CreatePoll() {
                         Email
                         <span className="ml-2 text-muted-foreground text-sm">(Servira uniquement à retrouver vos différents sondages)</span>
                     </Label>
-                    <Input className="max-w-xs" {...register('email')} id="email" />
+                    <Input className="max-w-xs" {...register('email')} id="email" inputMode="email" />
                 </div>
                 {type === '2' && (
                     <div className="flex flex-col gap-3">

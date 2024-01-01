@@ -101,7 +101,7 @@ export default function Home() {
                 Si vous avez lié vos sondages à votre adresse mail, vous pourrez en retrouver un historique.
             </p>
             <form onSubmit={onSubmit} className="mb-32 w-full flex justify-center items-end gap-2">
-                <Input className="flex-1 sm:flex-initial sm:w-64" placeholder="Votre email..." {...register('email')} />
+                <Input className="flex-1 sm:flex-initial sm:w-64" placeholder="Votre email..." inputMode="email" {...register('email')} />
                 <Button>Rechercher</Button>
             </form>
             <FAQContent />
