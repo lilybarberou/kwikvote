@@ -43,9 +43,7 @@ export default function Home() {
     return (
         <div className="w-full flex flex-col items-center">
             <div className="absolute -z-10 top-0 w-full h-screen" style={{ background: ' radial-gradient(88.74% 100% at 50% 0%, #41A4C3 0%, #020817 100%)' }} />
-            <h1 className="mb-6 max-w-xl text-3xl font-semibold text-center sm:text-4xl">
-                Créez un sondage en quelques secondes et partagez-le avec vos amis.
-            </h1>
+            <h1 className="mb-6 max-w-xl text-3xl font-semibold text-center sm:text-4xl">Créez un sondage en quelques secondes et partagez-le avec vos amis</h1>
             <h2 className="mb-4 text-[#d5d5d5] text-center">C&apos;est simple, gratuit, et aucun compte n&apos;est requis.</h2>
             <div className="mb-14 flex gap-2">
                 <Button asChild variant="secondary">
