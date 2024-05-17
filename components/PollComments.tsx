@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import fr from 'date-fns/locale/fr';
+import { fr } from 'date-fns/locale/fr';
 import { useForm } from 'react-hook-form';
 import { Comment } from '@prisma/client';
 import { Input } from './ui/input';
@@ -12,65 +12,64 @@ import { useToast } from './ui/use-toast';
 import { useCommentsStore } from '@/lib/commentsStore';
 
 type Props = {
-    comments: Comment[];
-    pollId: string;
+  comments: Comment[];
+  pollId: string;
 };
 
 type CommentForm = {
-    author: string;
-    text: string;
+  author: string;
+  text: string;
 };
 
 export default function PollComments(props: Props) {
-    const { toast } = useToast();
-    const { pollId } = props;
-    const { subscription } = useNotificationsStore();
-    const { comments, addComment } = useCommentsStore();
-    const [submitLoading, setSubmitLoading] = useState(false);
-    const { register, handleSubmit, reset } = useForm<CommentForm>();
+  const { toast } = useToast();
+  const { pollId } = props;
+  const { subscription } = useNotificationsStore();
+  const { comments, addComment } = useCommentsStore();
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const { register, handleSubmit, reset } = useForm<CommentForm>();
 
-    // ADD A COMMENT
-    const onCommentSubmit = handleSubmit(async (data) => {
-        setSubmitLoading(true);
-        const res = await fetch('/api/comment', {
-            method: 'POST',
-            body: JSON.stringify({ comment: { ...data, pollId }, exceptEndpoint: subscription?.endpoint }),
-        });
-        setSubmitLoading(false);
-
-        const comment = await res.json();
-
-        if (res.status !== 200) {
-            toast({
-                title: 'Erreur lors de la création du commentaire',
-                description: 'Veuillez réessayer plus tard',
-                variant: 'destructive',
-            });
-        } else {
-            addComment(comment);
-            reset();
-        }
+  // ADD A COMMENT
+  const onCommentSubmit = handleSubmit(async (data) => {
+    setSubmitLoading(true);
+    const res = await fetch('/api/comment', {
+      method: 'POST',
+      body: JSON.stringify({ comment: { ...data, pollId }, exceptEndpoint: subscription?.endpoint }),
     });
+    setSubmitLoading(false);
 
-    return (
-        <div className="mt-6 flex flex-col gap-2">
-            {comments.map((comment, index) => (
-                <div key={comment.id} className={index < comments.length - 1 ? 'pb-3 border-b' : ''}>
-                    <p>
-                        {comment.author}{' '}
-                        <span className="ml-1 text-xs text-muted-foreground">{format(new Date(comment.createdAt), 'PPp', { locale: fr })}</span>
-                    </p>
-                    <p>{comment.text}</p>
-                </div>
-            ))}
-            <form onSubmit={onCommentSubmit} className="mt-5 p-2 max-w-[350px] flex flex-col gap-2 rounded bg-muted">
-                <Input className="w-[230px]" placeholder="Auteur" {...register('author', { required: true })} />
-                <Textarea placeholder="Message" {...register('text', { required: true })} />
-                <Button disabled={submitLoading}>
-                    Envoyer
-                    {submitLoading && <Loader2 className="ml-2 w-5 h-5 animate-spin" />}
-                </Button>
-            </form>
+    const comment = await res.json();
+
+    if (res.status !== 200) {
+      toast({
+        title: 'Erreur lors de la création du commentaire',
+        description: 'Veuillez réessayer plus tard',
+        variant: 'destructive',
+      });
+    } else {
+      addComment(comment);
+      reset();
+    }
+  });
+
+  return (
+    <div className="mt-6 flex flex-col gap-2">
+      {comments.map((comment, index) => (
+        <div key={comment.id} className={index < comments.length - 1 ? 'pb-3 border-b' : ''}>
+          <p>
+            {comment.author} <span className="ml-1 text-xs text-muted-foreground">{format(new Date(comment.createdAt), 'PPp', { locale: fr })}</span>
+          </p>
+          <p>{comment.text}</p>
         </div>
-    );
+      ))}
+      <form onSubmit={onCommentSubmit} className="mt-5 p-2 max-w-[350px] flex flex-col gap-2 rounded bg-muted">
+        <Input className="w-[230px]" placeholder="Auteur" {...register('author', { required: true })} />
+        <Textarea placeholder="Message" {...register('text', { required: true })} />
+        <Button disabled={submitLoading}>
+          Envoyer
+          {submitLoading && <Loader2 className="ml-2 w-5 h-5 animate-spin" />}
+        </Button>
+      </form>
+    </div>
+  );
 }
