@@ -14,23 +14,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = CreatePollSchema.parse(body);
 
-    // create start and end date time
-    data.slots = data.slots.map((slot) => {
-      const startDate = new Date(slot.startDate);
-      const endDate = new Date(slot.endDate);
-      const startTime = slot.startTime.split(':');
-      const endTime = slot.endTime.split(':');
-
-      // bc of separated date/hour, we need to set hours manually so its fr hours
-      // we need to parse this date to utc
-      startDate.setHours(+startTime[0], +startTime[1], 0, 0);
-      const utcStartDate = fromZonedTime(startDate, 'Europe/Paris');
-      endDate.setHours(+endTime[0], +endTime[1], 0, 0);
-      const utcEndDate = fromZonedTime(endDate, 'Europe/Paris');
-
-      return { ...slot, startDate: utcStartDate, endDate: utcEndDate };
-    });
-
     const poll = await prisma.poll.create({
       data: {
         type: data.type,
@@ -40,7 +23,7 @@ export async function POST(request: NextRequest) {
         timeBeforeAllowedType: data.timeBeforeAllowedType,
         msBeforeAllowed: data.msBeforeAllowed,
         slots: {
-          create: data.slots.map(({ startTime, endTime, ...slot }: z.infer<typeof CreateSlotSchema>) => slot),
+          create: data.slots.map((slot: z.infer<typeof CreateSlotSchema>) => slot),
         },
       },
     });
@@ -53,25 +36,22 @@ export async function POST(request: NextRequest) {
           // can't be reregistered on first slot
           if (index === 0) return arr;
 
-          // if startdate + starttime is before now, don't create cron schedule
-          const slotDate = new Date(curr.startDate);
-          const hours = curr.startTime.split(':')[0];
-          const minutes = curr.startTime.split(':')[1];
-          const slotDateTime = new Date(slotDate.setHours(+hours, +minutes, 0, 0));
-          if (slotDateTime.getTime() < Date.now()) return arr;
+          // if slot's startDate is before now, don't create cron schedule
+          if (new Date(curr.startDate).getTime() < Date.now()) return arr;
 
           const currentObj = { pollId: poll.id } as CronSchedule;
 
           // day before at 5pm
           if (poll.timeBeforeAllowedType == 1) {
-            const slotDate = new Date(curr.startDate);
-            slotDate.setDate(slotDate.getDate() - 1);
-            slotDate.setHours(17, 0, 0, 0);
-            currentObj.schedule = slotDate;
+            const cronDate = new Date(curr.startDate);
+            cronDate.setDate(cronDate.getDate() - 1);
+            cronDate.setHours(17, 0, 0, 0);
+            const utcCronDate = fromZonedTime(cronDate, 'Europe/Paris');
+            currentObj.schedule = utcCronDate;
           }
           // specific hours number before startDate
           else {
-            const timeBeforeDate = new Date(slotDateTime.getTime() - poll.msBeforeAllowed);
+            const timeBeforeDate = new Date(new Date(curr.startDate).getTime() - poll.msBeforeAllowed);
             currentObj.schedule = timeBeforeDate;
           }
 
@@ -93,9 +73,7 @@ export async function POST(request: NextRequest) {
 
 const CreateSlotSchema = z.object({
   startDate: z.string().or(z.date()),
-  startTime: z.string(),
   endDate: z.string().or(z.date()),
-  endTime: z.string(),
   maxParticipants: z.number().int().positive(),
 });
 
