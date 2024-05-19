@@ -3,6 +3,7 @@ const webpush = require('web-push');
 const { format } = require('date-fns/format');
 const { fr } = require('date-fns/locale/fr');
 const cron = require('node-cron');
+const { toZonedTime } = require('date-fns-tz');
 
 webpush.setVapidDetails('mailto:' + process.env.NEXT_PUBLIC_VAPID_EMAIL, process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
 
@@ -125,11 +126,13 @@ const doStuff = async () => {
         // send notifications
         Object.entries(votesNewlyRegistered.votesBySlot).forEach(([slotId, votes]) => {
           const slot = poll.slots.find((slot) => slot.id === slotId);
-          const formattedDate = format(slot.startDate, 'eeee d', { locale: fr });
+          const frSlotDate = toZonedTime(slot.startDate, 'Europe/Paris');
+          const formattedDate = format(frSlotDate, 'eeee d', { locale: fr });
+          const formattedTime = format(frSlotDate, 'HH:mm', { locale: fr });
 
           const payload = JSON.stringify({
             title: 'Vous êtes inscrit !',
-            body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${format(slot.startDate, 'kk:mm', { locale: fr })} !`,
+            body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${formattedTime} !`,
             link: `${process.env.DOMAIN}/poll/${poll.id}`,
           });
 
@@ -304,11 +307,14 @@ const checkTimeBeforeAllow = ({ timeBeforeAllowedType, msBeforeAllowed, slots })
 
     // date to compare is day before at 5pm
     if (timeBeforeAllowedType == 1) {
-      const dateToCompare = new Date(curr.startDate);
-      dateToCompare.setDate(dateToCompare.getDate() - 1);
-      dateToCompare.setHours(17, 0, 0, 0);
+      const dateToCompareFr = toZonedTime(curr.startDate, 'Europe/Paris');
+      dateToCompareFr.setDate(dateToCompareFr.getDate() - 1);
+      dateToCompareFr.setHours(17, 0, 0, 0);
 
-      obj[curr.id] = now.getTime() > dateToCompare.getTime();
+      // need now fr
+      const nowFr = toZonedTime(now, 'Europe/Paris');
+
+      obj[curr.id] = nowFr.getTime() > dateToCompareFr.getTime();
     }
     // specific hours number before startDate
     else {
@@ -318,10 +324,10 @@ const checkTimeBeforeAllow = ({ timeBeforeAllowedType, msBeforeAllowed, slots })
   }, {});
 };
 
-console.log(`Cron started on '${format(new Date(), 'eeee d MMMM kk:mm', { locale: fr })}'`);
+console.log(`Cron started on '${format(toZonedTime(new Date(), 'Europe/Paris'), 'eeee d MMMM kk:mm')}'`);
 
 cron.schedule('*/1 * * * *', async () => {
-  const formattedDate = format(new Date(), 'eeee d MMMM kk:mm', { locale: fr });
+  const formattedDateFr = format(toZonedTime(new Date(), 'Europe/Paris'), 'eeee d MMMM kk:mm');
   console.log(`START -- ${formattedDate} -------------------`);
   await doStuff();
   console.log('END --------------------------------------------------');
