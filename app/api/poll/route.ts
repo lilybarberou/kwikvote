@@ -2,7 +2,7 @@ import { prisma } from '@/prisma/db';
 import { CronSchedule } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { fromZonedTime } from 'date-fns-tz';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 
 export async function GET(_: NextRequest) {
   const polls = await prisma.poll.findMany();
@@ -43,11 +43,13 @@ export async function POST(request: NextRequest) {
 
           // day before at 5pm
           if (poll.timeBeforeAllowedType == 1) {
-            const cronDate = new Date(curr.startDate);
-            cronDate.setDate(cronDate.getDate() - 1);
-            cronDate.setHours(17, 0, 0, 0);
-            const utcCronDate = fromZonedTime(cronDate, 'Europe/Paris');
-            currentObj.schedule = utcCronDate;
+            // gen date at 5PM france time
+            const cronDateFr = toZonedTime(curr.startDate, 'Europe/Paris');
+            cronDateFr.setDate(cronDateFr.getDate() - 1);
+            cronDateFr.setHours(17, 0, 0, 0);
+
+            const cronDateUtc = fromZonedTime(cronDateFr, 'Europe/Paris');
+            currentObj.schedule = cronDateUtc;
           }
           // specific hours number before startDate
           else {
