@@ -328,7 +328,7 @@ console.log(`Cron started on '${format(toZonedTime(new Date(), 'Europe/Paris'), 
 
 cron.schedule('*/1 * * * *', async () => {
   const formattedDateFr = format(toZonedTime(new Date(), 'Europe/Paris'), 'eeee d MMMM kk:mm');
-  console.log(`START -- ${formattedDate} -------------------`);
+  console.log(`START -- ${formattedDateFr} -------------------`);
   await doStuff();
   console.log('END --------------------------------------------------');
 });
