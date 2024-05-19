@@ -2,6 +2,7 @@ import { timeTwoDigit } from '@/lib/utils';
 import { prisma } from '@/prisma/db';
 import { Prisma } from '@prisma/client';
 import { format } from 'date-fns';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import { fr } from 'date-fns/locale/fr';
 import { NextRequest, NextResponse } from 'next/server';
 import webpush from 'web-push';
@@ -276,11 +277,12 @@ const checkTimeBeforeAllow = ({
 
     // date to compare is day before at 5pm
     if (timeBeforeAllowedType == 1) {
-      const dateToCompare = new Date(curr.startDate);
-      dateToCompare.setDate(dateToCompare.getDate() - 1);
-      dateToCompare.setHours(17, 0, 0, 0);
+      const dateToCompareFr = toZonedTime(curr.startDate, 'Europe/Paris');
+      dateToCompareFr.setDate(dateToCompareFr.getDate() - 1);
+      dateToCompareFr.setHours(17, 0, 0, 0);
+      const dateToCompareUtc = fromZonedTime(dateToCompareFr, 'Europe/Paris');
 
-      obj[curr.id] = now.getTime() > dateToCompare.getTime();
+      obj[curr.id] = now.getTime() > dateToCompareUtc.getTime();
     }
     // specific hours number before startDate
     else {
