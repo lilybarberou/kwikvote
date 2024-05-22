@@ -12,11 +12,15 @@ export default function FAQContent(props: Props) {
         <AccordionItem value="item-1">
           <AccordionTrigger>Comment recevoir les notifications ?</AccordionTrigger>
           <AccordionContent>
+            <p className="underline">Android / Windows :</p>
             <p>
-              Pour recevoir les notifications sur un sondage, vous devez avoir un vote de créé sur celui-ci, quelques soient les choix définis. Ensuite, cliquez
-              sur l&apos;icône <Bell className="w-5 h-5 inline" /> et acceptez les notifications !
+              Pour recevoir les notifications sur un sondage, cliquez sur l&apos;icône <Bell className="w-5 h-5 inline" /> et acceptez les notifications !
+              Ensuite, inscrivez-vous sur un créneau, quelques soient vos choix.
             </p>
             <p className="text-xs mt-1 text-gray-300">(note: si vous avez désactivé les notifications de votre navigateur, vous ne pourrez pas les recevoir)</p>
+            <br />
+            <p className="underline">Iphone :</p>
+            <p>Malheureusement, les sites internet ne sont pas autorisés à envoyer de notifications sur Iphone.</p>
           </AccordionContent>
         </AccordionItem>
       )}
