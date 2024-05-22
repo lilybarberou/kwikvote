@@ -98,11 +98,13 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       // send notifications
       Object.entries(votesNewlyRegistered.votesBySlot).forEach(([slotId, votes]) => {
         const slot = poll.slots.find((slot) => slot.id === slotId)!;
-        const formattedDate = format(slot.startDate, 'eeee d', { locale: fr });
+        const frSlotDate = toZonedTime(slot.startDate, 'Europe/Paris');
+        const formattedDate = format(frSlotDate, 'eeee d', { locale: fr });
+        const formattedTime = format(frSlotDate, 'HH:mm', { locale: fr });
 
         const payload = JSON.stringify({
           title: 'Vous êtes inscrit !',
-          body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${timeTwoDigit(slot.startDate)} !`,
+          body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${formattedTime} !`,
           link: `${process.env.DOMAIN}/poll/${body.pollId}`,
         });
 
