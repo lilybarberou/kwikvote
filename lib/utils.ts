@@ -1,5 +1,7 @@
+import { Slot } from '@prisma/client';
 import { type ClassValue, clsx } from 'clsx';
 import { format } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { fr } from 'date-fns/locale';
 import { twMerge } from 'tailwind-merge';
 
@@ -17,4 +19,10 @@ export const getDate = (date: Date) => {
 
 export const timeTwoDigit = (date: Date) => {
   return format(new Date(date), 'HH:mm', { locale: fr });
+};
+
+export const getFormattedTimeBeforeAllowed = ({ timeBeforeAllowedType, msBeforeAllowed }: { timeBeforeAllowedType: number; msBeforeAllowed: number }) => {
+  if (timeBeforeAllowedType === 2) {
+    return `${msBeforeAllowed / 60 / 60 / 1000}h avant le début du créneau`;
+  } else return 'la veille à 17h';
 };

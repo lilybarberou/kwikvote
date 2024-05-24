@@ -234,7 +234,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
         </div>
         <TabsContent value="votes">
           {poll.type === 1 && <PollSlots slots={poll.slots} pollId={poll.id} />}
-          {poll.type === 2 && <RegistrationPoll slots={poll.slots} pollId={poll.id} />}
+          {poll.type === 2 && <RegistrationPoll slots={poll.slots} poll={poll} />}
         </TabsContent>
         <TabsContent value="comments">
           <PollComments comments={poll.comments} pollId={params.id} />
