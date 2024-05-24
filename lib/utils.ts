@@ -1,7 +1,5 @@
-import { Slot } from '@prisma/client';
 import { type ClassValue, clsx } from 'clsx';
 import { format } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
 import { fr } from 'date-fns/locale';
 import { twMerge } from 'tailwind-merge';
 
