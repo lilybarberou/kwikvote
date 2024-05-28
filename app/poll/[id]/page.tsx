@@ -30,15 +30,13 @@ import {
 import { useHistoryStore } from '@/lib/historyStore';
 import RegistrationPoll from '@/components/RegistrationPoll';
 import { useCommentsStore } from '@/lib/commentsStore';
-import { useSearchParams } from 'next/navigation';
 import DialogPollLink from '@/components/DialogPollLink';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { AnimatePresence, motion } from 'framer-motion';
+import { parseAsString, useQueryState } from 'nuqs';
 
 export default function PollPage({ params }: { params: { id: string } }) {
-  const searchParams = useSearchParams();
-  const tabParam = searchParams.get('tab');
-  const defaultTab = tabParam === 'comments' ? 'comments' : 'votes';
+  const [tab] = useQueryState('tab', parseAsString.withDefault('votes'));
 
   const alreadyVisited = typeof window !== 'undefined' ? localStorage.getItem('alreadyVisited') : null;
   const [dialogWarnNotifOpen, setDialogWarnNotifOpen] = useState(!alreadyVisited);
@@ -181,7 +179,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
           <AlertDescription>{poll.description}</AlertDescription>
         </Alert>
       )}
-      <Tabs defaultValue={defaultTab} className="mt-10">
+      <Tabs defaultValue={tab} className="mt-10">
         <div className="flex gap-2">
           <TabsList>
             <TabsTrigger value="votes">Votes</TabsTrigger>
