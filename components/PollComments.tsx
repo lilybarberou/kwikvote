@@ -59,7 +59,7 @@ export default function PollComments(props: Props) {
           <p>
             {comment.author} <span className="ml-1 text-xs text-muted-foreground">{format(new Date(comment.createdAt), 'PPp', { locale: fr })}</span>
           </p>
-          <p>{comment.text}</p>
+          <p className="whitespace-pre-wrap">{comment.text}</p>
         </div>
       ))}
       <form onSubmit={onCommentSubmit} className="mt-5 p-2 max-w-[350px] flex flex-col gap-2 rounded bg-muted">
