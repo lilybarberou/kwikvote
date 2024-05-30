@@ -61,3 +61,7 @@
 html {
     scroll-behavior: smooth;
 }
+
+input[type="time"]::-webkit-calendar-picker-indicator{
+    filter: invert(1);
+}
