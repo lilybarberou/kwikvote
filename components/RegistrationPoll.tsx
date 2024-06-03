@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { getDate, timeTwoDigit, sameDay, getFormattedTimeBeforeAllowed } from '@/lib/utils';
 import { useVotesStore } from '@/lib/votesStore';
 import { PollSlot } from '@/app/api/poll/id/[value]/route';
@@ -68,7 +68,7 @@ export default function RegistrationPoll(props: Props) {
       <Table>
         <TableHeader>
           <TableRow className="!border-0 hover:bg-transparent">
-            <TableHead className="pl-2 w-[330px] min-w-[210px]">
+            <TableHead className="pl-2 w-[330px] min-w-[140px]">
               <RegistrationPollHelp />
             </TableHead>
             {slots.map((slot) => (
@@ -96,7 +96,7 @@ export default function RegistrationPoll(props: Props) {
         </TableHeader>
         <TableBody>
           {slotArraysLabel.map((array, index) => (
-            <>
+            <Fragment key={array.key}>
               <TableRow className={`mt-4 bg-[#101929] border-0 border-transparent ${index !== 0 ? 'border-t-8' : ''}`} key={array.key}>
                 <TableCell className="py-2 font-bold rounded-tl-lg rounded-bl-lg whitespace-pre-wrap">
                   <p>{array.label}</p>
@@ -128,7 +128,7 @@ export default function RegistrationPoll(props: Props) {
                   ))}
                 </TableRow>
               ))}
-            </>
+            </Fragment>
           ))}
         </TableBody>
       </Table>
