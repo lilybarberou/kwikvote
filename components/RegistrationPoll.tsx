@@ -1,5 +1,5 @@
 import { Fragment, useState } from 'react';
-import { getDate, timeTwoDigit, sameDay, getFormattedTimeBeforeAllowed } from '@/lib/utils';
+import { getDate, timeTwoDigit, sameDay, getFormattedTimeBeforeAllowed, cn } from '@/lib/utils';
 import { useVotesStore } from '@/lib/votesStore';
 import { PollSlot } from '@/app/api/poll/id/[value]/route';
 import { Dialog, DialogTrigger } from './ui/dialog';
@@ -8,6 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import DialogVote from './DialogVote';
 import RegistrationPollHelp from './RegistrationPollHelp';
 import { Poll } from '@prisma/client';
+import { useNotificationsStore } from '@/lib/notificationsStore';
+import { Edit, XIcon } from 'lucide-react';
+import { useAlertStore } from '@/lib/alertStore';
 
 type Props = {
   slots: PollSlot[];
@@ -23,8 +26,10 @@ type VotesBySlotId = {
 export default function RegistrationPoll(props: Props) {
   const [slots, setSlots] = useState(props.slots);
   const { votes } = useVotesStore();
+  const { subscription } = useNotificationsStore();
   const [currentVoteId, setCurrentVoteId] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { alerts, updateAlert } = useAlertStore();
 
   const TBA = getFormattedTimeBeforeAllowed({ timeBeforeAllowedType: props.poll.timeBeforeAllowedType, msBeforeAllowed: props.poll.msBeforeAllowed });
 
@@ -65,6 +70,27 @@ export default function RegistrationPoll(props: Props) {
           Nouvelle inscription
         </Button>
       </DialogTrigger>
+
+      {/* INFO */}
+      {!alerts.pollLegend && (
+        <div className="bg-gray-600/20 w-fit rounded-md flex p-2 gap-3 mt-2">
+          <div className="my-2 gap-2 grid grid-cols-[30px,1fr] items-center gap-x-2">
+            {!!subscription && (
+              <>
+                <div className="w-[30px] h-[15px] rounded-sm bg-primary/40" />
+                <p className="text-xs text-gray-400">Votes pour lesquels vous recevez les notifications</p>
+              </>
+            )}
+            <Edit className="w-3 h-3  mx-auto stroke-gray-400" />
+            <p className="text-xs text-gray-400">Pour modifier un vote, cliquez sur celui-ci</p>
+          </div>
+          <Button onClick={() => updateAlert('pollLegend', true)} variant="ghost" className="p-1 h-fit">
+            <XIcon className="w-3 h-3 mx-auto stroke-gray-400" />
+          </Button>
+        </div>
+      )}
+
+      {/* TABLE */}
       <Table>
         <TableHeader>
           <TableRow className="!border-0 hover:bg-transparent">
@@ -117,15 +143,20 @@ export default function RegistrationPoll(props: Props) {
               <TableRow className="table-cell border-0 hover:bg-transparent" />
               {slots.map((slot) => (
                 <TableRow className="table-cell border-0 hover:bg-transparent text-center" key={slot.id}>
-                  {slot[array.key].map((voteId) => (
-                    <DialogTrigger key={voteId} asChild>
-                      <TableCell className="py-1 px-0 block bg-background" onClick={() => setCurrentVoteId(voteId)}>
-                        <Button className="p-2 w-full" variant="ghost">
-                          {votes[voteId].name}
-                        </Button>
-                      </TableCell>
-                    </DialogTrigger>
-                  ))}
+                  {slot[array.key].map((voteId) => {
+                    const vote = votes[voteId];
+                    const isAuthorOfVote = vote?.subscriptions?.some((sub) => sub.endpoint === subscription?.endpoint);
+
+                    return (
+                      <DialogTrigger key={voteId} asChild>
+                        <TableCell className="py-1 px-1 block bg-background" onClick={() => setCurrentVoteId(voteId)}>
+                          <Button className={cn('p-2 w-full', isAuthorOfVote && 'bg-primary/40 hover:bg-primary/30')} variant="ghost">
+                            {vote?.name}
+                          </Button>
+                        </TableCell>
+                      </DialogTrigger>
+                    );
+                  })}
                 </TableRow>
               ))}
             </Fragment>
