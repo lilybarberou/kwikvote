@@ -12,7 +12,7 @@ export const sameDay = (d1: Date, d2: Date) => {
 };
 
 export const getDate = (date: Date) => {
-  return format(new Date(date), 'eee dd/MM', { locale: fr });
+  return format(new Date(date), 'EEEE dd/MM', { locale: fr });
 };
 
 export const timeTwoDigit = (date: Date) => {

@@ -57,7 +57,7 @@ export default function PollComments(props: Props) {
       {comments.map((comment, index) => (
         <div key={comment.id} className={index < comments.length - 1 ? 'pb-3 border-b' : ''}>
           <p>
-            {comment.author} <span className="ml-1 text-xs text-muted-foreground">{format(new Date(comment.createdAt), 'PPp', { locale: fr })}</span>
+            {comment.author} <span className="ml-1 text-xs text-muted-foreground">{format(new Date(comment.createdAt), 'EEEE PPp', { locale: fr })}</span>
           </p>
           <p className="whitespace-pre-wrap">{comment.text}</p>
         </div>
