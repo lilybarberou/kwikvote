@@ -151,7 +151,7 @@ export default function RegistrationPoll(props: Props) {
                       <DialogTrigger key={voteId} asChild>
                         <TableCell className="py-1 px-1 block bg-background" onClick={() => setCurrentVoteId(voteId)}>
                           <Button className={cn('p-2 w-full', isAuthorOfVote && 'bg-primary/40 hover:bg-primary/30')} variant="ghost">
-                            {vote?.name}
+                            <p className="max-w-[200px] truncate">{vote?.name}</p>
                           </Button>
                         </TableCell>
                       </DialogTrigger>
