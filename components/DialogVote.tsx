@@ -154,7 +154,7 @@ export default function DialogVote(props: Props) {
   };
 
   return (
-    <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="w-11/12 max-w-[360px]">
+    <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="w-11/12 max-w-[400px]">
       <DialogTitleBySlotType />
       <form onSubmit={submitVote}>
         <Label className="mt-4" htmlFor="name">

@@ -102,16 +102,16 @@ export default function RegistrationPoll(props: Props) {
                 <div className="text-center whitespace-nowrap">
                   {sameDay(new Date(slot.startDate), new Date(slot.endDate)) ? (
                     <>
-                      <p>{getDate(slot.startDate)}</p>
+                      <p className="capitalize">{getDate(slot.startDate)}</p>
                       <p>
                         {timeTwoDigit(slot.startDate)} - {timeTwoDigit(slot.endDate)}
                       </p>
                     </>
                   ) : (
                     <>
-                      <p>{getDate(slot.startDate)}</p>
+                      <p className="capitalize">{getDate(slot.startDate)}</p>
                       <p>{timeTwoDigit(slot.startDate)}</p>
-                      <p>{getDate(slot.endDate)}</p>
+                      <p className="capitalize">{getDate(slot.endDate)}</p>
                       <p>{timeTwoDigit(slot.endDate)}</p>
                     </>
                   )}
