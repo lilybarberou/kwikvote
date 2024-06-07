@@ -1,3 +1,5 @@
+'use client';
+
 import { SetStateAction, useEffect, useState } from 'react';
 import { v4 } from 'uuid';
 import { Controller, useForm } from 'react-hook-form';
@@ -13,6 +15,7 @@ import { Button } from './ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useNotificationsStore } from '@/lib/notificationsStore';
 import { PollSlot } from '@/app/api/poll/id/[value]/route';
+import { useMediaQuery } from 'usehooks-ts';
 
 type Props = {
   slots: { id: string; startDate: Date; endDate: Date }[];
@@ -37,6 +40,7 @@ export default function DialogVote(props: Props) {
     reset,
     formState: { errors },
   } = useForm<{ name: string; [key: string]: string }>();
+  const isMobile = useMediaQuery('(max-width: 700px)');
 
   useEffect(() => {
     reset();
@@ -154,7 +158,13 @@ export default function DialogVote(props: Props) {
   };
 
   return (
-    <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="w-11/12 max-w-[400px]">
+    <DialogContent
+      onInteractOutside={(e) => {
+        if (isMobile) e.preventDefault();
+      }}
+      onOpenAutoFocus={(e) => e.preventDefault()}
+      className="w-11/12 max-w-[400px]"
+    >
       <DialogTitleBySlotType />
       <form onSubmit={submitVote}>
         <Label className="mt-4" htmlFor="name">
