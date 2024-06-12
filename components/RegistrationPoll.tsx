@@ -142,7 +142,7 @@ export default function RegistrationPoll(props: Props) {
               </TableRow>
               <TableRow className="table-cell border-0 hover:bg-transparent" />
               {slots.map((slot) => (
-                <TableRow className="table-cell border-0 hover:bg-transparent text-center" key={slot.id}>
+                <TableRow className="table-cell border-0 hover:bg-transparent text-center align-top" key={slot.id}>
                   {slot[array.key].map((voteId) => {
                     const vote = votes[voteId];
                     const isAuthorOfVote = vote?.subscriptions?.some((sub) => sub.endpoint === subscription?.endpoint);
