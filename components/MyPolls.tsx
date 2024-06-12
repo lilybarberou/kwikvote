@@ -20,7 +20,7 @@ type SearchSchema = z.infer<typeof SearchSchema>;
 export const MyPolls = () => {
   const [email, setEmail] = useQueryState('email', parseAsString);
 
-  const { isLoading, data: polls = [] } = useSWR<{ id: string; title: string }[]>(`/api/poll/email/${email}`, fetcher);
+  const { isLoading, data: polls = [] } = useSWR<{ id: string; title: string }[]>(`/api/poll/email/${email?.toLowerCase()}`, fetcher);
 
   const { register, handleSubmit, getValues } = useForm<SearchSchema>({
     resolver: zodResolver(SearchSchema),
