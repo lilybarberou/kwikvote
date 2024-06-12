@@ -91,6 +91,7 @@ export default function CreatePoll() {
       body: JSON.stringify({
         ...data,
         slots,
+        email: data.email?.toLowerCase() || undefined,
         type: Number(data.type),
         timeBeforeAllowedType: Number(data.timeBeforeAllowedType),
         msBeforeAllowed,
