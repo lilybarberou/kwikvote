@@ -136,7 +136,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
     return (
       <div className="mx-auto mt-32 flex flex-col justify-center items-center">
         <BarChart3 className="mb-10 w-24 h-24" />
-        <p className="text-2xl font-bold">Ce sondage n&apos;existe pas</p>
+        <p className="text-2xl font-bold">Ce sondage n'existe pas</p>
         <p className="text-muted-foreground text-center">
           Vous pouvez créer un sondage via la{' '}
           <Link className="text-primary" href="/poll/create">
@@ -159,7 +159,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
             <Card className="p-4">
               <CardTitle className="text-lg">Activer les notifications</CardTitle>
               <CardDescription>
-                <p> Vous recevrez une notification lorsqu&apos;un nouveau commentaire sera posté, ainsi que pour vous avertir de place disponible.</p>
+                <p> Vous recevrez une notification lorsqu'un nouveau commentaire sera posté, ainsi que pour vous avertir de place disponible.</p>
                 <div className="mt-2 flex justify-end gap-2">
                   <Button onClick={dismissNotif} variant="outline">
                     Non merci
@@ -205,7 +205,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Activer les notifications</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Vous recevrez une notification lorsqu&apos;un nouveau commentaire sera posté, ainsi que pour vous avertir de place disponible.
+                    Vous recevrez une notification lorsqu'un nouveau commentaire sera posté, ainsi que pour vous avertir de place disponible.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

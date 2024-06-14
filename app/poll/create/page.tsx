@@ -135,7 +135,7 @@ export default function CreatePoll() {
                   htmlFor="type-2"
                   className="!ml-0 p-3 h-44 flex flex-col justify-center items-center cursor-pointer rounded border border-[#ffffff33] text-center peer-data-[state=checked]:bg-[#ffffff1a]"
                 >
-                  <p className="mb-2">Sondage avec liste d&apos;attente</p>
+                  <p className="mb-2">Sondage avec liste d'attente</p>
                   <Image className="w-32 object-cover" width={400} height={400} src="/poll-22.png" alt="Sondage avec liste d'attente" />
                 </Label>
               </div>
