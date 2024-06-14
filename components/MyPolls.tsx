@@ -49,7 +49,7 @@ const NoPolls = () => {
   return (
     <div className="mt-24 flex flex-col justify-center items-center">
       <Bird className="mb-10 w-24 h-24" />
-      <p className="text-2xl font-bold">C&apos;est vide !</p>
+      <p className="text-2xl font-bold">C'est vide !</p>
       <p className="text-muted-foreground text-center">
         Vous pouvez créer un sondage via la{' '}
         <Link className="text-primary" href="/poll/create">
