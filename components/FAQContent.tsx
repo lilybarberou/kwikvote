@@ -1,5 +1,5 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Bell } from 'lucide-react';
+import { Bell, ShareIcon } from 'lucide-react';
 
 type Props = {
   faqPage?: boolean;
@@ -12,15 +12,17 @@ export default function FAQContent(props: Props) {
         <AccordionItem value="item-1">
           <AccordionTrigger>Comment recevoir les notifications ?</AccordionTrigger>
           <AccordionContent>
-            <p className="underline">Android / Windows :</p>
             <p>
-              Pour recevoir les notifications sur un sondage, cliquez sur l&apos;icône <Bell className="w-5 h-5 inline" /> et acceptez les notifications !
-              Ensuite, inscrivez-vous sur un créneau, quelques soient vos choix.
+              Pour recevoir les notifications sur un sondage, cliquez sur l'icône <Bell className="w-5 h-5 inline" /> et acceptez les notifications ! Ensuite,
+              inscrivez-vous sur un créneau, quelques soient vos choix.
             </p>
             <p className="text-xs mt-1 text-gray-300">(note: si vous avez désactivé les notifications de votre navigateur, vous ne pourrez pas les recevoir)</p>
             <br />
-            <p className="underline">Iphone :</p>
-            <p>Malheureusement, les sites internet ne sont pas autorisés à envoyer de notifications sur Iphone.</p>
+            <p className="underline">Spécification Iphone :</p>
+            <p>
+              Pour pouvoir activer les notifications sur Iphone (safari), vous devez tout d'abord installer l'application via l'icône{' '}
+              <ShareIcon className="w-5 h-5 inline" /> puis "sur l'écran d'accueil".
+            </p>
           </AccordionContent>
         </AccordionItem>
       )}
