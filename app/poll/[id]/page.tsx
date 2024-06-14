@@ -76,7 +76,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
 
       init({
         notificationsSupported,
-        notificationsPermission: Notification.permission,
+        notificationsPermission: notificationsSupported ? Notification.permission : 'default',
         subscription: sub
           ? {
               endpoint: sub.endpoint!,
