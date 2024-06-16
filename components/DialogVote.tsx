@@ -40,48 +40,58 @@ export default function DialogVote(props: Props) {
     reset,
     formState: { errors },
   } = useForm<{ name: string; [key: string]: string }>();
+
   const isMobile = useMediaQuery('(max-width: 700px)');
+  const isFreePoll = pollType == 1;
+  const isRegistrationPoll = pollType == 2;
 
   useEffect(() => {
     reset();
   }, [currentVoteId, reset]);
 
   const submitVote = handleSubmit(async (data) => {
+    const areSameChoices = votes[currentVoteId]?.choices.every((choice) => choice.choice === parseInt(data[`choice-${choice.slotId}`]));
+    const isSameName = votes[currentVoteId]?.name === data.name;
+
+    // CASE UPDATE
     // check if choices have been modified
-    if (currentVoteId && votes[currentVoteId]?.choices.every((choice) => choice.choice === parseInt(data[`choice-${choice.slotId}`]))) {
+    if (currentVoteId && areSameChoices) {
       // check if name has been modified
-      if (votes[currentVoteId]?.name === data.name) {
+      if (isSameName) {
         // do not submit  if nothing has changed
         closeDialog();
         return;
-      } else {
-        // submit name only
-        setLoading(true);
-        const res = await fetch('/api/vote/name', {
-          method: 'PUT',
-          body: JSON.stringify({
-            voteId: currentVoteId,
-            name: data.name,
-          }),
-        });
-        setLoading(false);
-
-        if (res.ok) {
-          addVote({ ...votes[currentVoteId], name: data.name });
-          closeDialog();
-          reset();
-          setCurrentVoteId('edited'); // TODO FAIRE MIEUX
-          return;
-        } else {
-          toast({
-            title: 'Erreur lors de la modification du vote',
-            description: 'Veuillez réessayer plus tard',
-            variant: 'destructive',
-          });
-        }
       }
+
+      // submit name only
+      setLoading(true);
+      const res = await fetch('/api/vote/name', {
+        method: 'PUT',
+        body: JSON.stringify({
+          voteId: currentVoteId,
+          name: data.name,
+        }),
+      });
+      setLoading(false);
+
+      if (res.ok) {
+        // update vote in store
+        addVote({ ...votes[currentVoteId], name: data.name });
+        closeDialog();
+        reset();
+        setCurrentVoteId('edited'); // TODO FAIRE MIEUX
+      } else {
+        toast({
+          title: 'Erreur lors de la modification du vote',
+          description: 'Veuillez réessayer plus tard',
+          variant: 'destructive',
+        });
+      }
+
+      return;
     }
 
+    // CASE CREATE
     const formattedData = {
       id: currentVoteId || v4(),
       name: data.name,
@@ -104,7 +114,8 @@ export default function DialogVote(props: Props) {
     setLoading(false);
 
     if (res.ok) {
-      if (pollType == 2 && setSlots) {
+      if (isRegistrationPoll && setSlots) {
+        // update local slots with new sorts
         const resData = await res.json();
         setSlots((prevSlots) => prevSlots.map((slot) => ({ ...slot, ...(resData.slots[slot.id] || {}) })));
       }
@@ -128,8 +139,9 @@ export default function DialogVote(props: Props) {
     });
 
     if (res.ok) {
-      if (pollType == 1) deleteVote(currentVoteId);
-      else if (pollType == 2 && setSlots) {
+      deleteVote(currentVoteId);
+
+      if (isRegistrationPoll && setSlots) {
         const resData = await res.json();
         if (resData.slots) {
           setSlots((prevSlots) => prevSlots.map((slot) => ({ ...slot, ...(resData.slots[slot.id] || {}) })));
@@ -148,9 +160,9 @@ export default function DialogVote(props: Props) {
 
   const DialogTitleBySlotType = () => {
     let text = '';
-    if (pollType == 1) {
+    if (isFreePoll) {
       text = currentVoteId ? 'Modifier un vote' : 'Ajouter un vote';
-    } else if (pollType == 2) {
+    } else if (isRegistrationPoll) {
       text = currentVoteId ? 'Modifier une inscription' : 'Ajouter une inscription';
     }
 
@@ -209,7 +221,7 @@ export default function DialogVote(props: Props) {
                       >
                         <SelectItem value="1">Oui</SelectItem>
                         <SelectItem value="2">Non</SelectItem>
-                        {pollType == 1 && <SelectItem value="3">Ne sais pas</SelectItem>}
+                        {isFreePoll && <SelectItem value="3">Ne sais pas</SelectItem>}
                       </SelectContent>
                     </Select>
                   )}
