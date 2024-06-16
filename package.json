@@ -6,6 +6,7 @@
     "dev": "next dev -p 2112",
     "build": "npm run prisma && next build",
     "start": "next start -p 1912",
+    "preprod": "next start -p 1913",
     "lint": "next lint",
     "prisma": "npx prisma generate && npx prisma db push",
     "studio": "npx prisma studio"
