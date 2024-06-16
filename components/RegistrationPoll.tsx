@@ -1,3 +1,5 @@
+'use client';
+
 import { Fragment, useState } from 'react';
 import { getDate, timeTwoDigit, sameDay, getFormattedTimeBeforeAllowed, cn } from '@/lib/utils';
 import { useVotesStore } from '@/lib/votesStore';
@@ -11,6 +13,7 @@ import { Poll } from '@prisma/client';
 import { useNotificationsStore } from '@/lib/notificationsStore';
 import { Edit, XIcon } from 'lucide-react';
 import { useAlertStore } from '@/lib/alertStore';
+import { Checkbox } from './ui/checkbox';
 
 type Props = {
   slots: PollSlot[];
@@ -25,10 +28,11 @@ type VotesBySlotId = {
 
 export default function RegistrationPoll(props: Props) {
   const [slots, setSlots] = useState(props.slots);
-  const { votes } = useVotesStore();
-  const { subscription } = useNotificationsStore();
   const [currentVoteId, setCurrentVoteId] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [showAllNotComing, setShowAllNotComing] = useState(false);
+  const { votes } = useVotesStore();
+  const { subscription } = useNotificationsStore();
   const { alerts, updateAlert } = useAlertStore();
 
   const TBA = getFormattedTimeBeforeAllowed({ timeBeforeAllowedType: props.poll.timeBeforeAllowedType, msBeforeAllowed: props.poll.msBeforeAllowed });
@@ -121,46 +125,64 @@ export default function RegistrationPoll(props: Props) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {slotArraysLabel.map((array, index) => (
-            <Fragment key={array.key}>
-              <TableRow className={`mt-4 bg-[#101929] border-0 border-transparent ${index !== 0 ? 'border-t-8' : ''}`} key={array.key}>
-                <TableCell className="py-2 font-bold rounded-tl-lg rounded-bl-lg whitespace-pre-wrap">
-                  <p>{array.label}</p>
-                  <span className="text-xs text-gray-400">{array.detail}</span>
-                </TableCell>
-                {slots.map((slot, index) => (
-                  <TableCell
-                    className={`text-center ${
-                      array.key === 'registered' && slot.registered.length == slot.maxParticipants ? 'text-red-500' : 'text-muted-foreground'
-                    } ${index === slots.length - 1 ? 'rounded-tr-lg rounded-br-lg' : ''}`}
-                    key={slot.id}
-                  >
-                    {array.key === 'registered' && `${slot.registered.length}/${slot.maxParticipants}`}
-                    {array.key !== 'registered' && slot[array.key].length}
-                  </TableCell>
-                ))}
-              </TableRow>
-              <TableRow className="table-cell border-0 hover:bg-transparent" />
-              {slots.map((slot) => (
-                <TableRow className="table-cell border-0 hover:bg-transparent text-center align-top" key={slot.id}>
-                  {slot[array.key].map((voteId) => {
-                    const vote = votes[voteId];
-                    const isAuthorOfVote = vote?.subscriptions?.some((sub) => sub.endpoint === subscription?.endpoint);
+          {slotArraysLabel.map((array, index) => {
+            const isNotComingColumn = array.key === 'notComing';
 
-                    return (
-                      <DialogTrigger key={voteId} asChild>
-                        <TableCell className="py-1 px-1 block bg-background" onClick={() => setCurrentVoteId(voteId)}>
-                          <Button className={cn('p-2 w-full', isAuthorOfVote && 'bg-primary/40 hover:bg-primary/30')} variant="ghost">
-                            <p className="max-w-[200px] truncate">{vote?.name}</p>
-                          </Button>
-                        </TableCell>
-                      </DialogTrigger>
-                    );
-                  })}
+            return (
+              <Fragment key={array.key}>
+                <TableRow className={`mt-4 bg-[#101929] border-0 border-transparent ${index !== 0 ? 'border-t-8' : ''}`}>
+                  <TableCell className="py-2 font-bold rounded-tl-lg rounded-bl-lg whitespace-pre-wrap">
+                    <p>{array.label}</p>
+                    <span className="text-xs text-gray-400">{array.detail}</span>
+                    {isNotComingColumn && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <Checkbox id="show-all-not-coming" onCheckedChange={() => setShowAllNotComing((prev) => !prev)} />
+                        <label className="font-normal" htmlFor="show-all-not-coming">
+                          Voir tout
+                        </label>
+                      </div>
+                    )}
+                  </TableCell>
+                  {slots.map((slot, index) => (
+                    <TableCell
+                      className={`text-center ${
+                        array.key === 'registered' && slot.registered.length == slot.maxParticipants ? 'text-red-500' : 'text-muted-foreground'
+                      } ${index === slots.length - 1 ? 'rounded-tr-lg rounded-br-lg' : ''}`}
+                      key={slot.id}
+                    >
+                      {array.key === 'registered' && `${slot.registered.length}/${slot.maxParticipants}`}
+                      {array.key !== 'registered' && slot[array.key].length}
+                    </TableCell>
+                  ))}
                 </TableRow>
-              ))}
-            </Fragment>
-          ))}
+                <TableRow className="table-cell border-0 hover:bg-transparent" />
+                {slots.map((slot) => (
+                  <TableRow className="table-cell border-0 hover:bg-transparent text-center align-top" key={slot.id}>
+                    {slot[array.key]
+                      // put author's votes first
+                      .sort((voteId) => {
+                        return votes[voteId]?.subscriptions?.some((sub) => sub.endpoint === subscription?.endpoint) ? -1 : 1;
+                      })
+                      .map((voteId) => {
+                        const vote = votes[voteId];
+                        const isAuthorOfVote = vote?.subscriptions?.some((sub) => sub.endpoint === subscription?.endpoint);
+
+                        if (isNotComingColumn && !isAuthorOfVote && !showAllNotComing) return null;
+                        return (
+                          <DialogTrigger key={voteId} asChild>
+                            <TableCell className="py-1 px-1 block bg-background" onClick={() => setCurrentVoteId(voteId)}>
+                              <Button className={cn('p-2 w-full', isAuthorOfVote && 'bg-primary/40 hover:bg-primary/30')} variant="ghost">
+                                <p className="max-w-[200px] truncate">{vote?.name}</p>
+                              </Button>
+                            </TableCell>
+                          </DialogTrigger>
+                        );
+                      })}
+                  </TableRow>
+                ))}
+              </Fragment>
+            );
+          })}
         </TableBody>
       </Table>
     </Dialog>
