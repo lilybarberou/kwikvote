@@ -34,15 +34,17 @@ import DialogPollLink from '@/components/DialogPollLink';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { AnimatePresence, motion } from 'framer-motion';
 import { parseAsString, useQueryState } from 'nuqs';
+import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export default function PollPage({ params }: { params: { id: string } }) {
   const [tab] = useQueryState('tab', parseAsString.withDefault('votes'));
 
   const alreadyVisited = typeof window !== 'undefined' ? localStorage.getItem('alreadyVisited') : null;
   const [dialogWarnNotifOpen, setDialogWarnNotifOpen] = useState(!alreadyVisited);
-  const { notificationsSupported, notificationsPermission, init } = useNotificationsStore();
+  const { notificationsSupported, notificationsPermission, init, subscription } = useNotificationsStore();
 
-  const { initVotes } = useVotesStore();
+  const { initVotes, votes } = useVotesStore();
   const { addPollToHistory } = useHistoryStore();
   const { comments, initComments } = useCommentsStore();
   const { toast } = useToast();
@@ -57,6 +59,9 @@ export default function PollPage({ params }: { params: { id: string } }) {
       addPollToHistory(params.id, data.title || '');
     },
   });
+
+  const isRegistrationPoll = poll?.type == 2;
+  const hasSomeVotes = Object.values(votes).some((v) => v.subscriptions.some((s) => s.endpoint === subscription?.endpoint));
 
   // NOTIFICATIONS MANAGEMENT
   useEffect(() => {
@@ -120,8 +125,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
       });
       toast({
         title: 'Notifications activées',
-        description:
-          "Vous recevrez une notification lorsqu'un nouveau commentaire sera posté, ainsi que pour être prévenu de votre inscription lorsque vous êtes en liste d'attente.",
+        description: `Il ne vous reste plus qu'à vous inscrire au sondage !`,
       });
     } else toast({ title: 'Erreur', description: "Une erreur est survenue lors de l'activation des notifications." });
   };
@@ -159,7 +163,10 @@ export default function PollPage({ params }: { params: { id: string } }) {
             <Card className="p-4">
               <CardTitle className="text-lg">Activer les notifications</CardTitle>
               <CardDescription>
-                <p> Vous recevrez une notification lorsqu'un nouveau commentaire sera posté, ainsi que pour vous avertir de place disponible.</p>
+                <p>
+                  Vous recevrez une notification lorsqu'un nouveau commentaire sera posté
+                  {isRegistrationPoll ? ", ainsi que pour être prévenu de votre inscription lorsque vous êtes en liste d'attente." : '.'}
+                </p>
                 <div className="mt-2 flex justify-end gap-2">
                   <Button onClick={dismissNotif} variant="outline">
                     Non merci
@@ -205,7 +212,8 @@ export default function PollPage({ params }: { params: { id: string } }) {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Activer les notifications</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Vous recevrez une notification lorsqu'un nouveau commentaire sera posté, ainsi que pour vous avertir de place disponible.
+                    Vous recevrez une notification lorsqu'un nouveau commentaire sera posté
+                    {isRegistrationPoll ? ", ainsi que pour être prévenu de votre inscription lorsque vous êtes en liste d'attente." : '.'}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -216,18 +224,18 @@ export default function PollPage({ params }: { params: { id: string } }) {
             </AlertDialog>
           )}
           {notificationsPermission === 'granted' && (
-            <TooltipProvider>
-              <Tooltip delayDuration={300}>
-                <TooltipTrigger asChild>
-                  <div className="w-10 h-10 flex justify-center items-center border rounded-sm text-black bg-green-400">
-                    <BellRing className="w-5 h-5" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom">
-                  <p>Notifications activées</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Popover>
+              <PopoverTrigger>
+                <div className={cn('w-10 h-10 flex justify-center items-center border rounded-sm text-black', hasSomeVotes ? 'bg-green-400' : 'bg-gray-400')}>
+                  <BellRing className="w-5 h-5" />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent side="bottom">
+                <p className="text-sm text-center">
+                  {hasSomeVotes ? 'Notifications activées pour ce sondage' : 'En attente de votre vote pour activer les notifications sur ce sondage'}
+                </p>
+              </PopoverContent>
+            </Popover>
           )}
         </div>
         <TabsContent value="votes">
