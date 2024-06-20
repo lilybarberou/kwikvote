@@ -159,8 +159,9 @@ export default function RegistrationPoll(props: Props) {
                 {slots.map((slot) => (
                   <TableRow className="table-cell border-0 hover:bg-transparent text-center align-top" key={slot.id}>
                     {slot[array.key]
-                      // put author's votes first
+                      // put author's votes first (only for notComing column)
                       .sort((voteId) => {
+                        if (!isNotComingColumn) return 1;
                         return votes[voteId]?.subscriptions?.some((sub) => sub.endpoint === subscription?.endpoint) ? -1 : 1;
                       })
                       .map((voteId) => {
