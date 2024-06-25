@@ -1,15 +1,15 @@
 {
-  "name": "notif",
+  "name": "kwikvote",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 2112",
+    "dev": "pnpm doppler && dotenv -c -- next dev",
     "build": "npm run prisma && next build",
-    "start": "next start -p 1912",
-    "preprod": "next start -p 1913",
+    "start": "dotenv -c -- next start",
     "lint": "next lint",
     "prisma": "npx prisma generate && npx prisma db push",
-    "studio": "npx prisma studio"
+    "studio": "npx prisma studio",
+    "doppler": "doppler secrets download --format env --no-file > .env"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.2",
@@ -56,6 +56,7 @@
     "@types/uuid": "^9.0.7",
     "@types/web-push": "^3.6.3",
     "autoprefixer": "^10.0.1",
+    "dotenv-cli": "^7.4.2",
     "eslint": "^8",
     "eslint-config-next": "14.0.1",
     "postcss": "^8",
