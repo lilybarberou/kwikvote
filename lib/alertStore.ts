@@ -1,7 +1,7 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
-type Alerts = 'pollLegend';
+type Alerts = "pollLegend";
 
 type Store = {
   alerts: Record<Alerts, boolean>;
@@ -14,8 +14,9 @@ export const useAlertStore = create<Store>()(
       alerts: {
         pollLegend: false,
       },
-      updateAlert: (alert, value) => set({ alerts: { ...get().alerts, [alert]: value } }),
+      updateAlert: (alert, value) =>
+        set({ alerts: { ...get().alerts, [alert]: value } }),
     }),
-    { name: 'alerts' }
-  )
+    { name: "alerts" },
+  ),
 );
