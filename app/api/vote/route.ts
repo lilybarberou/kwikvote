@@ -1,16 +1,20 @@
-import { prisma } from '@/prisma/db';
-import { Prisma } from '@prisma/client';
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import webpush from 'web-push';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale/fr';
-import { timeTwoDigit } from '@/lib/utils';
-import { fromZonedTime, toZonedTime } from 'date-fns-tz';
+import { timeTwoDigit } from "@/lib/utils";
+import { prisma } from "@/prisma/db";
+import { Prisma } from "@prisma/client";
+import { format } from "date-fns";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
+import { fr } from "date-fns/locale/fr";
+import { NextRequest, NextResponse } from "next/server";
+import webpush from "web-push";
+import { z } from "zod";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-webpush.setVapidDetails('mailto:' + process.env.NEXT_PUBLIC_VAPID_EMAIL, process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
+webpush.setVapidDetails(
+  "mailto:" + process.env.NEXT_PUBLIC_VAPID_EMAIL,
+  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY,
+);
 
 // UPDATE VOTE
 export async function POST(request: NextRequest) {
@@ -41,23 +45,25 @@ export async function POST(request: NextRequest) {
       update: {
         name: data.name,
         choices: {
-          upsert: data.choices.map((choice: { id: string; slotId: string; choice: number }) => ({
-            where: {
-              id: choice.id,
-            },
-            update: {
-              choice: choice.choice,
-            },
-            create: {
-              id: choice.id,
-              choice: choice.choice,
-              slot: {
-                connect: {
-                  id: choice.slotId,
+          upsert: data.choices.map(
+            (choice: { id: string; slotId: string; choice: number }) => ({
+              where: {
+                id: choice.id,
+              },
+              update: {
+                choice: choice.choice,
+              },
+              create: {
+                id: choice.id,
+                choice: choice.choice,
+                slot: {
+                  connect: {
+                    id: choice.slotId,
+                  },
                 },
               },
-            },
-          })),
+            }),
+          ),
         },
         subscriptions: data.subscription
           ? {
@@ -79,15 +85,17 @@ export async function POST(request: NextRequest) {
           },
         },
         choices: {
-          create: data.choices.map((choice: { id: string; slotId: string; choice: number }) => ({
-            id: choice.id,
-            choice: choice.choice,
-            slot: {
-              connect: {
-                id: choice.slotId,
+          create: data.choices.map(
+            (choice: { id: string; slotId: string; choice: number }) => ({
+              id: choice.id,
+              choice: choice.choice,
+              slot: {
+                connect: {
+                  id: choice.slotId,
+                },
               },
-            },
-          })),
+            }),
+          ),
         },
         subscriptions: data.subscription
           ? {
@@ -108,8 +116,14 @@ export async function POST(request: NextRequest) {
         select: { ...pollInclude },
       });
 
-      if (!poll) return NextResponse.json({ message: 'Sondage introuvable' }, { status: 404 });
-      const initialPoll = JSON.parse(JSON.stringify(poll.slots)) as Poll['slots'];
+      if (!poll)
+        return NextResponse.json(
+          { message: "Sondage introuvable" },
+          { status: 404 },
+        );
+      const initialPoll = JSON.parse(
+        JSON.stringify(poll.slots),
+      ) as Poll["slots"];
 
       const timeBeforeAllowedPassed = checkTimeBeforeAllow({
         timeBeforeAllowedType: poll.timeBeforeAllowedType,
@@ -140,9 +154,13 @@ export async function POST(request: NextRequest) {
         (obj, slot) => {
           obj.votesBySlot[slot.id] = [];
 
-          const oldRegistered = initialPoll.find((initialSlot) => initialSlot.id === slot.id)!.registered;
+          const oldRegistered = initialPoll.find(
+            (initialSlot) => initialSlot.id === slot.id,
+          )!.registered;
           // get id addded in registered
-          const newRegistered = slot.registered.filter((id) => !oldRegistered.includes(id));
+          const newRegistered = slot.registered.filter(
+            (id) => !oldRegistered.includes(id),
+          );
           // push ids which are not in array yet
           newRegistered.forEach((id) => {
             if (!obj.votes.includes(id) && id !== data.id) {
@@ -153,7 +171,10 @@ export async function POST(request: NextRequest) {
 
           return obj;
         },
-        { votesBySlot: {}, votes: [] } as { votesBySlot: { [slotId: string]: string[] }; votes: string[] }
+        { votesBySlot: {}, votes: [] } as {
+          votesBySlot: { [slotId: string]: string[] };
+          votes: string[];
+        },
       );
 
       // get subs from all the votes
@@ -174,52 +195,66 @@ export async function POST(request: NextRequest) {
       });
 
       // send notifications
-      Object.entries(votesNewlyRegistered.votesBySlot).forEach(([slotId, votes]) => {
-        const slot = poll.slots.find((slot) => slot.id === slotId)!;
-        const frSlotDate = toZonedTime(slot.startDate, 'Europe/Paris');
-        const formattedDate = format(frSlotDate, 'eeee d', { locale: fr });
-        const formattedTime = format(frSlotDate, 'HH:mm', { locale: fr });
+      Object.entries(votesNewlyRegistered.votesBySlot).forEach(
+        ([slotId, votes]) => {
+          const slot = poll.slots.find((slot) => slot.id === slotId)!;
+          const frSlotDate = toZonedTime(slot.startDate, "Europe/Paris");
+          const formattedDate = format(frSlotDate, "eeee d", { locale: fr });
+          const formattedTime = format(frSlotDate, "HH:mm", { locale: fr });
 
-        const payload = JSON.stringify({
-          title: 'Vous êtes inscrit !',
-          body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${formattedTime} !`,
-          link: `${process.env.DOMAIN}/poll/${data.pollId}`,
-        });
-
-        votes.forEach((vote) => {
-          const voteSubs = votesWithSub.find((voteWithSub) => voteWithSub.id === vote)?.subscriptions;
-          if (!voteSubs) return;
-
-          voteSubs.forEach((sub) => {
-            webpush
-              .sendNotification(
-                {
-                  endpoint: sub.endpoint,
-                  keys: {
-                    auth: sub.auth,
-                    p256dh: sub.p256dh,
-                  },
-                },
-                payload
-              )
-              .then((res) => console.log('notif envoyée: ', res.statusCode))
-              .catch((err) => console.log(err));
+          const payload = JSON.stringify({
+            title: "Vous êtes inscrit !",
+            body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${formattedTime} !`,
+            link: `${process.env.DOMAIN}/poll/${data.pollId}`,
           });
-        });
-      });
+
+          votes.forEach((vote) => {
+            const voteSubs = votesWithSub.find(
+              (voteWithSub) => voteWithSub.id === vote,
+            )?.subscriptions;
+            if (!voteSubs) return;
+
+            voteSubs.forEach((sub) => {
+              webpush
+                .sendNotification(
+                  {
+                    endpoint: sub.endpoint,
+                    keys: {
+                      auth: sub.auth,
+                      p256dh: sub.p256dh,
+                    },
+                  },
+                  payload,
+                )
+                .then((res) => console.log("notif envoyée: ", res.statusCode))
+                .catch((err) => console.log(err));
+            });
+          });
+        },
+      );
     }
 
     // obj slot by id
-    const slotsByID = newPoll?.slots.reduce((obj, slot) => {
-      obj[slot.id] = slot;
-      return obj;
-    }, {} as Record<string, Poll['slots'][0]>);
+    const slotsByID = newPoll?.slots.reduce(
+      (obj, slot) => {
+        obj[slot.id] = slot;
+        return obj;
+      },
+      {} as Record<string, Poll["slots"][0]>,
+    );
 
     return NextResponse.json({ slots: slotsByID }, { status: 200 });
   } catch (e) {
     console.log(e);
-    if (e instanceof z.ZodError) return NextResponse.json({ message: 'Données incorrectes' }, { status: 400 });
-    return NextResponse.json({ message: "Le vote n'a pas pu être créé" }, { status: 500 });
+    if (e instanceof z.ZodError)
+      return NextResponse.json(
+        { message: "Données incorrectes" },
+        { status: 400 },
+      );
+    return NextResponse.json(
+      { message: "Le vote n'a pas pu être créé" },
+      { status: 500 },
+    );
   }
 }
 
@@ -258,17 +293,25 @@ const updateSlotsArray = async ({
 
   for (const slot of poll.slots) {
     const isFull = slot.registered.length >= slot.maxParticipants;
-    const currentVoteChoice = [...(firstCall ? initialVoteChoices : currentVoteData!.choices)].find((choice) => choice.slotId === slot.id);
+    const currentVoteChoice = [
+      ...(firstCall ? initialVoteChoices : currentVoteData!.choices),
+    ].find((choice) => choice.slotId === slot.id);
 
     // if its an edit
     if (voteExists) {
-      const oldChoice = firstCall ? initialVoteOldChoices!.find((choice) => choice.slotId === slot.id)! : undefined;
-      const choiceChanged = firstCall ? oldChoice?.choice !== currentVoteChoice?.choice : false;
+      const oldChoice = firstCall
+        ? initialVoteOldChoices!.find((choice) => choice.slotId === slot.id)!
+        : undefined;
+      const choiceChanged = firstCall
+        ? oldChoice?.choice !== currentVoteChoice?.choice
+        : false;
 
       if (choiceChanged) {
         slot.registered = slot.registered.filter((id) => id !== voteId);
         slot.waitingList = slot.waitingList.filter((id) => id !== voteId);
-        slot.waitingListReregistered = slot.waitingListReregistered.filter((id) => id !== voteId);
+        slot.waitingListReregistered = slot.waitingListReregistered.filter(
+          (id) => id !== voteId,
+        );
         slot.notComing = slot.notComing.filter((id) => id !== voteId);
       } else {
         if (currentVoteChoice?.choice == 1) {
@@ -288,34 +331,48 @@ const updateSlotsArray = async ({
               continue;
             }
             // else remove from registered (will be in reregistered waiting list)
-            else slot.registered = slot.registered.filter((id) => id !== voteId);
+            else
+              slot.registered = slot.registered.filter((id) => id !== voteId);
           }
           // not registered yet -> actually in wl or wlr
           else {
             const isWaitingList = slot.waitingList.includes(voteId);
-            const isWaitingListReregistered = slot.waitingListReregistered.includes(voteId);
-            const isAllowedToRegister = !isRegisteredOnce || timeBeforeAllowedPassed[slot.id];
+            const isWaitingListReregistered =
+              slot.waitingListReregistered.includes(voteId);
+            const isAllowedToRegister =
+              !isRegisteredOnce || timeBeforeAllowedPassed[slot.id];
 
             if (isFull) {
               // if allowed to reregister -> must be in wl
               if (isAllowedToRegister) {
-                if (isWaitingListReregistered) slot.waitingListReregistered = slot.waitingListReregistered.filter((id) => id !== voteId);
+                if (isWaitingListReregistered)
+                  slot.waitingListReregistered =
+                    slot.waitingListReregistered.filter((id) => id !== voteId);
                 else continue;
               }
               // else -> must be in wlr
               else {
-                if (isWaitingList) slot.waitingList = slot.waitingList.filter((id) => id !== voteId);
+                if (isWaitingList)
+                  slot.waitingList = slot.waitingList.filter(
+                    (id) => id !== voteId,
+                  );
                 else continue;
               }
             } else {
               // if allowed to reregister -> remove from all wl -> will be in registered
               if (isAllowedToRegister) {
-                slot.waitingListReregistered = slot.waitingListReregistered.filter((id) => id !== voteId);
-                slot.waitingList = slot.waitingList.filter((id) => id !== voteId);
+                slot.waitingListReregistered =
+                  slot.waitingListReregistered.filter((id) => id !== voteId);
+                slot.waitingList = slot.waitingList.filter(
+                  (id) => id !== voteId,
+                );
               }
               // else -> must be in wlr
               else {
-                if (isWaitingList) slot.waitingList = slot.waitingList.filter((id) => id !== voteId);
+                if (isWaitingList)
+                  slot.waitingList = slot.waitingList.filter(
+                    (id) => id !== voteId,
+                  );
                 else continue;
               }
             }
@@ -334,14 +391,15 @@ const updateSlotsArray = async ({
         isRegisteredOnce = true;
       }
       // full and not registered anywhere -> add to waiting list
-      else if (!isRegisteredOnce || timeBeforeAllowedPassed[slot.id]) slot.waitingList.push(voteId);
+      else if (!isRegisteredOnce || timeBeforeAllowedPassed[slot.id])
+        slot.waitingList.push(voteId);
       // already registered somewhere -> add to reregistered waiting list
       else slot.waitingListReregistered.push(voteId);
     }
   }
 
   // ----- CHECK SI IL RESTE DE LA PLACE DANS LES INSCRITS D'UN CRENEAU -----
-  let voteIdToRegister = '';
+  let voteIdToRegister = "";
   poll.slots.forEach((slot) => {
     if (slot.registered.length < slot.maxParticipants) {
       if (slot.waitingList.length > 0) {
@@ -351,7 +409,13 @@ const updateSlotsArray = async ({
   });
 
   if (voteIdToRegister) {
-    poll = await updateSlotsArray({ poll, voteId: voteIdToRegister, initialVoteChoices, voteExists: true, timeBeforeAllowedPassed });
+    poll = await updateSlotsArray({
+      poll,
+      voteId: voteIdToRegister,
+      initialVoteChoices,
+      voteExists: true,
+      timeBeforeAllowedPassed,
+    });
   }
 
   return poll;
@@ -364,26 +428,30 @@ const checkTimeBeforeAllow = ({
 }: {
   timeBeforeAllowedType: number;
   msBeforeAllowed: number;
-  slots: Poll['slots'];
+  slots: Poll["slots"];
 }) => {
-  return slots.reduce((obj, curr) => {
-    const now = new Date();
+  return slots.reduce(
+    (obj, curr) => {
+      const now = new Date();
 
-    // date to compare is day before at 5pm
-    if (timeBeforeAllowedType == 1) {
-      const dateToCompareFr = toZonedTime(curr.startDate, 'Europe/Paris');
-      dateToCompareFr.setDate(dateToCompareFr.getDate() - 1);
-      dateToCompareFr.setHours(17, 0, 0, 0);
-      const dateToCompareUtc = fromZonedTime(dateToCompareFr, 'Europe/Paris');
+      // date to compare is day before at 5pm
+      if (timeBeforeAllowedType == 1) {
+        const dateToCompareFr = toZonedTime(curr.startDate, "Europe/Paris");
+        dateToCompareFr.setDate(dateToCompareFr.getDate() - 1);
+        dateToCompareFr.setHours(17, 0, 0, 0);
+        const dateToCompareUtc = fromZonedTime(dateToCompareFr, "Europe/Paris");
 
-      obj[curr.id] = now.getTime() > dateToCompareUtc.getTime();
-    }
-    // specific hours number before startDate
-    else {
-      obj[curr.id] = now.getTime() > curr.startDate.getTime() - msBeforeAllowed;
-    }
-    return obj;
-  }, {} as Record<string, boolean>);
+        obj[curr.id] = now.getTime() > dateToCompareUtc.getTime();
+      }
+      // specific hours number before startDate
+      else {
+        obj[curr.id] =
+          now.getTime() > curr.startDate.getTime() - msBeforeAllowed;
+      }
+      return obj;
+    },
+    {} as Record<string, boolean>,
+  );
 };
 
 const pollInclude = Prisma.validator<Prisma.PollSelect>()({
@@ -401,7 +469,7 @@ const pollInclude = Prisma.validator<Prisma.PollSelect>()({
       notComing: true,
     },
     orderBy: {
-      startDate: 'asc',
+      startDate: "asc",
     },
   },
 });
@@ -423,7 +491,7 @@ const createVoteSchema = z.object({
       id: z.string(),
       slotId: z.string(),
       choice: z.number(),
-    })
+    }),
   ),
   subscription: z
     .object({

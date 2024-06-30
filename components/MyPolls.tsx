@@ -1,16 +1,16 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import useSWR from 'swr';
-import fetcher from '@/utils/fetch';
-import { Bird, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { motion } from 'framer-motion';
-import { parseAsString, useQueryState } from 'nuqs';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import fetcher from "@/utils/fetch";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { motion } from "framer-motion";
+import { Bird, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { parseAsString, useQueryState } from "nuqs";
+import { useForm } from "react-hook-form";
+import useSWR from "swr";
+import { z } from "zod";
 
 const SearchSchema = z.object({
   email: z.string().email(),
@@ -18,13 +18,15 @@ const SearchSchema = z.object({
 type SearchSchema = z.infer<typeof SearchSchema>;
 
 export const MyPolls = () => {
-  const [email, setEmail] = useQueryState('email', parseAsString);
+  const [email, setEmail] = useQueryState("email", parseAsString);
 
-  const { isLoading, data: polls = [] } = useSWR<{ id: string; title: string }[]>(`/api/poll/email/${email?.toLowerCase()}`, fetcher);
+  const { isLoading, data: polls = [] } = useSWR<
+    { id: string; title: string }[]
+  >(`/api/poll/email/${email?.toLowerCase()}`, fetcher);
 
   const { register, handleSubmit, getValues } = useForm<SearchSchema>({
     resolver: zodResolver(SearchSchema),
-    defaultValues: { email: email ?? '' },
+    defaultValues: { email: email ?? "" },
   });
 
   const onSubmit = handleSubmit(async ({ email }) => {
@@ -34,24 +36,36 @@ export const MyPolls = () => {
   return (
     <>
       <form onSubmit={onSubmit} className="flex items-end gap-2">
-        <Input className="flex-1 sm:flex-initial sm:w-64" placeholder="Votre email..." inputMode="email" {...register('email')} />
+        <Input
+          className="flex-1 sm:w-64 sm:flex-initial"
+          placeholder="Votre email..."
+          inputMode="email"
+          {...register("email")}
+        />
         <Button disabled={!!(email && isLoading)}>
           Rechercher
-          {email && isLoading && <Loader2 className="ml-2 w-5 h-5 animate-spin" />}
+          {email && isLoading && (
+            <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+          )}
         </Button>
       </form>
-      {!isLoading && (getValues('email') && polls.length === 0 ? <NoPolls /> : <Polls polls={polls} />)}
+      {!isLoading &&
+        (getValues("email") && polls.length === 0 ? (
+          <NoPolls />
+        ) : (
+          <Polls polls={polls} />
+        ))}
     </>
   );
 };
 
 const NoPolls = () => {
   return (
-    <div className="mt-24 flex flex-col justify-center items-center">
-      <Bird className="mb-10 w-24 h-24" />
+    <div className="mt-24 flex flex-col items-center justify-center">
+      <Bird className="mb-10 h-24 w-24" />
       <p className="text-2xl font-bold">C'est vide !</p>
-      <p className="text-muted-foreground text-center">
-        Vous pouvez créer un sondage via la{' '}
+      <p className="text-center text-muted-foreground">
+        Vous pouvez créer un sondage via la{" "}
         <Link className="text-primary" href="/poll/create">
           page de création
         </Link>
@@ -74,7 +88,7 @@ const Polls = ({ polls }: { polls: { id: string; title: string }[] }) => {
     >
       {polls?.map((poll) => (
         <LinkMotion
-          className="p-2 block border rounded hover:bg-accent transition-all"
+          className="block rounded border p-2 transition-all hover:bg-accent"
           href={`/poll/${poll.id}`}
           variants={{ init: { opacity: 0 }, anim: { opacity: 1 } }}
           key={poll.id}

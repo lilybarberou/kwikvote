@@ -1,11 +1,25 @@
-import { useState } from 'react';
-import { getDate, timeTwoDigit, sameDay } from '@/lib/utils';
-import { useVotesStore } from '@/lib/votesStore';
-import { CheckCircle, CircleUserRound, Edit, HelpCircle, XCircle } from 'lucide-react';
-import { Dialog, DialogTrigger } from './ui/dialog';
-import { Button } from './ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import DialogVote from './DialogVote';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { getDate, sameDay, timeTwoDigit } from "@/lib/utils";
+import { useVotesStore } from "@/lib/votesStore";
+import {
+  CheckCircle,
+  CircleUserRound,
+  Edit,
+  HelpCircle,
+  XCircle,
+} from "lucide-react";
+import { useState } from "react";
+
+import DialogVote from "./DialogVote";
+import { Button } from "./ui/button";
+import { Dialog, DialogTrigger } from "./ui/dialog";
 
 type Props = {
   slots: { id: string; startDate: Date; endDate: Date }[];
@@ -14,7 +28,7 @@ type Props = {
 
 export default function PollSlot(props: Props) {
   const { votes } = useVotesStore();
-  const [currentVoteId, setCurrentVoteId] = useState('');
+  const [currentVoteId, setCurrentVoteId] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const TotalUpvotes = ({ slotId }: { slotId: string }) => {
@@ -25,12 +39,12 @@ export default function PollSlot(props: Props) {
         else if (choice?.choice === 3) acc[1]++;
         return acc;
       },
-      [0, 0]
+      [0, 0],
     );
 
     return (
       <TableCell className="text-center">
-        <div className="flex justify-center items-center gap-1 text-green-400">
+        <div className="flex items-center justify-center gap-1 text-green-400">
           {total[0]}
           <VoteIcon choice={1} />
           {total[1] > 0 && (
@@ -46,11 +60,11 @@ export default function PollSlot(props: Props) {
   const VoteIcon = ({ choice }: { choice: number }) => {
     switch (choice) {
       case 1:
-        return <CheckCircle className="w-4 h-4 inline-block text-green-400" />;
+        return <CheckCircle className="inline-block h-4 w-4 text-green-400" />;
       case 2:
-        return <XCircle className="w-4 h-4 inline-block text-red-400" />;
+        return <XCircle className="inline-block h-4 w-4 text-red-400" />;
       case 3:
-        return <HelpCircle className="w-4 h-4 inline-block text-yellow-200" />;
+        return <HelpCircle className="inline-block h-4 w-4 text-yellow-200" />;
     }
   };
 
@@ -71,16 +85,19 @@ export default function PollSlot(props: Props) {
           <TableRow>
             <TableHead>
               <DialogTrigger asChild>
-                <Button onClick={() => setCurrentVoteId('')}>Nouveau vote</Button>
+                <Button onClick={() => setCurrentVoteId("")}>
+                  Nouveau vote
+                </Button>
               </DialogTrigger>
             </TableHead>
             {props.slots.map((slot) => (
               <TableHead key={slot.id} className="py-4">
                 {sameDay(new Date(slot.startDate), new Date(slot.endDate)) ? (
-                  <div className="text-center whitespace-nowrap">
+                  <div className="whitespace-nowrap text-center">
                     <p className="capitalize">{getDate(slot.startDate)}</p>
                     <p>
-                      {timeTwoDigit(slot.startDate)} - {timeTwoDigit(slot.endDate)}
+                      {timeTwoDigit(slot.startDate)} -{" "}
+                      {timeTwoDigit(slot.endDate)}
                     </p>
                   </div>
                 ) : (
@@ -99,9 +116,10 @@ export default function PollSlot(props: Props) {
         <TableBody>
           <TableRow>
             <TableCell className="flex justify-between font-bold">
-              Total{' '}
+              Total{" "}
               <span className="flex gap-1">
-                {Object.keys(votes).length} <CircleUserRound className="w-5 h-5" />
+                {Object.keys(votes).length}{" "}
+                <CircleUserRound className="h-5 w-5" />
               </span>
             </TableCell>
             {props.slots.map((slot) => (
@@ -111,16 +129,23 @@ export default function PollSlot(props: Props) {
           </TableRow>
           {Object.values(votes).map((vote) => (
             <TableRow key={vote.id}>
-              <TableCell className="py-2 max-w-[220px] text-ellipsis overflow-hidden whitespace-nowrap">{vote.name}</TableCell>
+              <TableCell className="max-w-[220px] overflow-hidden text-ellipsis whitespace-nowrap py-2">
+                {vote.name}
+              </TableCell>
               {vote.choices.map((choice) => (
                 <TableCell className="py-2 text-center" key={choice.id}>
                   <VoteIcon choice={choice.choice} />
                 </TableCell>
               ))}
-              <TableCell className="py-2 flex justify-center">
+              <TableCell className="flex justify-center py-2">
                 <DialogTrigger asChild>
-                  <Button onClick={() => setCurrentVoteId(vote.id)} className="w-8 h-8" size="icon" variant="outline">
-                    <Edit className="w-4 h-4" />
+                  <Button
+                    onClick={() => setCurrentVoteId(vote.id)}
+                    className="h-8 w-8"
+                    size="icon"
+                    variant="outline"
+                  >
+                    <Edit className="h-4 w-4" />
                   </Button>
                 </DialogTrigger>
               </TableCell>

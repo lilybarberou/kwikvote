@@ -8,39 +8,39 @@ datasource db {
 }
 
 model CronSchedule {
-  id        String   @id @default(uuid())
-  schedule  DateTime
-  pollId    String
-  poll      Poll     @relation(fields: [pollId], references: [id])
+  id       String   @id @default(uuid())
+  schedule DateTime
+  pollId   String
+  poll     Poll     @relation(fields: [pollId], references: [id])
 }
 
 model Poll {
-  id                     String     @id @default(uuid())
-  type                   Int        @default(1)
-  title                  String
-  description            String     @default("")
-  email                  String     @default("")
-  timeBeforeAllowedType  Int        @default(1)
-  msBeforeAllowed        Int        @default(0)
-  slots                  Slot[]
-  comments               Comment[]
-  votes                  Vote[]
-  cronSchedules          CronSchedule[]
-  createdAt              DateTime   @default(now())
+  id                    String         @id @default(uuid())
+  type                  Int            @default(1)
+  title                 String
+  description           String         @default("")
+  email                 String         @default("")
+  timeBeforeAllowedType Int            @default(1)
+  msBeforeAllowed       Int            @default(0)
+  slots                 Slot[]
+  comments              Comment[]
+  votes                 Vote[]
+  cronSchedules         CronSchedule[]
+  createdAt             DateTime       @default(now())
 }
 
 model Slot {
-  id                      String        @id @default(uuid())
+  id                      String       @id @default(uuid())
   pollId                  String
   startDate               DateTime
   endDate                 DateTime
-  maxParticipants         Int           @default(0)
-  registered              String[]      @default([])
-  waitingList             String[]      @default([])
-  waitingListReregistered String[]      @default([])
-  notComing               String[]      @default([])
+  maxParticipants         Int          @default(0)
+  registered              String[]     @default([])
+  waitingList             String[]     @default([])
+  waitingListReregistered String[]     @default([])
+  notComing               String[]     @default([])
   choices                 VoteChoice[]
-  poll                    Poll          @relation(fields: [pollId], references: [id])
+  poll                    Poll         @relation(fields: [pollId], references: [id])
 }
 
 model Vote {
@@ -64,17 +64,17 @@ model VoteChoice {
 }
 
 model Subscription {
-  endpoint String @id  @unique
+  endpoint String @id @unique
   auth     String
   p256dh   String
   votes    Vote[]
 }
 
 model Comment {
-  id        String @id @default(uuid())
+  id        String   @id @default(uuid())
   author    String
   text      String
   createdAt DateTime @default(now())
   pollId    String
-  poll      Poll   @relation(fields: [pollId], references: [id])
+  poll      Poll     @relation(fields: [pollId], references: [id])
 }

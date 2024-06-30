@@ -1,8 +1,8 @@
-import { prisma } from '@/prisma/db';
-import { CronSchedule } from '@prisma/client';
-import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { fromZonedTime, toZonedTime } from 'date-fns-tz';
+import { prisma } from "@/prisma/db";
+import { CronSchedule } from "@prisma/client";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 export async function GET(_: NextRequest) {
   const polls = await prisma.poll.findMany();
@@ -23,7 +23,9 @@ export async function POST(request: NextRequest) {
         timeBeforeAllowedType: data.timeBeforeAllowedType,
         msBeforeAllowed: data.msBeforeAllowed,
         slots: {
-          create: data.slots.map((slot: z.infer<typeof CreateSlotSchema>) => slot),
+          create: data.slots.map(
+            (slot: z.infer<typeof CreateSlotSchema>) => slot,
+          ),
         },
       },
     });
@@ -31,7 +33,10 @@ export async function POST(request: NextRequest) {
     // calculate all cron schedule times
     if (poll.type === 2) {
       const cronScheduleTimes = data.slots
-        .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
+        .sort(
+          (a, b) =>
+            new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
+        )
         .reduce((arr, curr, index) => {
           // can't be reregistered on first slot
           if (index === 0) return arr;
@@ -44,16 +49,18 @@ export async function POST(request: NextRequest) {
           // day before at 5pm
           if (poll.timeBeforeAllowedType == 1) {
             // gen date at 5PM france time
-            const cronDateFr = toZonedTime(curr.startDate, 'Europe/Paris');
+            const cronDateFr = toZonedTime(curr.startDate, "Europe/Paris");
             cronDateFr.setDate(cronDateFr.getDate() - 1);
             cronDateFr.setHours(17, 0, 0, 0);
 
-            const cronDateUtc = fromZonedTime(cronDateFr, 'Europe/Paris');
+            const cronDateUtc = fromZonedTime(cronDateFr, "Europe/Paris");
             currentObj.schedule = cronDateUtc;
           }
           // specific hours number before startDate
           else {
-            const timeBeforeDate = new Date(new Date(curr.startDate).getTime() - poll.msBeforeAllowed);
+            const timeBeforeDate = new Date(
+              new Date(curr.startDate).getTime() - poll.msBeforeAllowed,
+            );
             currentObj.schedule = timeBeforeDate;
           }
 
@@ -68,8 +75,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(poll);
   } catch (e) {
-    if (e instanceof z.ZodError) return NextResponse.json({ message: 'Données incorrectes' }, { status: 400 });
-    return NextResponse.json({ message: 'Erreur lors de la création du sondage' }, { status: 500 });
+    if (e instanceof z.ZodError)
+      return NextResponse.json(
+        { message: "Données incorrectes" },
+        { status: 400 },
+      );
+    return NextResponse.json(
+      { message: "Erreur lors de la création du sondage" },
+      { status: 500 },
+    );
   }
 }
 
@@ -83,7 +97,7 @@ const CreatePollSchema = z.object({
   type: z.number().int().positive().min(1).max(2),
   title: z.string(),
   description: z.string().optional(),
-  email: z.string().email().optional().or(z.literal('')),
+  email: z.string().email().optional().or(z.literal("")),
   timeBeforeAllowedType: z.number(),
   msBeforeAllowed: z.number(),
   slots: z.array(CreateSlotSchema),

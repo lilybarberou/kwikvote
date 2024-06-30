@@ -1,21 +1,12 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import useSWR from 'swr';
-import { useNotificationsStore } from '@/lib/notificationsStore';
-import fetcher from '@/utils/fetch';
-import { CompletePoll } from '@/app/api/poll/id/[value]/route';
-import { BarChart3, Bell, BellRing, Megaphone } from 'lucide-react';
-import PollComments from '@/components/PollComments';
-import PollSlots from '@/components/PollSlots';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useVotesStore } from '@/lib/votesStore';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import PollSkeleton from '@/components/PollSkeleton';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { CompletePoll } from "@/app/api/poll/id/[value]/route";
+import DialogPollLink from "@/components/DialogPollLink";
+import PollComments from "@/components/PollComments";
+import PollSkeleton from "@/components/PollSkeleton";
+import PollSlots from "@/components/PollSlots";
+import RegistrationPoll from "@/components/RegistrationPoll";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,23 +17,50 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { useHistoryStore } from '@/lib/historyStore';
-import RegistrationPoll from '@/components/RegistrationPoll';
-import { useCommentsStore } from '@/lib/commentsStore';
-import DialogPollLink from '@/components/DialogPollLink';
-import { Card, CardDescription, CardTitle } from '@/components/ui/card';
-import { AnimatePresence, motion } from 'framer-motion';
-import { parseAsString, useQueryState } from 'nuqs';
-import { cn } from '@/lib/utils';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useToast } from "@/components/ui/use-toast";
+import { useCommentsStore } from "@/lib/commentsStore";
+import { useHistoryStore } from "@/lib/historyStore";
+import { useNotificationsStore } from "@/lib/notificationsStore";
+import { cn } from "@/lib/utils";
+import { useVotesStore } from "@/lib/votesStore";
+import fetcher from "@/utils/fetch";
+import { AnimatePresence, motion } from "framer-motion";
+import { BarChart3, Bell, BellRing, Megaphone } from "lucide-react";
+import Link from "next/link";
+import { parseAsString, useQueryState } from "nuqs";
+import { useEffect, useState } from "react";
+import useSWR from "swr";
 
 export default function PollPage({ params }: { params: { id: string } }) {
-  const [tab] = useQueryState('tab', parseAsString.withDefault('votes'));
+  const [tab] = useQueryState("tab", parseAsString.withDefault("votes"));
 
-  const alreadyVisited = typeof window !== 'undefined' ? localStorage.getItem('alreadyVisited') : null;
-  const [dialogWarnNotifOpen, setDialogWarnNotifOpen] = useState(!alreadyVisited);
-  const { notificationsSupported, notificationsPermission, init, subscription } = useNotificationsStore();
+  const alreadyVisited =
+    typeof window !== "undefined"
+      ? localStorage.getItem("alreadyVisited")
+      : null;
+  const [dialogWarnNotifOpen, setDialogWarnNotifOpen] =
+    useState(!alreadyVisited);
+  const {
+    notificationsSupported,
+    notificationsPermission,
+    init,
+    subscription,
+  } = useNotificationsStore();
 
   const { initVotes, votes } = useVotesStore();
   const { addPollToHistory } = useHistoryStore();
@@ -56,22 +74,27 @@ export default function PollPage({ params }: { params: { id: string } }) {
     onSuccess: (data) => {
       initVotes(data.votes);
       initComments(data.comments);
-      addPollToHistory(params.id, data.title || '');
+      addPollToHistory(params.id, data.title || "");
     },
   });
 
   const isRegistrationPoll = poll?.type == 2;
-  const hasSomeVotes = Object.values(votes).some((v) => v.subscriptions.some((s) => s.endpoint === subscription?.endpoint));
+  const hasSomeVotes = Object.values(votes).some((v) =>
+    v.subscriptions.some((s) => s.endpoint === subscription?.endpoint),
+  );
 
   // NOTIFICATIONS MANAGEMENT
   useEffect(() => {
     const initNotifications = async () => {
       // CHECK IF NOTIFICATIONS ARE SUPPORTED AND ALREADY ASKED
-      const notificationsSupported = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window;
+      const notificationsSupported =
+        "Notification" in window &&
+        "serviceWorker" in navigator &&
+        "PushManager" in window;
 
       // STORE SUBSCRIPTION ENDPOINT
       let sub: PushSubscriptionJSON | undefined;
-      if (notificationsSupported && Notification.permission === 'granted') {
+      if (notificationsSupported && Notification.permission === "granted") {
         sub = await navigator.serviceWorker.ready
           .then((registration) => {
             return registration.pushManager.getSubscription();
@@ -81,7 +104,9 @@ export default function PollPage({ params }: { params: { id: string } }) {
 
       init({
         notificationsSupported,
-        notificationsPermission: notificationsSupported ? Notification.permission : 'default',
+        notificationsPermission: notificationsSupported
+          ? Notification.permission
+          : "default",
         subscription: sub
           ? {
               endpoint: sub.endpoint!,
@@ -96,9 +121,10 @@ export default function PollPage({ params }: { params: { id: string } }) {
 
   const enableNotifications = async () => {
     const receivedPermission = await Notification.requestPermission();
-    if (receivedPermission !== 'granted') return;
+    if (receivedPermission !== "granted") return;
 
-    const swRegistration = await navigator.serviceWorker.register('/service.js');
+    const swRegistration =
+      await navigator.serviceWorker.register("/service.js");
     await navigator.serviceWorker.ready; // waits for service worker to be ready = status active for sure
 
     const subscription = await swRegistration.pushManager
@@ -108,8 +134,8 @@ export default function PollPage({ params }: { params: { id: string } }) {
       })
       .then((sub) => sub.toJSON());
 
-    const res = await fetch('/api/subscription', {
-      method: 'POST',
+    const res = await fetch("/api/subscription", {
+      method: "POST",
       body: JSON.stringify(subscription),
     });
 
@@ -124,25 +150,30 @@ export default function PollPage({ params }: { params: { id: string } }) {
         },
       });
       toast({
-        title: 'Notifications activées',
+        title: "Notifications activées",
         description: `Il ne vous reste plus qu'à vous inscrire au sondage !`,
       });
-    } else toast({ title: 'Erreur', description: "Une erreur est survenue lors de l'activation des notifications." });
+    } else
+      toast({
+        title: "Erreur",
+        description:
+          "Une erreur est survenue lors de l'activation des notifications.",
+      });
   };
 
   const dismissNotif = () => {
-    localStorage.setItem('alreadyVisited', 'true');
+    localStorage.setItem("alreadyVisited", "true");
     setDialogWarnNotifOpen(false);
   };
 
   if (isLoading) return <PollSkeleton />;
   if (error || !poll)
     return (
-      <div className="mx-auto mt-32 flex flex-col justify-center items-center">
-        <BarChart3 className="mb-10 w-24 h-24" />
+      <div className="mx-auto mt-32 flex flex-col items-center justify-center">
+        <BarChart3 className="mb-10 h-24 w-24" />
         <p className="text-2xl font-bold">Ce sondage n'existe pas</p>
-        <p className="text-muted-foreground text-center">
-          Vous pouvez créer un sondage via la{' '}
+        <p className="text-center text-muted-foreground">
+          Vous pouvez créer un sondage via la{" "}
           <Link className="text-primary" href="/poll/create">
             page de création
           </Link>
@@ -153,30 +184,37 @@ export default function PollPage({ params }: { params: { id: string } }) {
   return (
     <div>
       <AnimatePresence>
-        {dialogWarnNotifOpen && notificationsSupported && notificationsPermission === 'default' && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="fixed w-11/12 z-50 bottom-[20px] min-[400px]:max-w-[400px] min-[400px]:right-4"
-          >
-            <Card className="p-4">
-              <CardTitle className="text-lg">Activer les notifications</CardTitle>
-              <CardDescription>
-                <p>
-                  Vous recevrez une notification lorsqu'un nouveau commentaire sera posté
-                  {isRegistrationPoll ? ", ainsi que pour être prévenu de votre inscription lorsque vous êtes en liste d'attente." : '.'}
-                </p>
-                <div className="mt-2 flex justify-end gap-2">
-                  <Button onClick={dismissNotif} variant="outline">
-                    Non merci
-                  </Button>
-                  <Button onClick={enableNotifications}>Activer</Button>
-                </div>
-              </CardDescription>
-            </Card>
-          </motion.div>
-        )}
+        {dialogWarnNotifOpen &&
+          notificationsSupported &&
+          notificationsPermission === "default" && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="fixed bottom-[20px] z-50 w-11/12 min-[400px]:right-4 min-[400px]:max-w-[400px]"
+            >
+              <Card className="p-4">
+                <CardTitle className="text-lg">
+                  Activer les notifications
+                </CardTitle>
+                <CardDescription>
+                  <p>
+                    Vous recevrez une notification lorsqu'un nouveau commentaire
+                    sera posté
+                    {isRegistrationPoll
+                      ? ", ainsi que pour être prévenu de votre inscription lorsque vous êtes en liste d'attente."
+                      : "."}
+                  </p>
+                  <div className="mt-2 flex justify-end gap-2">
+                    <Button onClick={dismissNotif} variant="outline">
+                      Non merci
+                    </Button>
+                    <Button onClick={enableNotifications}>Activer</Button>
+                  </div>
+                </CardDescription>
+              </Card>
+            </motion.div>
+          )}
       </AnimatePresence>
       <DialogPollLink />
       <h1 className="mb-5 text-lg">{poll?.title}</h1>
@@ -190,16 +228,18 @@ export default function PollPage({ params }: { params: { id: string } }) {
         <div className="flex gap-2">
           <TabsList>
             <TabsTrigger value="votes">Votes</TabsTrigger>
-            <TabsTrigger value="comments">Commentaires ({comments.length})</TabsTrigger>
+            <TabsTrigger value="comments">
+              Commentaires ({comments.length})
+            </TabsTrigger>
           </TabsList>
-          {notificationsSupported && notificationsPermission === 'default' && (
+          {notificationsSupported && notificationsPermission === "default" && (
             <AlertDialog>
               <TooltipProvider>
                 <Tooltip delayDuration={300}>
                   <TooltipTrigger asChild>
                     <AlertDialogTrigger asChild>
-                      <Button className="w-10 h-10" size="icon">
-                        <Bell className="w-5 h-5" />
+                      <Button className="h-10 w-10" size="icon">
+                        <Bell className="h-5 w-5" />
                       </Button>
                     </AlertDialogTrigger>
                   </TooltipTrigger>
@@ -212,27 +252,39 @@ export default function PollPage({ params }: { params: { id: string } }) {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Activer les notifications</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Vous recevrez une notification lorsqu'un nouveau commentaire sera posté
-                    {isRegistrationPoll ? ", ainsi que pour être prévenu de votre inscription lorsque vous êtes en liste d'attente." : '.'}
+                    Vous recevrez une notification lorsqu'un nouveau commentaire
+                    sera posté
+                    {isRegistrationPoll
+                      ? ", ainsi que pour être prévenu de votre inscription lorsque vous êtes en liste d'attente."
+                      : "."}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction onClick={enableNotifications}>Confirmer</AlertDialogAction>
+                  <AlertDialogAction onClick={enableNotifications}>
+                    Confirmer
+                  </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
           )}
-          {notificationsPermission === 'granted' && (
+          {notificationsPermission === "granted" && (
             <Popover>
               <PopoverTrigger>
-                <div className={cn('w-10 h-10 flex justify-center items-center border rounded-sm text-black', hasSomeVotes ? 'bg-green-400' : 'bg-gray-400')}>
-                  <BellRing className="w-5 h-5" />
+                <div
+                  className={cn(
+                    "flex h-10 w-10 items-center justify-center rounded-sm border text-black",
+                    hasSomeVotes ? "bg-green-400" : "bg-gray-400",
+                  )}
+                >
+                  <BellRing className="h-5 w-5" />
                 </div>
               </PopoverTrigger>
               <PopoverContent side="bottom">
-                <p className="text-sm text-center">
-                  {hasSomeVotes ? 'Notifications activées pour ce sondage' : 'En attente de votre vote pour activer les notifications sur ce sondage'}
+                <p className="text-center text-sm">
+                  {hasSomeVotes
+                    ? "Notifications activées pour ce sondage"
+                    : "En attente de votre vote pour activer les notifications sur ce sondage"}
                 </p>
               </PopoverContent>
             </Popover>
@@ -240,7 +292,9 @@ export default function PollPage({ params }: { params: { id: string } }) {
         </div>
         <TabsContent value="votes">
           {poll.type === 1 && <PollSlots slots={poll.slots} pollId={poll.id} />}
-          {poll.type === 2 && <RegistrationPoll slots={poll.slots} poll={poll} />}
+          {poll.type === 2 && (
+            <RegistrationPoll slots={poll.slots} poll={poll} />
+          )}
         </TabsContent>
         <TabsContent value="comments">
           <PollComments comments={poll.comments} pollId={params.id} />
