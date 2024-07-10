@@ -1,6 +1,7 @@
 "use client";
 
-import { History, Menu, PlusCircle, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { History, Menu, PlusCircle, SparklesIcon, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -28,9 +29,12 @@ export default function Navigation() {
     return (
       <Link
         onClick={() => props.mobileItem && setMobileNavOpen(false)}
-        className={`${props.mobileItem ? "px-8 py-4 text-xl font-semibold" : "hidden"} ${
-          props.hasBorder ? "border-b border-[#ffffff29]" : ""
-        } sm:block ${pathname === props.href ? "font-semibold" : ""}`}
+        className={cn(
+          props.mobileItem ? "px-8 py-4 text-xl font-semibold" : "hidden",
+          props.hasBorder && "border-b border-[#ffffff29]",
+          pathname === props.href && "font-semibold",
+          "sm:block",
+        )}
         href={props.href}
       >
         {props.label}
@@ -67,6 +71,14 @@ export default function Navigation() {
             <ActiveLink label="Accueil" href="/" />
             <ActiveLink label="Mes sondages" href="/mes-sondages" />
             <ActiveLink label="FAQ" href="/faq" />
+            <a
+              className="hidden sm:block"
+              href="https://kwikvote.featurebase.app/fr/roadmap"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <SparklesIcon className="w-4 h-4 " />
+            </a>
           </div>
           <div className="flex gap-2">
             <Popover>
@@ -121,24 +133,23 @@ export default function Navigation() {
       </nav>
       {mobileNavOpen && (
         <div className="fixed left-0 top-[56px] flex h-screen w-full flex-col bg-[#00000068] backdrop-blur-lg">
+          <ActiveLink mobileItem hasBorder label="Accueil" href="/" />
           <ActiveLink
-            mobileItem={true}
-            hasBorder={true}
-            label="Accueil"
-            href="/"
-          />
-          <ActiveLink
-            mobileItem={true}
-            hasBorder={true}
+            mobileItem
+            hasBorder
             label="Mes sondages"
             href="/mes-sondages"
           />
-          <ActiveLink
-            mobileItem={true}
-            hasBorder={true}
-            label="FAQ"
-            href="/faq"
-          />
+          <ActiveLink mobileItem hasBorder label="FAQ" href="/faq" />
+          <a
+            className="flex items-center gap-2 px-8 py-4 text-xl font-semibold border-b border-[#ffffff29]"
+            href="https://kwikvote.featurebase.app/fr/roadmap"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Roadmap
+            <SparklesIcon className="w-4 h-4 " />
+          </a>
         </div>
       )}
     </>
