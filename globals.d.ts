@@ -1,11 +1,12 @@
 declare namespace NodeJS {
   interface ProcessEnv {
-    NEXT_PUBLIC_VAPID_EMAIL: string;
-    NEXT_PUBLIC_VAPID_PUBLIC_KEY: string;
-    VAPID_PRIVATE_KEY: string;
+    ADMIN_PASSWORD: string;
     DATABASE_URL: string;
     DOMAIN: string;
-    ADMIN_PASSWORD: string;
+    NEXT_PUBLIC_VAPID_EMAIL: string;
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: string;
+    PORT: string;
+    VAPID_PRIVATE_KEY: string;
   }
 }
 
