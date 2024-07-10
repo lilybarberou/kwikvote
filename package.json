@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "pnpm doppler && dotenv -c -- next dev",
     "dev-offline": "next dev",
-    "build": "npm run prisma && next build",
+    "build": "pnpm doppler && pnpm prisma && next build",
     "start": "dotenv -c -- next start",
     "lint": "next lint",
     "prisma": "npx prisma generate && npx prisma db push",
