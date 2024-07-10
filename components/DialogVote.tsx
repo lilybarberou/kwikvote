@@ -1,6 +1,5 @@
 "use client";
 
-import { PollSlot } from "@/app/api/poll/id/[value]/route";
 import {
   Select,
   SelectContent,
@@ -14,11 +13,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useVote } from "@/hooks/use-vote";
 import { useNotificationsStore } from "@/lib/notificationsStore";
 import { getDate, timeTwoDigit } from "@/lib/utils";
 import { useVotesStore } from "@/lib/votesStore";
+import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2 } from "lucide-react";
-import { SetStateAction, useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { SetStateAction, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { useMediaQuery } from "usehooks-ts";
 import { v4 } from "uuid";
@@ -32,7 +34,6 @@ import {
 } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { useToast } from "./ui/use-toast";
 
 type Props = {
   slots: { id: string; startDate: Date; endDate: Date }[];
@@ -41,11 +42,13 @@ type Props = {
   currentVoteId: string;
   closeDialog: () => void;
   setCurrentVoteId: React.Dispatch<SetStateAction<string>>;
-  setSlots?: React.Dispatch<SetStateAction<PollSlot[]>>;
 };
 
 export default function DialogVote(props: Props) {
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
+  const params = useParams() as { id: string };
+  const { createVoteMutation, deleteVoteMutation, updateVoteNameMutation } =
+    useVote();
   const {
     currentVoteId,
     slots,
@@ -53,11 +56,9 @@ export default function DialogVote(props: Props) {
     pollId,
     setCurrentVoteId,
     pollType,
-    setSlots,
   } = props;
   const { removeVote: deleteVote, addVote, votes } = useVotesStore();
   const { subscription } = useNotificationsStore();
-  const { toast } = useToast();
   const {
     register,
     handleSubmit,
@@ -91,35 +92,25 @@ export default function DialogVote(props: Props) {
       }
 
       // submit name only
-      setLoading(true);
-      const res = await fetch("/api/vote/name", {
-        method: "PUT",
-        body: JSON.stringify({
-          voteId: currentVoteId,
-          name: data.name,
-        }),
-      });
-      setLoading(false);
-
-      if (res.ok) {
-        // update vote in store
-        addVote({ ...votes[currentVoteId], name: data.name });
-        closeDialog();
-        reset();
-        setCurrentVoteId("edited"); // TODO FAIRE MIEUX
-      } else {
-        toast({
-          title: "Erreur lors de la modification du vote",
-          description: "Veuillez réessayer plus tard",
-          variant: "destructive",
-        });
-      }
+      updateVoteNameMutation.mutate(
+        { voteId: currentVoteId, name: data.name },
+        {
+          onSuccess: () => {
+            addVote({ ...votes[currentVoteId], name: data.name });
+            closeDialog();
+            reset();
+            setCurrentVoteId("edited"); // TODO FAIRE MIEUX
+          },
+        },
+      );
 
       return;
     }
 
     // CASE CREATE
-    const formattedData = {
+    const mutationData = {
+      pollId,
+      pollType,
       id: currentVoteId || v4(),
       name: data.name,
       choices: slots.map((slot) => {
@@ -135,73 +126,42 @@ export default function DialogVote(props: Props) {
       subscription: subscription || undefined,
     };
 
-    setLoading(true);
-    const res = await fetch("/api/vote", {
-      method: "POST",
-      body: JSON.stringify({
-        pollId,
-        pollType,
-        ...formattedData,
-      }),
+    createVoteMutation.mutate(mutationData, {
+      onSuccess: async () => {
+        if (isRegistrationPoll) {
+          // update local slots with new sorts
+          queryClient.invalidateQueries({
+            queryKey: ["getPollById", params.id],
+          });
+        }
+        addVote({
+          ...mutationData,
+          subscriptions: subscription ? [subscription] : [],
+        });
+        closeDialog();
+        reset();
+        setCurrentVoteId("edited"); // TODO FAIRE MIEUX
+      },
     });
-    setLoading(false);
-
-    if (res.ok) {
-      if (isRegistrationPoll && setSlots) {
-        // update local slots with new sorts
-        const resData = await res.json();
-        setSlots((prevSlots) =>
-          prevSlots.map((slot) => ({
-            ...slot,
-            ...(resData.slots[slot.id] || {}),
-          })),
-        );
-      }
-      addVote({
-        ...formattedData,
-        subscriptions: subscription ? [subscription] : [],
-      });
-      closeDialog();
-      reset();
-      setCurrentVoteId("edited"); // TODO FAIRE MIEUX
-    } else {
-      toast({
-        title: "Erreur lors de la création du vote",
-        description: "Veuillez réessayer plus tard",
-        variant: "destructive",
-      });
-    }
   });
 
   const removeVote = async () => {
-    const res = await fetch(`/api/vote/${currentVoteId}`, {
-      method: "DELETE",
-      body: JSON.stringify({ pollId, pollType }),
-    });
+    deleteVoteMutation.mutate(
+      { pollId, pollType, voteId: currentVoteId },
+      {
+        onSuccess: () => {
+          deleteVote(currentVoteId);
 
-    if (res.ok) {
-      deleteVote(currentVoteId);
+          if (isRegistrationPoll) {
+            queryClient.invalidateQueries({
+              queryKey: ["getPollById", params.id],
+            });
+          }
 
-      if (isRegistrationPoll && setSlots) {
-        const resData = await res.json();
-        if (resData.slots) {
-          setSlots((prevSlots) =>
-            prevSlots.map((slot) => ({
-              ...slot,
-              ...(resData.slots[slot.id] || {}),
-            })),
-          );
-        }
-      }
-
-      closeDialog();
-    } else {
-      toast({
-        title: "Erreur lors de la suppression du vote",
-        description: "Veuillez réessayer plus tard",
-        variant: "destructive",
-      });
-    }
+          closeDialog();
+        },
+      },
+    );
   };
 
   const DialogTitleBySlotType = () => {
@@ -319,9 +279,11 @@ export default function DialogVote(props: Props) {
             <DialogClose asChild>
               <Button variant="outline">Annuler</Button>
             </DialogClose>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={createVoteMutation.isPending}>
               Confirmer
-              {loading && <Loader2 className="ml-2 h-5 w-5 animate-spin" />}
+              {createVoteMutation.isPending && (
+                <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+              )}
             </Button>
           </div>
         </DialogFooter>

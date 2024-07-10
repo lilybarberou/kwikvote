@@ -6,39 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import { usePoll } from "@/hooks/use-poll";
+import { PollFormSchema, pollFormSchema } from "@/lib/schema/poll-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { fromZonedTime } from "date-fns-tz";
 import { Loader2, X } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
-import { z } from "zod";
 
-const PollFormSchema = z.object({
-  type: z.enum(["1", "2"]),
-  title: z.string().min(1),
-  description: z.string().optional(),
-  email: z.string().email().optional().or(z.literal("")),
-  timeBeforeAllowedType: z.enum(["1", "2"]),
-  hoursBeforeAllowed: z
-    .number()
-    .positive()
-    .optional()
-    .or(z.string().regex(/^\d+$/)),
-  slots: z.array(
-    z.object({
-      startDate: z.date(),
-      startTime: z.string(),
-      endDate: z.date(),
-      endTime: z.string(),
-      maxParticipants: z.coerce.number().positive(),
-    }),
-  ),
-});
-
-const defaultValues = {
+const slotDefaultValues = {
   startDate: new Date(),
   startTime: "12:00",
   endDate: new Date(),
@@ -47,19 +23,15 @@ const defaultValues = {
 };
 
 export default function CreatePoll() {
-  const [submitLoading, setSubmitLoading] = useState(false);
-  const { toast } = useToast();
-  const { push } = useRouter();
-  const { register, control, handleSubmit, watch } = useForm<
-    z.infer<typeof PollFormSchema>
-  >({
+  const { createPollMutation } = usePoll();
+  const { register, control, handleSubmit, watch } = useForm<PollFormSchema>({
     defaultValues: {
       type: "1",
       timeBeforeAllowedType: "1",
       hoursBeforeAllowed: 1,
-      slots: [defaultValues],
+      slots: [slotDefaultValues],
     },
-    resolver: zodResolver(PollFormSchema),
+    resolver: zodResolver(pollFormSchema),
   });
   const type = watch("type");
 
@@ -97,28 +69,14 @@ export default function CreatePoll() {
       };
     });
 
-    setSubmitLoading(true);
-    const res = await fetch("/api/poll", {
-      method: "POST",
-      body: JSON.stringify({
-        ...data,
-        slots,
-        email: data.email?.toLowerCase() || undefined,
-        type: Number(data.type),
-        timeBeforeAllowedType: Number(data.timeBeforeAllowedType),
-        msBeforeAllowed,
-      }),
+    createPollMutation.mutate({
+      ...data,
+      slots,
+      email: data.email?.toLowerCase() || undefined,
+      type: Number(data.type),
+      timeBeforeAllowedType: Number(data.timeBeforeAllowedType),
+      msBeforeAllowed,
     });
-
-    const poll = await res.json();
-
-    if (!res.ok) {
-      setSubmitLoading(false);
-      toast({
-        title: poll.message,
-        description: "Veuillez réessayer plus tard",
-      });
-    } else push(`/poll/${poll.id}?created=true`);
   });
 
   return (
@@ -174,7 +132,9 @@ export default function CreatePoll() {
           )}
         />
         <div className="flex flex-col gap-2">
-          <Label htmlFor="title">Titre du sondage*</Label>
+          <Label htmlFor="title">
+            Titre du sondage<span className="text-red-600">*</span>
+          </Label>
           <Input
             className="max-w-[550px] lg:w-1/2"
             {...register("title")}
@@ -185,19 +145,25 @@ export default function CreatePoll() {
           <Label htmlFor="description">Description</Label>
           <Textarea {...register("description")} id="description" />
         </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="email">
-            Email
-            <span className="ml-2 text-sm text-muted-foreground">
-              (Servira uniquement à retrouver vos différents sondages)
-            </span>
-          </Label>
-          <Input
-            className="max-w-xs"
-            {...register("email")}
-            id="email"
-            inputMode="email"
-          />
+        <div className="flex flex-col md:grid grid-cols-2 gap-x-4 gap-y-4">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="email">
+              Email
+              <span className="ml-2 text-sm text-muted-foreground">
+                (Servira uniquement à retrouver vos différents sondages)
+              </span>
+            </Label>
+            <Input {...register("email")} id="email" inputMode="email" />
+          </div>
+          <div className="flex flex-col gap-2 justify-between">
+            <Label htmlFor="password">
+              Mot de passe
+              <span className="ml-2 text-sm text-muted-foreground">
+                (Permettra de modifier le sondage)
+              </span>
+            </Label>
+            <Input {...register("password")} id="password" />
+          </div>
         </div>
         {type === "2" && (
           <div className="flex flex-col gap-3">
@@ -316,13 +282,15 @@ export default function CreatePoll() {
           className="mt-2"
           type="button"
           variant="secondary"
-          onClick={() => append(defaultValues)}
+          onClick={() => append(slotDefaultValues)}
         >
           Ajouter un créneau
         </Button>
-        <Button disabled={submitLoading} className="mt-4">
+        <Button disabled={createPollMutation.isPending} className="mt-4">
           Créer
-          {submitLoading && <Loader2 className="ml-2 h-5 w-5 animate-spin" />}
+          {createPollMutation.isPending && (
+            <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+          )}
         </Button>
       </form>
     </div>

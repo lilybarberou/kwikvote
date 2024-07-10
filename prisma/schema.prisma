@@ -11,7 +11,9 @@ model CronSchedule {
   id       String   @id @default(uuid())
   schedule DateTime
   pollId   String
+  slotId   String
   poll     Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  slot     Slot     @relation(fields: [slotId], references: [id], onDelete: Cascade)
 }
 
 model Poll {
@@ -20,6 +22,7 @@ model Poll {
   title                 String
   description           String         @default("")
   email                 String         @default("")
+  password              String         @default("")
   timeBeforeAllowedType Int            @default(1)
   msBeforeAllowed       Int            @default(0)
   slots                 Slot[]
@@ -30,17 +33,18 @@ model Poll {
 }
 
 model Slot {
-  id                      String       @id @default(uuid())
+  id                      String         @id @default(uuid())
   pollId                  String
   startDate               DateTime
   endDate                 DateTime
-  maxParticipants         Int          @default(0)
-  registered              String[]     @default([])
-  waitingList             String[]     @default([])
-  waitingListReregistered String[]     @default([])
-  notComing               String[]     @default([])
+  maxParticipants         Int            @default(0)
+  registered              String[]       @default([])
+  waitingList             String[]       @default([])
+  waitingListReregistered String[]       @default([])
+  notComing               String[]       @default([])
   choices                 VoteChoice[]
-  poll                    Poll         @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  cronSchedules           CronSchedule[]
+  poll                    Poll           @relation(fields: [pollId], references: [id], onDelete: Cascade)
 }
 
 model Vote {

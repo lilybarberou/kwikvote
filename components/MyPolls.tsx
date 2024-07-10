@@ -2,14 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import fetcher from "@/utils/fetch";
+import { getPollsByEmail } from "@/lib/api/poll/query";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { Bird, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { parseAsString, useQueryState } from "nuqs";
 import { useForm } from "react-hook-form";
-import useSWR from "swr";
 import { z } from "zod";
 
 const SearchSchema = z.object({
@@ -20,9 +20,14 @@ type SearchSchema = z.infer<typeof SearchSchema>;
 export const MyPolls = () => {
   const [email, setEmail] = useQueryState("email", parseAsString);
 
-  const { isLoading, data: polls = [] } = useSWR<
-    { id: string; title: string }[]
-  >(`/api/poll/email/${email?.toLowerCase()}`, fetcher);
+  const { data: polls, isLoading } = useQuery({
+    queryKey: ["getPollsByEmail", email?.toLowerCase()],
+    queryFn: async () => {
+      const res = await getPollsByEmail(email?.toLowerCase()!);
+      return res?.data;
+    },
+    enabled: !!email,
+  });
 
   const { register, handleSubmit, getValues } = useForm<SearchSchema>({
     resolver: zodResolver(SearchSchema),
@@ -50,10 +55,10 @@ export const MyPolls = () => {
         </Button>
       </form>
       {!isLoading &&
-        (getValues("email") && polls.length === 0 ? (
+        (getValues("email") && polls?.length === 0 ? (
           <NoPolls />
         ) : (
-          <Polls polls={polls} />
+          <Polls polls={polls!} />
         ))}
     </>
   );

@@ -1,20 +1,19 @@
-import { prisma } from "@/prisma/db";
-import { NextRequest, NextResponse } from "next/server";
-import webpush from "web-push";
-import { z } from "zod";
+"use server";
 
-export const dynamic = "force-dynamic";
+import { action } from "@/lib/safe-action";
+import { createCommentSchema } from "@/lib/schema/comment-schema";
+import { prisma } from "@/prisma/db";
+import webpush from "web-push";
 
 webpush.setVapidDetails(
   "mailto:" + process.env.NEXT_PUBLIC_VAPID_EMAIL,
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
   process.env.VAPID_PRIVATE_KEY,
 );
-// CREATE COMMENT
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const data = bodySchema.parse(body);
+
+export const createComment = action
+  .schema(createCommentSchema)
+  .action(async ({ parsedInput: data }) => {
     const comment = await prisma.comment.create({ data: data.comment });
 
     // SEND NOTIFICATION TO ALL POLL SUBS
@@ -38,9 +37,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (!votes.length) {
-      return NextResponse.json(comment);
-    }
+    if (!votes.length) return comment;
 
     const payload = JSON.stringify({
       title: "Nouveau commentaire !",
@@ -62,7 +59,7 @@ export async function POST(request: NextRequest) {
       });
     });
 
-    // REMOVE ENDPOINT FROM MESSAGE AUTHOR
+    // REMOVE ENDPOINT FROM MESSAGE'S AUTHOR
     if (data.exceptEndpoint) delete subscriptions[data.exceptEndpoint];
 
     // SEND NOTIFICATION TO ALL SUBS
@@ -73,23 +70,8 @@ export async function POST(request: NextRequest) {
         .catch((err) => console.log(err));
     });
 
-    return NextResponse.json(comment);
-  } catch {
-    return NextResponse.json(
-      { message: "Le commentaire n'a pas pu être créé" },
-      { status: 500 },
-    );
-  }
-}
-
-const bodySchema = z.object({
-  comment: z.object({
-    author: z.string(),
-    text: z.string(),
-    pollId: z.string(),
-  }),
-  exceptEndpoint: z.string().optional(),
-});
+    return comment;
+  });
 
 type Subscriptions = {
   [endpoint: string]: {
