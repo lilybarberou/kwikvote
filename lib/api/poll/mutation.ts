@@ -1,38 +1,28 @@
+"use server";
+
+import { action } from "@/lib/safe-action";
+import { CreateSlotSchema, createPollSchema } from "@/lib/schema/poll-schema";
 import { prisma } from "@/prisma/db";
 import { CronSchedule } from "@prisma/client";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
-import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-export async function GET(_: NextRequest) {
-  const polls = await prisma.poll.findMany();
-  return NextResponse.json(polls);
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const data = CreatePollSchema.parse(body);
-
+export const createPoll = action
+  .schema(createPollSchema)
+  .action(async ({ parsedInput: data }) => {
     const poll = await prisma.poll.create({
+      include: { slots: true },
       data: {
-        type: data.type,
-        title: data.title,
-        description: data.description,
-        email: data.email,
-        timeBeforeAllowedType: data.timeBeforeAllowedType,
-        msBeforeAllowed: data.msBeforeAllowed,
+        ...data,
         slots: {
-          create: data.slots.map(
-            (slot: z.infer<typeof CreateSlotSchema>) => slot,
-          ),
+          create: data.slots.map((slot: CreateSlotSchema) => slot),
         },
       },
     });
 
     // calculate all cron schedule times
     if (poll.type === 2) {
-      const cronScheduleTimes = data.slots
+      const cronScheduleTimes = poll.slots
         .sort(
           (a, b) =>
             new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
@@ -44,7 +34,10 @@ export async function POST(request: NextRequest) {
           // if slot's startDate is before now, don't create cron schedule
           if (new Date(curr.startDate).getTime() < Date.now()) return arr;
 
-          const currentObj = { pollId: poll.id } as CronSchedule;
+          const currentObj = {
+            pollId: poll.id,
+            slotId: curr.id,
+          } as CronSchedule;
 
           // day before at 5pm
           if (poll.timeBeforeAllowedType == 1) {
@@ -73,32 +66,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json(poll);
-  } catch (e) {
-    if (e instanceof z.ZodError)
-      return NextResponse.json(
-        { message: "Données incorrectes" },
-        { status: 400 },
-      );
-    return NextResponse.json(
-      { message: "Erreur lors de la création du sondage" },
-      { status: 500 },
-    );
-  }
-}
+    return poll.id;
+  });
 
-const CreateSlotSchema = z.object({
-  startDate: z.string().or(z.date()),
-  endDate: z.string().or(z.date()),
-  maxParticipants: z.number().int().positive(),
-});
-
-const CreatePollSchema = z.object({
-  type: z.number().int().positive().min(1).max(2),
-  title: z.string(),
-  description: z.string().optional(),
-  email: z.string().email().optional().or(z.literal("")),
-  timeBeforeAllowedType: z.number(),
-  msBeforeAllowed: z.number(),
-  slots: z.array(CreateSlotSchema),
-});
+export const deletePoll = action
+  .schema(z.object({ pollId: z.string() }))
+  .action(async ({ parsedInput: { pollId } }) => {
+    await prisma.poll.delete({ where: { id: pollId } });
+    return { success: true };
+  });

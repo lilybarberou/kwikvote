@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware";
 type Store = {
   pollHistory: { pollId: string; title: string }[];
   addPollToHistory: (pollId: string, title: string) => void;
+  removePollFromHistory: (pollId: string) => void;
 };
 
 export const useHistoryStore = create<Store>()(
@@ -25,6 +26,13 @@ export const useHistoryStore = create<Store>()(
             pollHistory: [{ pollId, title }, ...state.pollHistory].slice(0, 5),
           }));
         }
+      },
+      removePollFromHistory: (pollId: string) => {
+        set((state) => ({
+          pollHistory: state.pollHistory.filter(
+            (poll) => poll.pollId !== pollId,
+          ),
+        }));
       },
     }),
     {

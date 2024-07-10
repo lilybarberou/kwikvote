@@ -1,5 +1,6 @@
 import Footer from "@/components/Footer";
 import Navigation from "@/components/Navigation";
+import { Providers } from "@/components/Providers";
 import { Toaster } from "@/components/ui/toaster";
 import type { Metadata } from "next";
 import { Inter as FontSans } from "next/font/google";
@@ -52,12 +53,14 @@ export default function RootLayout({
       <body
         className={`dark flex min-h-screen flex-col items-center bg-background font-sans antialiased ${fontSans.variable}`}
       >
-        <Navigation />
-        <main className="w-full max-w-6xl px-4">
-          {children}
-          <Toaster />
-        </main>
-        <Footer />
+        <Providers>
+          <Navigation />
+          <main className="w-full max-w-6xl px-4">
+            {children}
+            <Toaster />
+          </main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );

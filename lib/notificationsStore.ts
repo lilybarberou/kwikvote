@@ -1,15 +1,17 @@
 import { Subscription } from "@prisma/client";
 import { create } from "zustand";
 
+export type StoreSub = Omit<Subscription, "createdAt">;
+
 type Store = {
-  subscription: Subscription | null;
+  subscription: StoreSub | null;
   notificationsSupported: boolean;
   notificationsPermission: NotificationPermission;
-  setSubscriptionEndpoint: (subscription: Subscription | null) => void;
+  setSubscriptionEndpoint: (subscription: StoreSub | null) => void;
   init: (obj: {
     notificationsSupported: boolean;
     notificationsPermission: NotificationPermission;
-    subscription: Subscription | null;
+    subscription: StoreSub | null;
   }) => void;
 };
 

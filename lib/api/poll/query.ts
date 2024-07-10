@@ -1,23 +1,39 @@
+"use server";
+
+import { action } from "@/lib/safe-action";
 import { prisma } from "@/prisma/db";
 import { Prisma } from "@prisma/client";
-import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
-// GET /api/poll/id/:id
-// GET POLL BY ID
-export async function GET(
-  _: NextRequest,
-  { params }: { params: { value: string } },
-) {
-  if (!params.value)
-    return NextResponse.json({ message: "Missing poll id" }, { status: 400 });
-
-  const poll = await prisma.poll.findUnique({
-    where: { id: params.value },
-    include: pollInclude,
+export const getPollsByEmail = action
+  .schema(z.string().email())
+  .action(async ({ parsedInput: email }) => {
+    const poll = await prisma.poll.findMany({
+      where: { email },
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    return poll;
   });
 
-  return NextResponse.json(poll);
-}
+export const getPollById = action
+  .schema(
+    z.object({
+      pollId: z.string(),
+    }),
+  )
+  .action(async ({ parsedInput: { pollId } }) => {
+    const poll = await prisma.poll.findUnique({
+      where: { id: pollId },
+      include: pollInclude,
+    });
+
+    return poll;
+  });
 
 const pollInclude = Prisma.validator<Prisma.PollInclude>()({
   comments: true,
@@ -53,6 +69,7 @@ const pollInclude = Prisma.validator<Prisma.PollInclude>()({
 export type CompletePoll = Prisma.PollGetPayload<{
   include: typeof pollInclude;
 }>;
+export type GetPollById = CompletePoll | undefined;
 export type PollSlot = CompletePoll["slots"][0];
 export type PollVote = CompletePoll["votes"][0];
 export type PollVoteChoice = PollVote["choices"][0];

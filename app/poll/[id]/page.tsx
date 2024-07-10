@@ -1,11 +1,11 @@
 "use client";
 
-import { CompletePoll } from "@/app/api/poll/id/[value]/route";
 import DialogPollLink from "@/components/DialogPollLink";
 import PollComments from "@/components/PollComments";
 import PollSkeleton from "@/components/PollSkeleton";
 import PollSlots from "@/components/PollSlots";
 import RegistrationPoll from "@/components/RegistrationPoll";
+import { PollSettingsDialog } from "@/components/poll/PollSettingsDialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -33,18 +33,20 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast";
+import { useSubscription } from "@/hooks/use-subscription";
+import { getPollById } from "@/lib/api/poll/query";
 import { useCommentsStore } from "@/lib/commentsStore";
 import { useHistoryStore } from "@/lib/historyStore";
 import { useNotificationsStore } from "@/lib/notificationsStore";
+import { CreateSubscriptionSchema } from "@/lib/schema/subscription-schema";
 import { cn } from "@/lib/utils";
 import { useVotesStore } from "@/lib/votesStore";
-import fetcher from "@/utils/fetch";
+import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { BarChart3, Bell, BellRing, Megaphone } from "lucide-react";
 import Link from "next/link";
 import { parseAsString, useQueryState } from "nuqs";
 import { useEffect, useState } from "react";
-import useSWR from "swr";
 
 export default function PollPage({ params }: { params: { id: string } }) {
   const [tab] = useQueryState("tab", parseAsString.withDefault("votes"));
@@ -63,21 +65,26 @@ export default function PollPage({ params }: { params: { id: string } }) {
   } = useNotificationsStore();
 
   const { initVotes, votes } = useVotesStore();
-  const { addPollToHistory } = useHistoryStore();
+  const { addPollToHistory, removePollFromHistory } = useHistoryStore();
   const { comments, initComments } = useCommentsStore();
   const { toast } = useToast();
-  const {
-    data: poll,
-    error,
-    isLoading,
-  } = useSWR<CompletePoll>(`/api/poll/id/${params.id}`, fetcher, {
-    onSuccess: (data) => {
-      initVotes(data.votes);
-      initComments(data.comments);
-      addPollToHistory(params.id, data.title || "");
+  const { createSubscriptionMutation } = useSubscription();
+
+  const { data: poll, isLoading } = useQuery({
+    queryKey: ["getPollById", params.id],
+    queryFn: async () => {
+      const res = await getPollById({ pollId: params.id });
+      const data = res?.data!;
+
+      if (data) {
+        initVotes(data.votes);
+        initComments(data.comments);
+        addPollToHistory(params.id, data.title || "");
+      } else removePollFromHistory(params.id);
+
+      return data;
     },
   });
-
   const isRegistrationPoll = poll?.type == 2;
   const hasSomeVotes = Object.values(votes).some((v) =>
     v.subscriptions.some((s) => s.endpoint === subscription?.endpoint),
@@ -134,31 +141,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
       })
       .then((sub) => sub.toJSON());
 
-    const res = await fetch("/api/subscription", {
-      method: "POST",
-      body: JSON.stringify(subscription),
-    });
-
-    if (res.ok) {
-      init({
-        notificationsSupported,
-        notificationsPermission: Notification.permission,
-        subscription: {
-          endpoint: subscription.endpoint!,
-          auth: subscription.keys!.auth,
-          p256dh: subscription.keys!.p256dh,
-        },
-      });
-      toast({
-        title: "Notifications activées",
-        description: `Il ne vous reste plus qu'à vous inscrire au sondage !`,
-      });
-    } else
-      toast({
-        title: "Erreur",
-        description:
-          "Une erreur est survenue lors de l'activation des notifications.",
-      });
+    createSubscriptionMutation.mutate(subscription as CreateSubscriptionSchema);
   };
 
   const dismissNotif = () => {
@@ -167,7 +150,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
   };
 
   if (isLoading) return <PollSkeleton />;
-  if (error || !poll)
+  if (!poll)
     return (
       <div className="mx-auto mt-32 flex flex-col items-center justify-center">
         <BarChart3 className="mb-10 h-24 w-24" />
@@ -289,6 +272,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
               </PopoverContent>
             </Popover>
           )}
+          {!!poll.password && <PollSettingsDialog />}
         </div>
         <TabsContent value="votes">
           {poll.type === 1 && <PollSlots slots={poll.slots} pollId={poll.id} />}

@@ -1,6 +1,5 @@
 "use client";
 
-import { PollSlot } from "@/app/api/poll/id/[value]/route";
 import {
   Table,
   TableBody,
@@ -9,7 +8,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useSlot } from "@/hooks/use-slot";
 import { useAlertStore } from "@/lib/alertStore";
+import { PollSlot } from "@/lib/api/poll/query";
 import { useNotificationsStore } from "@/lib/notificationsStore";
 import {
   cn,
@@ -40,8 +41,7 @@ type VotesBySlotId = {
   };
 };
 
-export default function RegistrationPoll(props: Props) {
-  const [slots, setSlots] = useState(props.slots);
+export default function RegistrationPoll({ slots, poll }: Props) {
   const [currentVoteId, setCurrentVoteId] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [showAllNotComing, setShowAllNotComing] = useState(false);
@@ -50,8 +50,8 @@ export default function RegistrationPoll(props: Props) {
   const { alerts, updateAlert } = useAlertStore();
 
   const TBA = getFormattedTimeBeforeAllowed({
-    timeBeforeAllowedType: props.poll.timeBeforeAllowedType,
-    msBeforeAllowed: props.poll.msBeforeAllowed,
+    timeBeforeAllowedType: poll.timeBeforeAllowedType,
+    msBeforeAllowed: poll.msBeforeAllowed,
   });
 
   type SlotArrayKey =
@@ -96,12 +96,11 @@ export default function RegistrationPoll(props: Props) {
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogVote
         setCurrentVoteId={setCurrentVoteId}
-        setSlots={setSlots}
         pollType={2}
         currentVoteId={currentVoteId}
         slots={slots}
         closeDialog={closeDialog}
-        pollId={props.poll.id}
+        pollId={poll.id}
       />
       <DialogTrigger asChild>
         <Button className="mb-2 mt-7" onClick={() => setCurrentVoteId("")}>

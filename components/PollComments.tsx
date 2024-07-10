@@ -1,10 +1,10 @@
+import { useComment } from "@/hooks/use-comment";
 import { useCommentsStore } from "@/lib/commentsStore";
 import { useNotificationsStore } from "@/lib/notificationsStore";
 import { Comment } from "@prisma/client";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale/fr";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { Button } from "./ui/button";
@@ -27,33 +27,23 @@ export default function PollComments(props: Props) {
   const { pollId } = props;
   const { subscription } = useNotificationsStore();
   const { comments, addComment } = useCommentsStore();
-  const [submitLoading, setSubmitLoading] = useState(false);
   const { register, handleSubmit, reset } = useForm<CommentForm>();
+  const { createCommentMutation } = useComment();
 
   // ADD A COMMENT
   const onCommentSubmit = handleSubmit(async (data) => {
-    setSubmitLoading(true);
-    const res = await fetch("/api/comment", {
-      method: "POST",
-      body: JSON.stringify({
+    createCommentMutation.mutate(
+      {
         comment: { ...data, pollId },
         exceptEndpoint: subscription?.endpoint,
-      }),
-    });
-    setSubmitLoading(false);
-
-    const comment = await res.json();
-
-    if (res.status !== 200) {
-      toast({
-        title: "Erreur lors de la création du commentaire",
-        description: "Veuillez réessayer plus tard",
-        variant: "destructive",
-      });
-    } else {
-      addComment(comment);
-      reset();
-    }
+      },
+      {
+        onSuccess: (comment) => {
+          addComment(comment!);
+          reset();
+        },
+      },
+    );
   });
 
   return (
@@ -85,9 +75,11 @@ export default function PollComments(props: Props) {
           placeholder="Message"
           {...register("text", { required: true })}
         />
-        <Button disabled={submitLoading}>
+        <Button disabled={createCommentMutation.isPending}>
           Envoyer
-          {submitLoading && <Loader2 className="ml-2 h-5 w-5 animate-spin" />}
+          {createCommentMutation.isPending && (
+            <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+          )}
         </Button>
       </form>
     </div>
