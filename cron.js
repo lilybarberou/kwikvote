@@ -78,16 +78,17 @@ const doStuff = async () => {
       // check if still place in registered
       let voteIdToRegister = "";
       poll.slots.forEach((slot) => {
-        if (
-          slot.registered.length < slot.maxParticipants &&
-          timeBeforeAllowedPassed[slot.id]
-        ) {
-          if (slot.waitingListReregistered.length > 0) {
-            voteIdToRegister = slot.waitingListReregistered[0];
-          }
+        const isNotFull = slot.registered.length < slot.maxParticipants;
+        const timePassed = timeBeforeAllowedPassed[slot.id];
+        const isWaitingListReregisteredNotEmpty =
+          slot.waitingListReregistered.length > 0;
+
+        if (isNotFull && timePassed && isWaitingListReregisteredNotEmpty) {
+          voteIdToRegister = slot.waitingListReregistered[0];
         }
       });
       console.log("voteIdToRegister: ", voteIdToRegister);
+
       if (voteIdToRegister) {
         newPoll = await updateSlotsArray({
           poll,
@@ -95,88 +96,13 @@ const doStuff = async () => {
           timeBeforeAllowedPassed,
         });
 
-        // get new people registered to send notifications
-        const votesNewlyRegistered = newPoll.slots.reduce(
-          (obj, slot) => {
-            obj.votesBySlot[slot.id] = [];
-            const oldRegistered = initialPoll.find(
-              (initialSlot) => initialSlot.id === slot.id,
-            ).registered;
-
-            // get id addded in registered
-            const newRegistered = slot.registered.filter(
-              (id) => !oldRegistered.includes(id),
-            );
-
-            // push ids which are not in array yet
-            newRegistered.forEach((id) => {
-              if (!obj.votes.includes(id)) {
-                obj.votes.push(id);
-                obj.votesBySlot[slot.id].push(id);
-              }
-            });
-
-            return obj;
-          },
-          { votesBySlot: {}, votes: [] },
-        );
-        console.log("votesNewlyRegistered: ", votesNewlyRegistered);
-
-        // get subs from all the votes
-        const votesWithSub = await prisma.vote.findMany({
-          where: {
-            id: { in: votesNewlyRegistered.votes },
-          },
-          select: {
-            id: true,
-            subscriptions: {
-              select: {
-                auth: true,
-                endpoint: true,
-                p256dh: true,
-              },
-            },
-          },
+        sendNotifications({
+          poll: newPoll,
+          pollId: poll.id,
+          voteId: voteIdToRegister,
+          initialPoll,
+          newPoll,
         });
-
-        // send notifications
-        Object.entries(votesNewlyRegistered.votesBySlot).forEach(
-          ([slotId, votes]) => {
-            const slot = poll.slots.find((slot) => slot.id === slotId);
-            const frSlotDate = toZonedTime(slot.startDate, "Europe/Paris");
-            const formattedDate = format(frSlotDate, "eeee d", { locale: fr });
-            const formattedTime = format(frSlotDate, "HH:mm", { locale: fr });
-
-            const payload = JSON.stringify({
-              title: "Vous êtes inscrit !",
-              body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${formattedTime} !`,
-              link: `${process.env.DOMAIN}/poll/${poll.id}`,
-            });
-
-            votes.forEach((vote) => {
-              const voteSubs = votesWithSub.find(
-                (voteWithSub) => voteWithSub.id === vote,
-              )?.subscriptions;
-              if (!voteSubs) return;
-
-              voteSubs.forEach((sub) => {
-                webpush
-                  .sendNotification(
-                    {
-                      endpoint: sub.endpoint,
-                      keys: {
-                        auth: sub.auth,
-                        p256dh: sub.p256dh,
-                      },
-                    },
-                    payload,
-                  )
-                  .then((res) => console.log("notif envoyée: ", res.statusCode))
-                  .catch((err) => console.log(err));
-              });
-            });
-          },
-        );
       }
       // move wlr to wl if time passed
       else {
@@ -231,12 +157,16 @@ const updateSlotsArray = async ({ poll, voteId, timeBeforeAllowedPassed }) => {
   });
 
   for (const slot of poll.slots) {
-    const isFull = slot.registered.length >= slot.maxParticipants;
+    const timePassed = timeBeforeAllowedPassed[slot.id];
     const currentVoteChoice = currentVoteData.choices.find(
-      (choice) => choice.slotId === slot.id,
+      (choice) => choice.slotId == slot.id,
     );
+    const isChoiceYes = currentVoteChoice?.choice == 1;
 
-    if (currentVoteChoice?.choice == 1) {
+    const isAllowedToRegister = () => !isRegisteredOnce || timePassed;
+    const isFull = () => slot.registered.length >= slot.maxParticipants;
+
+    if (isChoiceYes) {
       const isRegistered = slot.registered.includes(voteId);
 
       // premier créneau où il est inscrit, on le laisse inscrit
@@ -248,7 +178,7 @@ const updateSlotsArray = async ({ poll, voteId, timeBeforeAllowedPassed }) => {
       // (passera en liste d'attente dans la logique suivante)
       else if (isRegistered && isRegisteredOnce) {
         // if time passed and reregistered allowed we can leave it
-        if (timeBeforeAllowedPassed[slot.id]) {
+        if (timePassed) {
           isRegisteredOnce = true;
           continue;
         }
@@ -263,7 +193,7 @@ const updateSlotsArray = async ({ poll, voteId, timeBeforeAllowedPassed }) => {
         const isAllowedToRegister =
           !isRegisteredOnce || timeBeforeAllowedPassed[slot.id];
 
-        if (isFull) {
+        if (isFull()) {
           // if allowed to reregister -> must be in wl
           if (isAllowedToRegister) {
             if (isWaitingListReregistered)
@@ -298,13 +228,12 @@ const updateSlotsArray = async ({ poll, voteId, timeBeforeAllowedPassed }) => {
     else continue;
 
     // not full -> add to registered
-    if (!isFull && (!isRegisteredOnce || timeBeforeAllowedPassed[slot.id])) {
+    if (!isFull() && isAllowedToRegister()) {
       slot.registered.push(voteId);
       isRegisteredOnce = true;
     }
     // full and not registered anywhere -> add to waiting list
-    else if (!isRegisteredOnce || timeBeforeAllowedPassed[slot.id])
-      slot.waitingList.push(voteId);
+    else if (isAllowedToRegister()) slot.waitingList.push(voteId);
     // already registered somewhere -> add to reregistered waiting list
     else slot.waitingListReregistered.push(voteId);
   }
@@ -312,13 +241,13 @@ const updateSlotsArray = async ({ poll, voteId, timeBeforeAllowedPassed }) => {
   // ----- CHECK SI IL RESTE DE LA PLACE DANS LES INSCRITS D'UN CRENEAU -----
   let voteIdToRegister = "";
   poll.slots.forEach((slot) => {
-    if (
-      slot.registered.length < slot.maxParticipants &&
-      timeBeforeAllowedPassed[slot.id]
-    ) {
-      if (slot.waitingListReregistered.length > 0) {
-        voteIdToRegister = slot.waitingListReregistered[0];
-      }
+    const isNotFull = slot.registered.length < slot.maxParticipants;
+    const timePassed = timeBeforeAllowedPassed[slot.id];
+    const isWaitingListReregisteredNotEmpty =
+      slot.waitingListReregistered.length > 0;
+
+    if (isNotFull && timePassed && isWaitingListReregisteredNotEmpty) {
+      voteIdToRegister = slot.waitingListReregistered[0];
     }
   });
 
@@ -370,6 +299,97 @@ const checkTimeBeforeAllow = ({
     }
     return obj;
   }, {});
+};
+
+const sendNotifications = async ({
+  pollId,
+  poll,
+  voteId,
+  newPoll,
+  initialPoll,
+}) => {
+  // get new people registered to send notifications
+  const votesNewlyRegistered = newPoll.slots.reduce(
+    (obj, slot) => {
+      obj.votesBySlot[slot.id] = [];
+      const oldRegistered = initialPoll.find(
+        (initialSlot) => initialSlot.id === slot.id,
+      ).registered;
+
+      // get id addded in registered
+      const newRegistered = slot.registered.filter(
+        (id) => !oldRegistered.includes(id),
+      );
+
+      // push ids which are not in array yet
+      newRegistered.forEach((id) => {
+        if (!obj.votes.includes(id)) {
+          obj.votes.push(id);
+          obj.votesBySlot[slot.id].push(id);
+        }
+      });
+
+      return obj;
+    },
+    { votesBySlot: {}, votes: [] },
+  );
+  console.log("votesNewlyRegistered: ", votesNewlyRegistered);
+
+  // get subs from all the votes
+  const votesWithSub = await prisma.vote.findMany({
+    where: {
+      id: { in: votesNewlyRegistered.votes },
+    },
+    select: {
+      id: true,
+      subscriptions: {
+        select: {
+          auth: true,
+          endpoint: true,
+          p256dh: true,
+        },
+      },
+    },
+  });
+
+  // send notifications
+  Object.entries(votesNewlyRegistered.votesBySlot).forEach(
+    ([slotId, votes]) => {
+      const slot = poll.slots.find((slot) => slot.id === slotId);
+      const frSlotDate = toZonedTime(slot.startDate, "Europe/Paris");
+      const formattedDate = format(frSlotDate, "eeee d", { locale: fr });
+      const formattedTime = format(frSlotDate, "HH:mm", { locale: fr });
+
+      const payload = JSON.stringify({
+        title: "Vous êtes inscrit !",
+        body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${formattedTime} !`,
+        link: `${process.env.DOMAIN}/poll/${pollId}`,
+      });
+
+      votes.forEach((vote) => {
+        const voteSubs = votesWithSub.find(
+          (voteWithSub) => voteWithSub.id === vote,
+        )?.subscriptions;
+        if (!voteSubs) return;
+
+        voteSubs.forEach((sub) => {
+          webpush
+            .sendNotification(
+              {
+                endpoint: sub.endpoint,
+                keys: {
+                  auth: sub.auth,
+                  p256dh: sub.p256dh,
+                },
+              },
+              payload,
+            )
+            .then((res) => console.log("notif envoyée: ", res.statusCode))
+            .catch((err) => console.log(err));
+        });
+      });
+    },
+  );
 };
 
 console.log(
