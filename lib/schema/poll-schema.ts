@@ -42,3 +42,13 @@ export const createPollSchema = z.object({
   slots: z.array(createSlotSchema),
 });
 export type CreatePollSchema = z.infer<typeof createPollSchema>;
+
+export const pollSettingsSchema = pollFormSchema.pick({
+  title: true,
+  description: true,
+});
+export type PollSettingsSchema = z.infer<typeof pollSettingsSchema>;
+
+export const updatePollSchema = pollFormSchema
+  .pick({ title: true, description: true })
+  .extend({ pollId: z.string() });

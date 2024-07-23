@@ -1,7 +1,12 @@
 "use server";
 
 import { action } from "@/lib/safe-action";
-import { CreateSlotSchema, createPollSchema } from "@/lib/schema/poll-schema";
+import {
+  CreateSlotSchema,
+  createPollSchema,
+  pollFormSchema,
+  updatePollSchema,
+} from "@/lib/schema/poll-schema";
 import { prisma } from "@/prisma/db";
 import { CronSchedule } from "@prisma/client";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
@@ -74,4 +79,13 @@ export const deletePoll = action
   .action(async ({ parsedInput: { pollId } }) => {
     await prisma.poll.delete({ where: { id: pollId } });
     return { success: true };
+  });
+
+export const updatePoll = action
+  .schema(updatePollSchema)
+  .action(async ({ parsedInput: { pollId, ...data } }) => {
+    await prisma.poll.update({
+      where: { id: pollId },
+      data,
+    });
   });
