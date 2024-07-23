@@ -3,12 +3,18 @@
 import { usePoll } from "@/hooks/use-poll";
 import { useSlot } from "@/hooks/use-slot";
 import { GetPollById } from "@/lib/api/poll/query";
+import {
+  PollSettingsSchema,
+  pollSettingsSchema,
+} from "@/lib/schema/poll-schema";
 import { cn, getDate, sameDay, timeTwoDigit } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { PopoverClose } from "@radix-ui/react-popover";
 import { useQueryClient } from "@tanstack/react-query";
 import { SettingsIcon, TrashIcon } from "lucide-react";
 import { useParams } from "next/navigation";
 import { createContext, useContext, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
 import { useStep } from "usehooks-ts";
 
 import {
@@ -25,7 +31,9 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Textarea } from "../ui/textarea";
 
 const Context = createContext({
   goToNextStep: () => {},
@@ -90,8 +98,8 @@ const FirstStep = () => {
 const SecondStep = () => {
   return (
     <Accordion type="single" collapsible>
-      <SlotsDeleteTab />
       <ManagePollTab />
+      <SlotsDeleteTab />
     </Accordion>
   );
 };
@@ -103,11 +111,11 @@ const SlotsDeleteTab = () => {
   return (
     <AccordionItem value="slots">
       <AccordionTrigger>Gérer les créneaux</AccordionTrigger>
-      <AccordionContent className="grid grid-cols-3 pt-3">
+      <AccordionContent className="grid grid-cols-3 pt-3 px-1">
         {poll?.slots.map((slot) => (
           <div key={slot.id} className="whitespace-nowrap text-center">
             <Popover>
-              <PopoverTrigger>
+              <PopoverTrigger asChild>
                 <Button size="icon" className="mb-2">
                   <TrashIcon className="w-4 h-4" />
                 </Button>
@@ -154,16 +162,62 @@ const SlotsDeleteTab = () => {
 };
 
 const ManagePollTab = () => {
-  const { deletePollMutation } = usePoll();
   const params = useParams() as { id: string };
+  const {
+    deletePollMutation,
+    getPollByIdQuery: { data: poll },
+    updatePollMutation,
+  } = usePoll({ enabled: { getPollById: true } });
+
+  const {
+    formState: { isDirty },
+    handleSubmit,
+    register,
+    reset,
+  } = useForm<PollSettingsSchema>({
+    resolver: zodResolver(pollSettingsSchema),
+    defaultValues: {
+      title: poll?.title,
+      description: poll?.description,
+    },
+  });
+
+  const onSubmit = handleSubmit((data) => {
+    updatePollMutation.mutate(data, {
+      onSuccess: () => {
+        reset(data);
+      },
+    });
+  });
 
   return (
     <AccordionItem value="poll">
       <AccordionTrigger>Gérer le sondage</AccordionTrigger>
-      <AccordionContent>
+      <AccordionContent className="px-1">
+        <form className="space-y-4" onSubmit={onSubmit}>
+          <div className="space-y-2">
+            <Label htmlFor="title">
+              Titre du sondage<span className="text-red-600">*</span>
+            </Label>
+            <Input id="title" {...register("title")} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea id="description" {...register("description")} />
+          </div>
+          <Button
+            disabled={!isDirty || updatePollMutation.isPending}
+            type="submit"
+          >
+            Enregistrer
+          </Button>
+        </form>
+        <div className="my-4 h-px w-full bg-input" />
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="destructive">Supprimer le sondage</Button>
+            <Button variant="destructive" type="button">
+              Supprimer le sondage
+            </Button>
           </PopoverTrigger>
           <PopoverContent className="flex items-center flex-col gap-2 max-w-[200px]">
             <p className="text-sm text-center">
