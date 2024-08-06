@@ -1,7 +1,7 @@
 import { HelpCircle } from "lucide-react";
 
-import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
+import { Button } from "../ui/button";
+import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
 
 export default function RegistrationPollHelp() {
   return (

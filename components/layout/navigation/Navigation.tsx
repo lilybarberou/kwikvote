@@ -6,17 +6,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-import ConsultedHistory from "../components/ConsultedHistory";
-import { Button } from "./ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { ThemeSwitcher } from "../../ThemeSwitcher";
+import { Button } from "../../ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "./ui/tooltip";
+} from "../../ui/tooltip";
+import { ConsultedHistory } from "./ConsultedHistory";
 
-export default function Navigation() {
+export const Navigation = () => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const pathname = usePathname();
 
@@ -45,7 +46,7 @@ export default function Navigation() {
   return (
     <>
       <nav
-        className={`sticky top-0 z-50 mb-12 w-full border-b-[0.5px] border-b-[#ffffff21] bg-[#00000026] py-2 backdrop-blur-sm sm:mb-20 ${
+        className={`sticky top-0 z-50 mb-12 w-full border-b-[0.5px] dark:border-b-[#ffffff21] border-b-[#41414121] dark:bg-[#00000026] py-2 backdrop-blur-sm sm:mb-20 ${
           mobileNavOpen ? "bg-[#00000068] backdrop-blur-lg" : ""
         }`}
       >
@@ -87,9 +88,9 @@ export default function Navigation() {
                   <PopoverTrigger asChild>
                     <TooltipTrigger asChild>
                       <Button
-                        className="border-[#ffffff36] bg-transparent hover:bg-transparent"
                         variant="outline"
                         size="icon"
+                        className="border-[#41414121] dark:border-[#ffffff36] bg-transparent hover:bg-transparent"
                       >
                         <History className="h-5 w-5" />
                       </Button>
@@ -107,6 +108,7 @@ export default function Navigation() {
                 <ConsultedHistory />
               </PopoverContent>
             </Popover>
+            <ThemeSwitcher />
             <Button
               className="h-10 w-10 p-0 sm:h-auto sm:w-auto sm:px-4 sm:py-2"
               asChild
@@ -154,4 +156,4 @@ export default function Navigation() {
       )}
     </>
   );
-}
+};

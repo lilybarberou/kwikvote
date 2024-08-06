@@ -6,8 +6,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useVotesStore } from "@/lib/store/votesStore";
 import { getDate, sameDay, timeTwoDigit } from "@/lib/utils";
-import { useVotesStore } from "@/lib/votesStore";
 import {
   CheckCircle,
   CircleUserRound,
@@ -17,9 +17,9 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+import { Button } from "../ui/button";
+import { Dialog, DialogTrigger } from "../ui/dialog";
 import DialogVote from "./DialogVote";
-import { Button } from "./ui/button";
-import { Dialog, DialogTrigger } from "./ui/dialog";
 
 type Props = {
   slots: { id: string; startDate: Date; endDate: Date }[];
@@ -64,7 +64,9 @@ export default function PollSlot(props: Props) {
       case 2:
         return <XCircle className="inline-block h-4 w-4 text-red-400" />;
       case 3:
-        return <HelpCircle className="inline-block h-4 w-4 text-yellow-200" />;
+        return (
+          <HelpCircle className="inline-block h-4 w-4 text-[#eeee00] dark:text-yellow-200" />
+        );
     }
   };
 
@@ -114,7 +116,7 @@ export default function PollSlot(props: Props) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableRow>
+          <TableRow className="bg-muted/50">
             <TableCell className="flex justify-between font-bold">
               Total{" "}
               <span className="flex gap-1">

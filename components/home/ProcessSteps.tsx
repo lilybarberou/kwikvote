@@ -1,18 +1,36 @@
 import { motion } from "framer-motion";
+import { useTheme } from "next-themes";
 import Image from "next/image";
 import { Fragment } from "react";
+import { useIsClient } from "usehooks-ts";
 
-import { Card } from "./ui/card";
+import { Card } from "../ui/card";
 
-export default function ProcessSteps() {
+export const ProcessSteps = () => {
+  const { theme } = useTheme();
+  const isClient = useIsClient();
+
   const steps = [
     {
-      icon: "/createPoll.svg",
+      icon:
+        theme === "light"
+          ? "/svg/home/create-poll-light.svg"
+          : "/svg/home/create-poll.svg",
       text: "Vous créez votre sondage",
       width: "w-7/12",
     },
-    { icon: "/share.svg", text: "Vous partagez le lien" },
-    { icon: "/userChoices.svg", text: "Vos amis s'inscrivent" },
+    {
+      icon:
+        theme === "light" ? "/svg/home/share-light.svg" : "/svg/home/share.svg",
+      text: "Vous partagez le lien",
+    },
+    {
+      icon:
+        theme === "light"
+          ? "/svg/home/user-choices-light.svg"
+          : "/svg/home/user-choices.svg",
+      text: "Vos amis s'inscrivent",
+    },
   ];
 
   return (
@@ -34,15 +52,17 @@ export default function ProcessSteps() {
             >
               <Card
                 key={index}
-                className="flex aspect-square max-w-[150px] flex-col items-center justify-between bg-[#ffffff05] p-5 pt-0 text-center md:max-w-[220px] md:flex-1 lg:max-w-[250px]"
+                className="flex aspect-square max-w-[150px] flex-col items-center justify-between dark:bg-[#ffffff05] p-5 pt-0 text-center md:max-w-[220px] md:flex-1 lg:max-w-[250px] bg-gray-100/20"
               >
-                <Image
-                  className={`m-auto ${step.width ?? "w-9/12"}`}
-                  width={300}
-                  height={300}
-                  src={step.icon}
-                  alt={step.text}
-                />
+                {isClient && (
+                  <Image
+                    className={`m-auto ${step.width ?? "w-9/12"}`}
+                    width={300}
+                    height={300}
+                    src={step.icon}
+                    alt={step.text}
+                  />
+                )}
                 <p className="text-xs md:text-base">{step.text}</p>
               </Card>
             </motion.div>
@@ -51,7 +71,7 @@ export default function ProcessSteps() {
                 className="hidden w-6 sm:block lg:w-8"
                 width={200}
                 height={200}
-                src="/arrow.svg"
+                src="/svg/arrow.svg"
                 alt="Puis"
               />
             )}
@@ -60,7 +80,11 @@ export default function ProcessSteps() {
                 className="w-6 lg:w-8"
                 width={200}
                 height={200}
-                src="/sparkles.svg"
+                src={
+                  theme === "light"
+                    ? "/svg/sparkles-light.svg"
+                    : "/svg/sparkles.svg"
+                }
                 alt="Fini"
               />
             )}
@@ -69,4 +93,4 @@ export default function ProcessSteps() {
       })}
     </motion.div>
   );
-}
+};

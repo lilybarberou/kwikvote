@@ -10,7 +10,7 @@ type Props = {
   faqPage?: boolean;
 };
 
-export default function FAQContent(props: Props) {
+export const FAQContent = (props: Props) => {
   return (
     <Accordion className="w-full max-w-3xl" id="faq" type="single" collapsible>
       {props.faqPage && (
@@ -25,7 +25,7 @@ export default function FAQContent(props: Props) {
               notifications ! Ensuite, inscrivez-vous sur un créneau, quelques
               soient vos choix.
             </p>
-            <p className="mt-1 text-xs text-gray-300">
+            <p className="mt-1 text-xs dark:text-gray-300 text-gray-500">
               (note: si vous avez désactivé les notifications de votre
               navigateur, vous ne pourrez pas les recevoir)
             </p>
@@ -93,4 +93,4 @@ export default function FAQContent(props: Props) {
       </AccordionItem>
     </Accordion>
   );
-}
+};

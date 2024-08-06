@@ -1,11 +1,11 @@
 "use client";
 
-import DialogPollLink from "@/components/DialogPollLink";
-import PollComments from "@/components/PollComments";
-import PollSkeleton from "@/components/PollSkeleton";
-import PollSlots from "@/components/PollSlots";
-import RegistrationPoll from "@/components/RegistrationPoll";
+import DialogPollLink from "@/components/poll/DialogPollLink";
+import PollComments from "@/components/poll/PollComments";
 import { PollSettingsDialog } from "@/components/poll/PollSettingsDialog";
+import PollSkeleton from "@/components/poll/PollSkeleton";
+import PollSlots from "@/components/poll/PollSlots";
+import RegistrationPoll from "@/components/poll/RegistrationPoll";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -35,12 +35,12 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useSubscription } from "@/hooks/use-subscription";
 import { getPollById } from "@/lib/api/poll/query";
-import { useCommentsStore } from "@/lib/commentsStore";
-import { useHistoryStore } from "@/lib/historyStore";
-import { useNotificationsStore } from "@/lib/notificationsStore";
 import { CreateSubscriptionSchema } from "@/lib/schema/subscription-schema";
+import { useCommentsStore } from "@/lib/store/commentsStore";
+import { useHistoryStore } from "@/lib/store/historyStore";
+import { useNotificationsStore } from "@/lib/store/notificationsStore";
+import { useVotesStore } from "@/lib/store/votesStore";
 import { cn } from "@/lib/utils";
-import { useVotesStore } from "@/lib/votesStore";
 import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { BarChart3, Bell, BellRing, Megaphone } from "lucide-react";

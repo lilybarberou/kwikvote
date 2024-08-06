@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import { PollVote } from "./api/poll/query";
+import { PollVote } from "../api/poll/query";
 
 type Store = {
   votes: { [voteId: string]: PollVote };

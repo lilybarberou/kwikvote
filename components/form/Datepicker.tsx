@@ -13,8 +13,9 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import * as React from "react";
 import { Controller } from "react-hook-form";
 
-export default function DatePicker(props: any) {
+export const DatePicker = (props: any) => {
   const [open, setOpen] = React.useState(false);
+
   return (
     <Controller
       control={props.control}
@@ -52,4 +53,4 @@ export default function DatePicker(props: any) {
       )}
     />
   );
-}
+};

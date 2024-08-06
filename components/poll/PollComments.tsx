@@ -1,16 +1,16 @@
 import { useComment } from "@/hooks/use-comment";
-import { useCommentsStore } from "@/lib/commentsStore";
-import { useNotificationsStore } from "@/lib/notificationsStore";
+import { useCommentsStore } from "@/lib/store/commentsStore";
+import { useNotificationsStore } from "@/lib/store/notificationsStore";
 import { Comment } from "@prisma/client";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale/fr";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Textarea } from "./ui/textarea";
-import { useToast } from "./ui/use-toast";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
+import { useToast } from "../ui/use-toast";
 
 type Props = {
   comments: Comment[];

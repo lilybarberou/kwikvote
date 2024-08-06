@@ -9,9 +9,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useSlot } from "@/hooks/use-slot";
-import { useAlertStore } from "@/lib/alertStore";
 import { PollSlot } from "@/lib/api/poll/query";
-import { useNotificationsStore } from "@/lib/notificationsStore";
+import { useAlertStore } from "@/lib/store/alertStore";
+import { useNotificationsStore } from "@/lib/store/notificationsStore";
+import { useVotesStore } from "@/lib/store/votesStore";
 import {
   cn,
   getDate,
@@ -19,16 +20,15 @@ import {
   sameDay,
   timeTwoDigit,
 } from "@/lib/utils";
-import { useVotesStore } from "@/lib/votesStore";
 import { Poll } from "@prisma/client";
 import { Edit, XIcon } from "lucide-react";
 import { Fragment, useState } from "react";
 
+import { Button } from "../ui/button";
+import { Checkbox } from "../ui/checkbox";
+import { Dialog, DialogTrigger } from "../ui/dialog";
 import DialogVote from "./DialogVote";
 import RegistrationPollHelp from "./RegistrationPollHelp";
-import { Button } from "./ui/button";
-import { Checkbox } from "./ui/checkbox";
-import { Dialog, DialogTrigger } from "./ui/dialog";
 
 type Props = {
   slots: PollSlot[];
@@ -110,18 +110,18 @@ export default function RegistrationPoll({ slots, poll }: Props) {
 
       {/* INFO */}
       {!alerts.pollLegend && (
-        <div className="mt-2 flex w-fit gap-3 rounded-md bg-gray-600/20 p-2">
+        <div className="mt-2 flex w-fit gap-3 rounded-md dark:bg-gray-600/20 bg-gray-100 p-2">
           <div className="my-2 grid grid-cols-[30px,1fr] items-center gap-2 gap-x-2">
             {!!subscription && (
               <>
-                <div className="h-[15px] w-[30px] rounded-sm bg-primary/40" />
-                <p className="text-xs text-gray-400">
+                <div className="h-[15px] w-[30px] rounded-sm dark:bg-primary/40 bg-primary/80" />
+                <p className="text-xs dark:text-gray-400 text-gray-700">
                   Votes pour lesquels vous recevez les notifications
                 </p>
               </>
             )}
-            <Edit className="mx-auto h-3 w-3 stroke-gray-400" />
-            <p className="text-xs text-gray-400">
+            <Edit className="mx-auto h-3 w-3 dark:stroke-gray-400 stroke-gray-700" />
+            <p className="text-xs dark:text-gray-400 text-gray-700">
               Pour modifier un vote, cliquez sur celui-ci
             </p>
           </div>
@@ -130,7 +130,7 @@ export default function RegistrationPoll({ slots, poll }: Props) {
             variant="ghost"
             className="h-fit p-1"
           >
-            <XIcon className="mx-auto h-3 w-3 stroke-gray-400" />
+            <XIcon className="mx-auto h-3 w-3 dark:stroke-gray-400 stroke-gray-700" />
           </Button>
         </div>
       )}
@@ -173,7 +173,7 @@ export default function RegistrationPoll({ slots, poll }: Props) {
             return (
               <Fragment key={array.key}>
                 <TableRow
-                  className={`mt-4 border-0 border-transparent bg-[#101929] ${index !== 0 ? "border-t-8" : ""}`}
+                  className={`mt-4 border-0 border-transparent dark:bg-[#101929] bg-[#f4f4f4] ${index !== 0 ? "border-t-8" : ""}`}
                 >
                   <TableCell className="whitespace-pre-wrap rounded-bl-lg rounded-tl-lg py-2 font-bold">
                     <p>{array.label}</p>
@@ -251,7 +251,7 @@ export default function RegistrationPoll({ slots, poll }: Props) {
                                 className={cn(
                                   "w-full p-2",
                                   isAuthorOfVote &&
-                                    "bg-primary/40 hover:bg-primary/30",
+                                    "dark:bg-primary/40 bg-primary/80 !text-white dark:hover:bg-primary/30 hover:bg-primary/70",
                                 )}
                                 variant="ghost"
                               >

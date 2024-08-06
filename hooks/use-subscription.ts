@@ -1,7 +1,7 @@
 import { useToast } from "@/components/ui/use-toast";
 import { createSubscription } from "@/lib/api/subscription/mutation";
-import { useNotificationsStore } from "@/lib/notificationsStore";
 import { CreateSubscriptionSchema } from "@/lib/schema/subscription-schema";
+import { useNotificationsStore } from "@/lib/store/notificationsStore";
 import { useMutation } from "@tanstack/react-query";
 
 export const useSubscription = () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import DatePicker from "@/components/Datepicker";
+import { DatePicker } from "@/components/form/Datepicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -80,7 +80,7 @@ export default function CreatePoll() {
   });
 
   return (
-    <div className="m-auto">
+    <div className="m-auto max-w-xl">
       <h1 className="mb-10 text-3xl font-bold">Création du sondage</h1>
       <form onSubmit={submitPoll} className="flex flex-col gap-4">
         <p className="text-sm font-semibold">
@@ -100,14 +100,14 @@ export default function CreatePoll() {
                 <RadioGroupItem value="1" id="type-1" className="peer hidden" />
                 <Label
                   htmlFor="type-1"
-                  className="!ml-0 flex h-44 min-w-[150px] cursor-pointer flex-col items-center justify-center rounded border border-[#ffffff33] p-3 peer-data-[state=checked]:bg-[#ffffff1a]"
+                  className="!ml-0 flex h-44 min-w-[150px] cursor-pointer flex-col items-center justify-center rounded border dark:border-[#ffffff33] border-[#41414121] p-3 dark:peer-data-[state=checked]:bg-[#ffffff1a] peer-data-[state=checked]:bg-[#d9d9d91a]"
                 >
                   <p className="mb-2">Sondage libre</p>
                   <Image
                     className="w-32 object-cover"
                     width={400}
                     height={400}
-                    src="/poll-11.png"
+                    src="/images/poll-11.png"
                     alt="Sondage libre"
                   />
                 </Label>
@@ -116,14 +116,14 @@ export default function CreatePoll() {
                 <RadioGroupItem value="2" id="type-2" className="peer hidden" />
                 <Label
                   htmlFor="type-2"
-                  className="!ml-0 flex h-44 cursor-pointer flex-col items-center justify-center rounded border border-[#ffffff33] p-3 text-center peer-data-[state=checked]:bg-[#ffffff1a]"
+                  className="!ml-0 flex h-44 cursor-pointer flex-col items-center justify-center rounded border text-center dark:border-[#ffffff33] border-[#41414121] p-3 dark:peer-data-[state=checked]:bg-[#ffffff1a] peer-data-[state=checked]:bg-[#d9d9d91a]"
                 >
                   <p className="mb-2">Sondage avec liste d'attente</p>
                   <Image
                     className="w-32 object-cover"
                     width={400}
                     height={400}
-                    src="/poll-22.png"
+                    src="/images/poll-22.png"
                     alt="Sondage avec liste d'attente"
                   />
                 </Label>
@@ -135,17 +135,13 @@ export default function CreatePoll() {
           <Label htmlFor="title">
             Titre du sondage<span className="text-red-600">*</span>
           </Label>
-          <Input
-            className="max-w-[550px] lg:w-1/2"
-            {...register("title")}
-            id="title"
-          />
+          <Input {...register("title")} id="title" />
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor="description">Description</Label>
           <Textarea {...register("description")} id="description" />
         </div>
-        <div className="flex flex-col md:grid grid-cols-2 gap-x-4 gap-y-4">
+        <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="email">
               Email
