@@ -10,9 +10,9 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogTitle,
-} from "./ui/alert-dialog";
-import { Button } from "./ui/button";
-import { useToast } from "./ui/use-toast";
+} from "../ui/alert-dialog";
+import { Button } from "../ui/button";
+import { useToast } from "../ui/use-toast";
 
 export default function DialogPollLink() {
   const [created, setCreated] = useQueryState(

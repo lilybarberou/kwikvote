@@ -14,9 +14,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useVote } from "@/hooks/use-vote";
-import { useNotificationsStore } from "@/lib/notificationsStore";
+import { useNotificationsStore } from "@/lib/store/notificationsStore";
+import { useVotesStore } from "@/lib/store/votesStore";
 import { getDate, timeTwoDigit } from "@/lib/utils";
-import { useVotesStore } from "@/lib/votesStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2 } from "lucide-react";
 import { useParams } from "next/navigation";
@@ -25,15 +25,15 @@ import { Controller, useForm } from "react-hook-form";
 import { useMediaQuery } from "usehooks-ts";
 import { v4 } from "uuid";
 
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import {
   DialogClose,
   DialogContent,
   DialogFooter,
   DialogTitle,
-} from "./ui/dialog";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
+} from "../ui/dialog";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 
 type Props = {
   slots: { id: string; startDate: Date; endDate: Date }[];

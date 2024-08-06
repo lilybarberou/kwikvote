@@ -1,4 +1,4 @@
-import { MyPolls } from "@/components/MyPolls";
+import { MyPolls } from "@/components/poll/MyPolls";
 import { Suspense } from "react";
 
 export default function SearchPollsByEmail() {

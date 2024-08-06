@@ -1,10 +1,10 @@
 import { useToast } from "@/components/ui/use-toast";
 import { createPoll, deletePoll, updatePoll } from "@/lib/api/poll/mutation";
 import { getPollById } from "@/lib/api/poll/query";
-import { useCommentsStore } from "@/lib/commentsStore";
-import { useHistoryStore } from "@/lib/historyStore";
 import { CreatePollSchema, PollSettingsSchema } from "@/lib/schema/poll-schema";
-import { useVotesStore } from "@/lib/votesStore";
+import { useCommentsStore } from "@/lib/store/commentsStore";
+import { useHistoryStore } from "@/lib/store/historyStore";
+import { useVotesStore } from "@/lib/store/votesStore";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 

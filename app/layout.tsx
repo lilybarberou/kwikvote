@@ -1,17 +1,12 @@
-import Footer from "@/components/Footer";
-import Navigation from "@/components/Navigation";
 import { Providers } from "@/components/Providers";
+import { Footer } from "@/components/layout/Footer";
+import { Navigation } from "@/components/layout/navigation/Navigation";
 import { Toaster } from "@/components/ui/toaster";
+import { fontSans } from "@/lib/fonts";
 import type { Metadata } from "next";
-import { Inter as FontSans } from "next/font/google";
 import Script from "next/script";
 
 import "./globals.css";
-
-export const fontSans = FontSans({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
 
 export const metadata: Metadata = {
   title: "KwikVote",
@@ -43,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <head>
         <Script
           src="https://cloud.umami.is/script.js"
@@ -51,7 +46,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`dark flex min-h-screen flex-col items-center bg-background font-sans antialiased ${fontSans.variable}`}
+        className={`flex min-h-screen flex-col items-center bg-background font-sans antialiased ${fontSans.variable}`}
       >
         <Providers>
           <Navigation />
