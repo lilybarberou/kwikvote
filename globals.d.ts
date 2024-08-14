@@ -17,6 +17,6 @@ interface ApiResponse<S extends any, Data> {
   validationErrors?: Partial<Record<keyof Infer<S> | "_root", string[]>>;
 }
 
-type GetDataFromAction<TFunc extends (...args: any[]) => any> = Awaited<
-  ReturnType<TFunc>
+type GetDataFromAction<TFunc extends (...args: any[]) => any> = NonNullable<
+  Awaited<ReturnType<TFunc>>
 >["data"];

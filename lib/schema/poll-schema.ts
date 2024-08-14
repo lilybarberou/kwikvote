@@ -51,4 +51,5 @@ export type PollSettingsSchema = z.infer<typeof pollSettingsSchema>;
 
 export const updatePollSchema = pollFormSchema
   .pick({ title: true, description: true })
-  .extend({ pollId: z.string() });
+  .extend({ password: z.string() });
+export type UpdatePollSchema = z.infer<typeof updatePollSchema>;

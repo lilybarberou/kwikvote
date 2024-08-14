@@ -1,30 +1,25 @@
+"use client";
+
 import { useComment } from "@/hooks/use-comment";
 import { useCommentsStore } from "@/lib/store/commentsStore";
 import { useNotificationsStore } from "@/lib/store/notificationsStore";
-import { Comment } from "@prisma/client";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale/fr";
 import { Loader2 } from "lucide-react";
+import { useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
-import { useToast } from "../ui/use-toast";
-
-type Props = {
-  comments: Comment[];
-  pollId: string;
-};
 
 type CommentForm = {
   author: string;
   text: string;
 };
 
-export default function PollComments(props: Props) {
-  const { toast } = useToast();
-  const { pollId } = props;
+export const PollComments = () => {
+  const { id: pollId } = useParams() as { id: string };
   const { subscription } = useNotificationsStore();
   const { comments, addComment } = useCommentsStore();
   const { register, handleSubmit, reset } = useForm<CommentForm>();
@@ -84,4 +79,4 @@ export default function PollComments(props: Props) {
       </form>
     </div>
   );
-}
+};

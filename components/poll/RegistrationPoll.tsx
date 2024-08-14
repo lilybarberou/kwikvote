@@ -8,8 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useSlot } from "@/hooks/use-slot";
-import { PollSlot } from "@/lib/api/poll/query";
+import { GetPollById } from "@/lib/api/poll/query";
 import { useAlertStore } from "@/lib/store/alertStore";
 import { useNotificationsStore } from "@/lib/store/notificationsStore";
 import { useVotesStore } from "@/lib/store/votesStore";
@@ -20,19 +19,17 @@ import {
   sameDay,
   timeTwoDigit,
 } from "@/lib/utils";
-import { Poll } from "@prisma/client";
 import { Edit, XIcon } from "lucide-react";
 import { Fragment, useState } from "react";
 
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
 import { Dialog, DialogTrigger } from "../ui/dialog";
-import DialogVote from "./DialogVote";
-import RegistrationPollHelp from "./RegistrationPollHelp";
+import { DialogVote } from "./DialogVote";
+import { RegistrationPollHelp } from "./RegistrationPollHelp";
 
 type Props = {
-  slots: PollSlot[];
-  poll: Poll;
+  poll: NonNullable<GetPollById>;
 };
 
 type VotesBySlotId = {
@@ -41,13 +38,15 @@ type VotesBySlotId = {
   };
 };
 
-export default function RegistrationPoll({ slots, poll }: Props) {
+export const RegistrationPoll = ({ poll }: Props) => {
   const [currentVoteId, setCurrentVoteId] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [showAllNotComing, setShowAllNotComing] = useState(false);
   const { votes } = useVotesStore();
   const { subscription } = useNotificationsStore();
   const { alerts, updateAlert } = useAlertStore();
+
+  const slots = poll.slots;
 
   const TBA = getFormattedTimeBeforeAllowed({
     timeBeforeAllowedType: poll.timeBeforeAllowedType,
@@ -100,7 +99,6 @@ export default function RegistrationPoll({ slots, poll }: Props) {
         currentVoteId={currentVoteId}
         slots={slots}
         closeDialog={closeDialog}
-        pollId={poll.id}
       />
       <DialogTrigger asChild>
         <Button className="mb-2 mt-7" onClick={() => setCurrentVoteId("")}>
@@ -272,4 +270,4 @@ export default function RegistrationPoll({ slots, poll }: Props) {
       </Table>
     </Dialog>
   );
-}
+};

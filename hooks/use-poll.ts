@@ -1,7 +1,7 @@
 import { useToast } from "@/components/ui/use-toast";
 import { createPoll, deletePoll, updatePoll } from "@/lib/api/poll/mutation";
-import { getPollById } from "@/lib/api/poll/query";
-import { CreatePollSchema, PollSettingsSchema } from "@/lib/schema/poll-schema";
+import { getPollById, isPollPasswordValid } from "@/lib/api/poll/query";
+import { CreatePollSchema, UpdatePollSchema } from "@/lib/schema/poll-schema";
 import { useCommentsStore } from "@/lib/store/commentsStore";
 import { useHistoryStore } from "@/lib/store/historyStore";
 import { useVotesStore } from "@/lib/store/votesStore";
@@ -33,7 +33,6 @@ export const usePoll = (props: Props = { enabled: { getPollById: false } }) => {
     queryKey: getPollByIdKey,
     queryFn: async () => {
       const res = await getPollById({ pollId });
-      console.log("ok");
       const data = res?.data!;
 
       if (data) {
@@ -65,12 +64,12 @@ export const usePoll = (props: Props = { enabled: { getPollById: false } }) => {
   });
 
   const deletePollMutation = useMutation({
-    mutationFn: async (pollId: string) => {
-      const data = await deletePoll({ pollId });
+    mutationFn: async (input: { pollId: string; password: string }) => {
+      const data = await deletePoll(input);
       return data?.data;
     },
-    onSuccess: async (_, pollId) => {
-      removePollFromHistory(pollId);
+    onSuccess: async (_, input) => {
+      removePollFromHistory(input.pollId);
       router.push(`/`);
     },
     onError: () => {
@@ -82,7 +81,7 @@ export const usePoll = (props: Props = { enabled: { getPollById: false } }) => {
   });
 
   const updatePollMutation = useMutation({
-    mutationFn: async (input: PollSettingsSchema) => {
+    mutationFn: async (input: UpdatePollSchema) => {
       const data = await updatePoll({ pollId: pollId, ...input });
       return data?.data;
     },
@@ -101,6 +100,13 @@ export const usePoll = (props: Props = { enabled: { getPollById: false } }) => {
     },
   });
 
+  const checkPollPasswordMutation = useMutation({
+    mutationFn: async (password: string) => {
+      const data = await isPollPasswordValid({ pollId, password });
+      return data?.data;
+    },
+  });
+
   return {
     // # QUERIES
     getPollByIdQuery,
@@ -108,5 +114,6 @@ export const usePoll = (props: Props = { enabled: { getPollById: false } }) => {
     createPollMutation,
     deletePollMutation,
     updatePollMutation,
+    checkPollPasswordMutation,
   };
 };

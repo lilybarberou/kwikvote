@@ -3,7 +3,7 @@ import { HelpCircle } from "lucide-react";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
 
-export default function RegistrationPollHelp() {
+export const RegistrationPollHelp = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -25,4 +25,4 @@ export default function RegistrationPollHelp() {
       </DialogContent>
     </Dialog>
   );
-}
+};
