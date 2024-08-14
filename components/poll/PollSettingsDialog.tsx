@@ -38,11 +38,14 @@ import { Textarea } from "../ui/textarea";
 const Context = createContext({
   goToNextStep: () => {},
   poll: {} as GetPollById,
+  password: "",
+  setPassword: (pw: string) => {},
 });
 const useProvider = () => useContext(Context);
 
 export const PollSettingsDialog = () => {
   const [step, helpers] = useStep(2);
+  const [password, setPassword] = useState("");
 
   const queryClient = useQueryClient();
   const params = useParams() as { id: string };
@@ -52,7 +55,7 @@ export const PollSettingsDialog = () => {
   ]);
 
   return (
-    <Context.Provider value={{ ...helpers, poll }}>
+    <Context.Provider value={{ ...helpers, poll, password, setPassword }}>
       <Dialog>
         <DialogTrigger asChild>
           <Button size="icon" variant="ghost">
@@ -70,18 +73,24 @@ export const PollSettingsDialog = () => {
 };
 
 const FirstStep = () => {
-  const { goToNextStep } = useProvider();
+  const { goToNextStep, setPassword } = useProvider();
   const inputPassword = useRef<HTMLInputElement>(null);
   const [error, setError] = useState(false);
-  const { poll } = useProvider();
+  const { checkPollPasswordMutation } = usePoll();
 
   const submitPassword = (e: React.FormEvent) => {
     e.preventDefault();
-
     const password = inputPassword.current?.value;
-    if (password === poll?.password || password === process.env.ADMIN_PASSWORD)
-      goToNextStep();
-    else setError(true);
+    if (!password) return;
+
+    checkPollPasswordMutation.mutate(password, {
+      onSuccess: (isValid) => {
+        if (isValid) {
+          goToNextStep();
+          setPassword(password);
+        } else setError(true);
+      },
+    });
   };
 
   return (
@@ -106,7 +115,7 @@ const SecondStep = () => {
 
 const SlotsDeleteTab = () => {
   const { deleteSlotByIdMutation } = useSlot();
-  const { poll } = useProvider();
+  const { poll, password } = useProvider();
 
   return (
     <AccordionItem value="slots">
@@ -132,7 +141,9 @@ const SlotsDeleteTab = () => {
                 <Button
                   variant="destructive"
                   className="w-full"
-                  onClick={() => deleteSlotByIdMutation.mutate(slot.id)}
+                  onClick={() =>
+                    deleteSlotByIdMutation.mutate({ slotId: slot.id, password })
+                  }
                   disabled={deleteSlotByIdMutation.isPending}
                 >
                   Supprimer
@@ -162,6 +173,7 @@ const SlotsDeleteTab = () => {
 };
 
 const ManagePollTab = () => {
+  const { password } = useProvider();
   const params = useParams() as { id: string };
   const {
     deletePollMutation,
@@ -183,11 +195,14 @@ const ManagePollTab = () => {
   });
 
   const onSubmit = handleSubmit((data) => {
-    updatePollMutation.mutate(data, {
-      onSuccess: () => {
-        reset(data);
+    updatePollMutation.mutate(
+      { ...data, password },
+      {
+        onSuccess: () => {
+          reset(data);
+        },
       },
-    });
+    );
   });
 
   return (
@@ -231,7 +246,9 @@ const ManagePollTab = () => {
             <Button
               variant="destructive"
               className="w-full"
-              onClick={() => deletePollMutation.mutate(params.id)}
+              onClick={() =>
+                deletePollMutation.mutate({ pollId: params.id, password })
+              }
               disabled={deletePollMutation.isPending}
             >
               Supprimer

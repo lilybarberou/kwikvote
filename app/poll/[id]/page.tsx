@@ -1,11 +1,11 @@
 "use client";
 
-import DialogPollLink from "@/components/poll/DialogPollLink";
-import PollComments from "@/components/poll/PollComments";
+import { DialogPollLink } from "@/components/poll/DialogPollLink";
+import { PollComments } from "@/components/poll/PollComments";
 import { PollSettingsDialog } from "@/components/poll/PollSettingsDialog";
-import PollSkeleton from "@/components/poll/PollSkeleton";
-import PollSlots from "@/components/poll/PollSlots";
-import RegistrationPoll from "@/components/poll/RegistrationPoll";
+import { PollSkeleton } from "@/components/poll/PollSkeleton";
+import { PollSlots } from "@/components/poll/PollSlots";
+import { RegistrationPoll } from "@/components/poll/RegistrationPoll";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -272,16 +272,14 @@ export default function PollPage({ params }: { params: { id: string } }) {
               </PopoverContent>
             </Popover>
           )}
-          {!!poll.password && <PollSettingsDialog />}
+          {poll.hasPassword && <PollSettingsDialog />}
         </div>
         <TabsContent value="votes">
-          {poll.type === 1 && <PollSlots slots={poll.slots} pollId={poll.id} />}
-          {poll.type === 2 && (
-            <RegistrationPoll slots={poll.slots} poll={poll} />
-          )}
+          {poll.type === 1 && <PollSlots slots={poll.slots} />}
+          {poll.type === 2 && <RegistrationPoll poll={poll} />}
         </TabsContent>
         <TabsContent value="comments">
-          <PollComments comments={poll.comments} pollId={params.id} />
+          <PollComments />
         </TabsContent>
       </Tabs>
     </div>

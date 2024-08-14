@@ -1,6 +1,8 @@
 import { create } from "zustand";
 
-import { PollVote } from "../api/poll/query";
+import { GetPollById } from "../api/poll/query";
+
+type PollVote = NonNullable<GetPollById>["votes"][0];
 
 type Store = {
   votes: { [voteId: string]: PollVote };

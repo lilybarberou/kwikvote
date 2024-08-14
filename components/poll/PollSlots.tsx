@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Table,
   TableBody,
@@ -6,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { GetPollById } from "@/lib/api/poll/query";
 import { useVotesStore } from "@/lib/store/votesStore";
 import { getDate, sameDay, timeTwoDigit } from "@/lib/utils";
 import {
@@ -19,14 +22,13 @@ import { useState } from "react";
 
 import { Button } from "../ui/button";
 import { Dialog, DialogTrigger } from "../ui/dialog";
-import DialogVote from "./DialogVote";
+import { DialogVote } from "./DialogVote";
 
 type Props = {
-  slots: { id: string; startDate: Date; endDate: Date }[];
-  pollId: string;
+  slots: NonNullable<GetPollById>["slots"];
 };
 
-export default function PollSlot(props: Props) {
+export const PollSlots = (props: Props) => {
   const { votes } = useVotesStore();
   const [currentVoteId, setCurrentVoteId] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -80,7 +82,6 @@ export default function PollSlot(props: Props) {
         currentVoteId={currentVoteId}
         slots={props.slots}
         closeDialog={closeDialog}
-        pollId={props.pollId}
       />
       <Table>
         <TableHeader>
@@ -157,4 +158,4 @@ export default function PollSlot(props: Props) {
       </Table>
     </Dialog>
   );
-}
+};

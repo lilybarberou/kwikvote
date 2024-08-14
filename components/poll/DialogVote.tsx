@@ -37,26 +37,21 @@ import { Label } from "../ui/label";
 
 type Props = {
   slots: { id: string; startDate: Date; endDate: Date }[];
-  pollId: string;
   pollType: number;
   currentVoteId: string;
   closeDialog: () => void;
   setCurrentVoteId: React.Dispatch<SetStateAction<string>>;
 };
 
-export default function DialogVote(props: Props) {
+export const DialogVote = (props: Props) => {
+  const { id: pollId } = useParams() as { id: string };
+
   const queryClient = useQueryClient();
   const params = useParams() as { id: string };
   const { createVoteMutation, deleteVoteMutation, updateVoteNameMutation } =
     useVote();
-  const {
-    currentVoteId,
-    slots,
-    closeDialog,
-    pollId,
-    setCurrentVoteId,
-    pollType,
-  } = props;
+  const { currentVoteId, slots, closeDialog, setCurrentVoteId, pollType } =
+    props;
   const { removeVote: deleteVote, addVote, votes } = useVotesStore();
   const { subscription } = useNotificationsStore();
   const {
@@ -290,4 +285,4 @@ export default function DialogVote(props: Props) {
       </form>
     </DialogContent>
   );
-}
+};

@@ -9,8 +9,8 @@ export const useSlot = () => {
 
   // # MUTATIONS
   const deleteSlotByIdMutation = useMutation({
-    mutationFn: async (slotId: string) => {
-      const data = await deleteSlotById({ slotId });
+    mutationFn: async (input: { slotId: string; password: string }) => {
+      const data = await deleteSlotById({ ...input, pollId });
       return data?.data;
     },
     onSuccess: async () => {

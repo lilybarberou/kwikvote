@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "../ui/table";
 
-export default function PollSkeleton() {
+export const PollSkeleton = () => {
   return (
     <div>
       <Skeleton className="mb-5 h-[28px] w-[200px] rounded-full" />
@@ -77,4 +77,4 @@ export default function PollSkeleton() {
       </Table>
     </div>
   );
-}
+};

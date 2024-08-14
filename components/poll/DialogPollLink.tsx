@@ -14,7 +14,7 @@ import {
 import { Button } from "../ui/button";
 import { useToast } from "../ui/use-toast";
 
-export default function DialogPollLink() {
+export const DialogPollLink = () => {
   const [created, setCreated] = useQueryState(
     "created",
     parseAsBoolean.withDefault(false),
@@ -75,4 +75,4 @@ export default function DialogPollLink() {
       </AlertDialogContent>
     </AlertDialog>
   );
-}
+};

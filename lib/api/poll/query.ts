@@ -2,7 +2,6 @@
 
 import { action } from "@/lib/safe-action";
 import { prisma } from "@/prisma/db";
-import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 export const getPollsByEmail = action
@@ -29,47 +28,54 @@ export const getPollById = action
   .action(async ({ parsedInput: { pollId } }) => {
     const poll = await prisma.poll.findUnique({
       where: { id: pollId },
-      include: pollInclude,
-    });
-
-    return poll;
-  });
-
-const pollInclude = Prisma.validator<Prisma.PollInclude>()({
-  comments: true,
-  slots: {
-    select: {
-      id: true,
-      startDate: true,
-      endDate: true,
-      maxParticipants: true,
-      registered: true,
-      waitingList: true,
-      waitingListReregistered: true,
-      notComing: true,
-    },
-    orderBy: { startDate: "asc" },
-  },
-  votes: {
-    select: {
-      id: true,
-      name: true,
-      subscriptions: { select: { endpoint: true } },
-      choices: {
-        select: { id: true, choice: true, slotId: true },
-        orderBy: {
-          slot: { startDate: "asc" },
+      select: {
+        id: true,
+        createdAt: true,
+        type: true,
+        title: true,
+        description: true,
+        password: true,
+        timeBeforeAllowedType: true,
+        msBeforeAllowed: true,
+        comments: true,
+        slots: {
+          orderBy: { startDate: "asc" },
+        },
+        votes: {
+          select: {
+            id: true,
+            name: true,
+            subscriptions: { select: { endpoint: true } },
+            choices: {
+              select: { id: true, choice: true, slotId: true },
+              orderBy: {
+                slot: { startDate: "asc" },
+              },
+            },
+          },
+          orderBy: { createdAt: "asc" },
         },
       },
-    },
-    orderBy: { createdAt: "asc" },
-  },
-});
+    });
+    if (!poll) throw new Error("Poll not found");
 
-export type CompletePoll = Prisma.PollGetPayload<{
-  include: typeof pollInclude;
-}>;
-export type GetPollById = CompletePoll | undefined;
-export type PollSlot = CompletePoll["slots"][0];
-export type PollVote = CompletePoll["votes"][0];
-export type PollVoteChoice = PollVote["choices"][0];
+    const { password, ...rest } = poll;
+
+    return { ...rest, hasPassword: !!password };
+  });
+
+export const isPollPasswordValid = action
+  .schema(z.object({ pollId: z.string(), password: z.string() }))
+  .action(async ({ parsedInput: { pollId, password } }) => {
+    if (password === process.env.ADMIN_PASSWORD) return true;
+
+    const poll = await prisma.poll.findFirst({
+      where: { id: pollId },
+      select: { password: true },
+    });
+    if (!poll) throw new Error("Poll not found");
+
+    return poll.password === password;
+  });
+
+export type GetPollById = GetDataFromAction<typeof getPollById>;
