@@ -14,6 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useVote } from "@/hooks/use-vote";
+import { useLocalVotesStore } from "@/lib/store/localVotesStore";
 import { useNotificationsStore } from "@/lib/store/notificationsStore";
 import { useVotesStore } from "@/lib/store/votesStore";
 import { getDate, timeTwoDigit } from "@/lib/utils";
@@ -54,6 +55,7 @@ export const DialogVote = (props: Props) => {
     props;
   const { removeVote: deleteVote, addVote, votes } = useVotesStore();
   const { subscription } = useNotificationsStore();
+  const { addLocalVote, removeLocalVote } = useLocalVotesStore();
   const {
     register,
     handleSubmit,
@@ -92,6 +94,7 @@ export const DialogVote = (props: Props) => {
         {
           onSuccess: () => {
             addVote({ ...votes[currentVoteId], name: data.name });
+            addLocalVote(pollId, currentVoteId);
             closeDialog();
             reset();
             setCurrentVoteId("edited"); // TODO FAIRE MIEUX
@@ -133,6 +136,7 @@ export const DialogVote = (props: Props) => {
           ...mutationData,
           subscriptions: subscription ? [subscription] : [],
         });
+        addLocalVote(pollId, mutationData.id);
         closeDialog();
         reset();
         setCurrentVoteId("edited"); // TODO FAIRE MIEUX
@@ -146,6 +150,7 @@ export const DialogVote = (props: Props) => {
       {
         onSuccess: () => {
           deleteVote(currentVoteId);
+          removeLocalVote(pollId, currentVoteId);
 
           if (isRegistrationPoll) {
             queryClient.invalidateQueries({
