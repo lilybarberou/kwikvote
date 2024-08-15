@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { GetPollById } from "@/lib/api/poll/query";
 import { useAlertStore } from "@/lib/store/alertStore";
+import { useLocalVotesStore } from "@/lib/store/localVotesStore";
 import { useNotificationsStore } from "@/lib/store/notificationsStore";
 import { useVotesStore } from "@/lib/store/votesStore";
 import {
@@ -45,6 +46,7 @@ export const RegistrationPoll = ({ poll }: Props) => {
   const { votes } = useVotesStore();
   const { subscription } = useNotificationsStore();
   const { alerts, updateAlert } = useAlertStore();
+  const { localVotes } = useLocalVotesStore();
 
   const slots = poll.slots;
 
@@ -229,9 +231,13 @@ export const RegistrationPoll = ({ poll }: Props) => {
                       })
                       .map((voteId) => {
                         const vote = votes[voteId];
-                        const isAuthorOfVote = vote?.subscriptions?.some(
-                          (sub) => sub.endpoint === subscription?.endpoint,
-                        );
+                        const isAuthorOfVote =
+                          vote?.subscriptions?.some(
+                            (sub) => sub.endpoint === subscription?.endpoint,
+                          ) ||
+                          localVotes[poll.id]?.some(
+                            (localVoteId) => localVoteId === voteId,
+                          );
 
                         if (
                           isNotComingColumn &&
