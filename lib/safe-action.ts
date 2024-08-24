@@ -4,6 +4,7 @@ import { z } from "zod";
 
 export const action = createSafeActionClient();
 
+// ADMIN ACTION
 const adminActionSchema = z.object({ password: z.string() });
 export const adminAction = action
   .schema(adminActionSchema)
@@ -16,6 +17,7 @@ export const adminAction = action
     return next();
   });
 
+// POLL PASSWORD ACTION
 const pollPwActionSchema = z.object({
   pollId: z.string(),
   password: z.string(),

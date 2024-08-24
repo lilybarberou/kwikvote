@@ -28,7 +28,9 @@ type Props = {
 
 const LIMIT = 12;
 
-export const usePoll = (props: Props = { enabled: { getPollById: false } }) => {
+export const usePoll = (
+  props: Props = { enabled: { getPollById: false, getPolls: false } },
+) => {
   const [{ password, q: query }] = useQueryStates({
     password: parseAsString.withDefault(""),
     q: parseAsString.withDefault(""),
