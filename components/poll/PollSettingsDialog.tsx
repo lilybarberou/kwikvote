@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { PopoverClose } from "@radix-ui/react-popover";
 import { useQueryClient } from "@tanstack/react-query";
 import { SettingsIcon, TrashIcon } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { createContext, useContext, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useStep } from "usehooks-ts";
@@ -52,7 +52,7 @@ export const PollSettingsDialog = () => {
   const poll = queryClient.getQueryData<GetPollById>([
     "getPollById",
     params.id,
-  ]);
+  ])!;
 
   return (
     <Context.Provider value={{ ...helpers, poll, password, setPassword }}>
@@ -173,6 +173,7 @@ const SlotsDeleteTab = () => {
 };
 
 const ManagePollTab = () => {
+  const router = useRouter();
   const { password } = useProvider();
   const params = useParams() as { id: string };
   const {
@@ -247,7 +248,14 @@ const ManagePollTab = () => {
               variant="destructive"
               className="w-full"
               onClick={() =>
-                deletePollMutation.mutate({ pollId: params.id, password })
+                deletePollMutation.mutate(
+                  { pollId: params.id, password },
+                  {
+                    onSuccess: () => {
+                      router.push(`/`);
+                    },
+                  },
+                )
               }
               disabled={deletePollMutation.isPending}
             >

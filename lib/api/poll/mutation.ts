@@ -1,7 +1,6 @@
 "use server";
 
-import { action } from "@/lib/safe-action";
-import { pwAction } from "@/lib/safe-action-server";
+import { action, pollPwAction } from "@/lib/safe-action";
 import {
   CreateSlotSchema,
   createPollSchema,
@@ -73,14 +72,14 @@ export const createPoll = action
     return poll.id;
   });
 
-export const deletePoll = pwAction.action(
+export const deletePoll = pollPwAction.action(
   async ({ parsedInput: { pollId } }) => {
     await prisma.poll.delete({ where: { id: pollId } });
     return { success: true };
   },
 );
 
-export const updatePoll = pwAction
+export const updatePoll = pollPwAction
   .schema(async (s) => s.merge(updatePollSchema))
   .action(async ({ parsedInput: { pollId, ...data } }) => {
     await prisma.poll.update({

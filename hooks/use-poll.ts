@@ -1,20 +1,39 @@
 import { useToast } from "@/components/ui/use-toast";
 import { createPoll, deletePoll, updatePoll } from "@/lib/api/poll/mutation";
-import { getPollById, isPollPasswordValid } from "@/lib/api/poll/query";
+import {
+  getPollById,
+  getPolls,
+  isPollPasswordValid,
+} from "@/lib/api/poll/query";
 import { CreatePollSchema, UpdatePollSchema } from "@/lib/schema/poll-schema";
 import { useCommentsStore } from "@/lib/store/commentsStore";
 import { useHistoryStore } from "@/lib/store/historyStore";
 import { useVotesStore } from "@/lib/store/votesStore";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { handleServerResponse } from "@/lib/utils";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
+import { parseAsString, useQueryStates } from "nuqs";
 
 type Props = {
   enabled?: {
-    getPollById: boolean;
+    getPollById?: boolean;
+    getPolls?: boolean;
   };
 } | null;
 
+const LIMIT = 12;
+
 export const usePoll = (props: Props = { enabled: { getPollById: false } }) => {
+  const [{ password, q: query }] = useQueryStates({
+    password: parseAsString.withDefault(""),
+    q: parseAsString.withDefault(""),
+  });
+
   let enabled = {} as NonNullable<Props>["enabled"];
   if (props) enabled = props.enabled;
 
@@ -46,6 +65,26 @@ export const usePoll = (props: Props = { enabled: { getPollById: false } }) => {
     enabled: enabled?.getPollById,
   });
 
+  const getPollsKey = ["getPolls", query];
+  const getPollsQuery = useInfiniteQuery({
+    queryKey: getPollsKey,
+    queryFn: async ({ pageParam }) => {
+      const data = await getPolls({
+        password,
+        query,
+        limit: LIMIT,
+        offset: pageParam * LIMIT,
+      });
+      return handleServerResponse(data);
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, pages) => {
+      if (!lastPage || (lastPage && lastPage?.length < LIMIT)) return undefined;
+      return pages.length;
+    },
+    enabled: enabled?.getPolls && !!password,
+  });
+
   // # MUTATIONS
   const createPollMutation = useMutation({
     mutationFn: async (input: CreatePollSchema) => {
@@ -70,7 +109,6 @@ export const usePoll = (props: Props = { enabled: { getPollById: false } }) => {
     },
     onSuccess: async (_, input) => {
       removePollFromHistory(input.pollId);
-      router.push(`/`);
     },
     onError: () => {
       toast({
@@ -110,10 +148,13 @@ export const usePoll = (props: Props = { enabled: { getPollById: false } }) => {
   return {
     // # QUERIES
     getPollByIdQuery,
+    getPollsQuery,
     // # MUTATIONS
     createPollMutation,
     deletePollMutation,
     updatePollMutation,
     checkPollPasswordMutation,
+    // # COMPUTED
+    keys: { getPollsKey },
   };
 };

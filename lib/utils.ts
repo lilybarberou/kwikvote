@@ -2,7 +2,13 @@ import { type ClassValue, clsx } from "clsx";
 import { format } from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { fr } from "date-fns/locale";
+import {
+  BindArgsValidationErrors,
+  SafeActionResult,
+  ValidationErrors,
+} from "next-safe-action";
 import { twMerge } from "tailwind-merge";
+import { Schema } from "zod";
 
 import { PollWithSlots } from "./api/vote/mutation";
 
@@ -38,26 +44,53 @@ export const getFormattedTimeBeforeAllowed = ({
   } else return "la veille à 17h";
 };
 
-export function handleServerResponse<S extends any, Data>(
-  response: ApiResponse<S, Data>,
-): Data {
+export function handleServerResponse<
+  ServerError,
+  S extends Schema | undefined,
+  BAS extends readonly Schema[],
+  CVE = ValidationErrors<S>,
+  CBAVE = BindArgsValidationErrors<BAS>,
+  Data extends any | { message?: string; success?: boolean } = any,
+  NextCtx = unknown,
+>(
+  response:
+    | SafeActionResult<string, S, BAS, CVE, CBAVE, Data, NextCtx>
+    | undefined,
+) {
+  if (!response) {
+    throw new Error("An error occurred");
+  }
   if (response.serverError) {
     throw new Error(response.serverError);
   }
 
   if (response.validationErrors) {
-    console.log(response.validationErrors, "validationErrors");
+    throw new Error("Validation error");
   }
 
   if (response.data) {
-    if (response.data.success === false) {
-      throw new Error(response.data.message ?? "An error occurred.");
+    if (isSuccessResponse(response.data)) {
+      if (response.data.success === false) {
+        throw new Error(response.data.message);
+      } else {
+        // Assuming you don't want to return the SuccessResponse type
+        return response.data as Exclude<Data, SuccessResponse>;
+      }
+    } else {
+      // If response.data is not a SuccessResponse, return it as is
+      return response.data as Exclude<Data, SuccessResponse>;
     }
-    return response.data;
   }
-
   // Handle case where no data is present
   throw new Error("No data available in the response.");
+}
+
+// Define a type guard to check if an object has a success property
+// Define a type for the object with success and message properties
+
+// Define a type guard to check if an object is a SuccessResponse
+function isSuccessResponse(obj: any): obj is SuccessResponse {
+  return obj && typeof obj === "object" && "success" in obj && "message" in obj;
 }
 
 export const checkTimeBeforeAllow = ({

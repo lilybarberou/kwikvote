@@ -1,13 +1,13 @@
 "use server";
 
-import { pwAction } from "@/lib/safe-action-server";
+import { pollPwAction } from "@/lib/safe-action";
 import { checkTimeBeforeAllow } from "@/lib/utils";
 import { prisma } from "@/prisma/db";
 import { z } from "zod";
 
 import { PollWithSlots, sendNotifications } from "../vote/mutation";
 
-export const deleteSlotById = pwAction
+export const deleteSlotById = pollPwAction
   .schema(async (s) => s.extend({ slotId: z.string() }))
   .action(async ({ parsedInput: { slotId } }) => {
     const deletedSlot = await prisma.slot.delete({ where: { id: slotId } });
