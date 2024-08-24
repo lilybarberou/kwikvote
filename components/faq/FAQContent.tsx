@@ -25,7 +25,7 @@ export const FAQContent = (props: Props) => {
               notifications ! Ensuite, inscrivez-vous sur un créneau, quelques
               soient vos choix.
             </p>
-            <p className="mt-1 text-xs dark:text-gray-300 text-gray-500">
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-300">
               (note: si vous avez désactivé les notifications de votre
               navigateur, vous ne pourrez pas les recevoir)
             </p>

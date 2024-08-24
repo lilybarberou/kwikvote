@@ -65,7 +65,7 @@ export const Home = () => {
       <h1 className="mb-6 max-w-xl text-center text-3xl font-semibold sm:text-4xl">
         Créez un sondage en quelques secondes et partagez-le avec vos amis
       </h1>
-      <h2 className="mb-4 text-center dark:text-[#d5d5d5] text-black">
+      <h2 className="mb-4 text-center text-black dark:text-[#d5d5d5]">
         C'est simple, gratuit, et aucun compte n'est requis.
       </h2>
       <div className="mb-14 flex gap-2">
@@ -75,7 +75,7 @@ export const Home = () => {
         <Button
           asChild
           variant="outline"
-          className="dark:border-[#ffffff36] border-[#41414121] bg-transparent hover:bg-transparent"
+          className="border-[#41414121] bg-transparent hover:bg-transparent dark:border-[#ffffff36]"
           size="icon"
         >
           <Link href="#faq" aria-label="FAQ">
@@ -88,24 +88,24 @@ export const Home = () => {
         defaultValue="free"
         className="mb-32 flex w-full flex-col items-center gap-4"
       >
-        <TabsList className="mb-2 dark:bg-[#00000029] bg-[#ffffff51]">
+        <TabsList className="mb-2 bg-[#ffffff51] dark:bg-[#00000029]">
           <TabsTrigger
             value="free"
-            className="flex items-center gap-2 dark:data-[state=active]:bg-[#ffffff28] data-[state=active]:bg-[#ffffff9c]"
+            className="flex items-center gap-2 data-[state=active]:bg-[#ffffff9c] dark:data-[state=active]:bg-[#ffffff28]"
           >
             <ListTodo className="h-5 w-5" />
             Libre
           </TabsTrigger>
           <TabsTrigger
             value="waitlist"
-            className="flex items-center gap-2 dark:data-[state=active]:bg-[#ffffff28] data-[state=active]:bg-[#ffffff9c]"
+            className="flex items-center gap-2 data-[state=active]:bg-[#ffffff9c] dark:data-[state=active]:bg-[#ffffff28]"
           >
             <List className="h-5 w-5" />
             Liste d'attente
           </TabsTrigger>
         </TabsList>
         <motion.div
-          className="aspect-auto w-full rounded-lg border border-b-0 dark:border-[#ffffff38] border-[#27272721] p-2 sm:p-[10px]"
+          className="aspect-auto w-full rounded-lg border border-b-0 border-[#27272721] p-2 dark:border-[#ffffff38] sm:p-[10px]"
           variants={{
             init: { opacity: 0, y: -20 },
             show: { opacity: 1, y: 0 },
@@ -115,7 +115,7 @@ export const Home = () => {
           animate={controls}
           transition={{ duration: 0.5 }}
         >
-          <div className="rounded-sm border border-b-0 dark:border-[#ffffff38] border-[#27272721]">
+          <div className="rounded-sm border border-b-0 border-[#27272721] dark:border-[#ffffff38]">
             <TabsContent value="free" className="mt-0 bg-background pt-3">
               {isClient && (
                 <Image

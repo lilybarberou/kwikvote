@@ -110,18 +110,18 @@ export const RegistrationPoll = ({ poll }: Props) => {
 
       {/* INFO */}
       {!alerts.pollLegend && (
-        <div className="mt-2 flex w-fit gap-3 rounded-md dark:bg-gray-600/20 bg-gray-100 p-2">
+        <div className="mt-2 flex w-fit gap-3 rounded-md bg-gray-100 p-2 dark:bg-gray-600/20">
           <div className="my-2 grid grid-cols-[30px,1fr] items-center gap-2 gap-x-2">
             {!!subscription && (
               <>
-                <div className="h-[15px] w-[30px] rounded-sm dark:bg-primary/40 bg-primary/80" />
-                <p className="text-xs dark:text-gray-400 text-gray-700">
+                <div className="h-[15px] w-[30px] rounded-sm bg-primary/80 dark:bg-primary/40" />
+                <p className="text-xs text-gray-700 dark:text-gray-400">
                   Votes pour lesquels vous recevez les notifications
                 </p>
               </>
             )}
-            <Edit className="mx-auto h-3 w-3 dark:stroke-gray-400 stroke-gray-700" />
-            <p className="text-xs dark:text-gray-400 text-gray-700">
+            <Edit className="mx-auto h-3 w-3 stroke-gray-700 dark:stroke-gray-400" />
+            <p className="text-xs text-gray-700 dark:text-gray-400">
               Pour modifier un vote, cliquez sur celui-ci
             </p>
           </div>
@@ -130,7 +130,7 @@ export const RegistrationPoll = ({ poll }: Props) => {
             variant="ghost"
             className="h-fit p-1"
           >
-            <XIcon className="mx-auto h-3 w-3 dark:stroke-gray-400 stroke-gray-700" />
+            <XIcon className="mx-auto h-3 w-3 stroke-gray-700 dark:stroke-gray-400" />
           </Button>
         </div>
       )}
@@ -173,7 +173,7 @@ export const RegistrationPoll = ({ poll }: Props) => {
             return (
               <Fragment key={array.key}>
                 <TableRow
-                  className={`mt-4 border-0 border-transparent dark:bg-[#101929] bg-[#f4f4f4] ${index !== 0 ? "border-t-8" : ""}`}
+                  className={`mt-4 border-0 border-transparent bg-[#f4f4f4] dark:bg-[#101929] ${index !== 0 ? "border-t-8" : ""}`}
                 >
                   <TableCell className="whitespace-pre-wrap rounded-bl-lg rounded-tl-lg py-2 font-bold">
                     <p>{array.label}</p>
@@ -255,7 +255,7 @@ export const RegistrationPoll = ({ poll }: Props) => {
                                 className={cn(
                                   "w-full p-2",
                                   isAuthorOfVote &&
-                                    "dark:bg-primary/40 bg-primary/80 !text-white dark:hover:bg-primary/30 hover:bg-primary/70",
+                                    "bg-primary/80 !text-white hover:bg-primary/70 dark:bg-primary/40 dark:hover:bg-primary/30",
                                 )}
                                 variant="ghost"
                               >

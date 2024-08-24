@@ -100,7 +100,7 @@ export default function CreatePoll() {
                 <RadioGroupItem value="1" id="type-1" className="peer hidden" />
                 <Label
                   htmlFor="type-1"
-                  className="!ml-0 flex h-44 min-w-[150px] cursor-pointer flex-col items-center justify-center rounded border dark:border-[#ffffff33] border-[#41414121] p-3 dark:peer-data-[state=checked]:bg-[#ffffff1a] peer-data-[state=checked]:bg-[#d9d9d91a]"
+                  className="!ml-0 flex h-44 min-w-[150px] cursor-pointer flex-col items-center justify-center rounded border border-[#41414121] p-3 peer-data-[state=checked]:bg-[#d9d9d91a] dark:border-[#ffffff33] dark:peer-data-[state=checked]:bg-[#ffffff1a]"
                 >
                   <p className="mb-2">Sondage libre</p>
                   <Image
@@ -116,7 +116,7 @@ export default function CreatePoll() {
                 <RadioGroupItem value="2" id="type-2" className="peer hidden" />
                 <Label
                   htmlFor="type-2"
-                  className="!ml-0 flex h-44 cursor-pointer flex-col items-center justify-center rounded border text-center dark:border-[#ffffff33] border-[#41414121] p-3 dark:peer-data-[state=checked]:bg-[#ffffff1a] peer-data-[state=checked]:bg-[#d9d9d91a]"
+                  className="!ml-0 flex h-44 cursor-pointer flex-col items-center justify-center rounded border border-[#41414121] p-3 text-center peer-data-[state=checked]:bg-[#d9d9d91a] dark:border-[#ffffff33] dark:peer-data-[state=checked]:bg-[#ffffff1a]"
                 >
                   <p className="mb-2">Sondage avec liste d'attente</p>
                   <Image
@@ -151,7 +151,7 @@ export default function CreatePoll() {
             </Label>
             <Input {...register("email")} id="email" inputMode="email" />
           </div>
-          <div className="flex flex-col gap-2 justify-between">
+          <div className="flex flex-col justify-between gap-2">
             <Label htmlFor="password">
               Mot de passe
               <span className="ml-2 text-sm text-muted-foreground">
