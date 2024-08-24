@@ -1,7 +1,12 @@
 import { MyPolls } from "@/components/poll/MyPolls";
+import { Metadata } from "next";
 import { Suspense } from "react";
 
-export default function SearchPollsByEmail() {
+export const metadata: Metadata = {
+  title: "Mes sondages",
+};
+
+export default function Page() {
   return (
     <div className="flex flex-col">
       <h1 className="mb-4 text-3xl font-bold">Mes sondages</h1>

@@ -9,7 +9,10 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "KwikVote",
+  title: {
+    default: "KwikVote",
+    template: "%s | KwikVote",
+  },
   description:
     "Créez un sondage en quelques secondes et partagez-le avec vos amis.",
   manifest: "/manifest.json",
