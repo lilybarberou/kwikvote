@@ -19,7 +19,7 @@ export const ThemeSwitcher = () => {
         <Button
           variant="outline"
           size="icon"
-          className="dark:border-[#ffffff36] border-[#41414121] bg-transparent hover:bg-transparent"
+          className="border-[#41414121] bg-transparent hover:bg-transparent dark:border-[#ffffff36]"
         >
           <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
           <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -28,7 +28,7 @@ export const ThemeSwitcher = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="max-w-[200px] rounded border border-[#ffffff29] bg-popover dark:bg-[#00000026] p-0 backdrop-blur-lg"
+        className="max-w-[200px] rounded border border-[#ffffff29] bg-popover p-0 backdrop-blur-lg dark:bg-[#00000026]"
       >
         <DropdownMenuItem onClick={() => setTheme("light")}>
           Clair

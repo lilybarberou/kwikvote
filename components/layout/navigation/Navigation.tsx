@@ -46,7 +46,7 @@ export const Navigation = () => {
   return (
     <>
       <nav
-        className={`sticky top-0 z-50 mb-12 w-full border-b-[0.5px] dark:border-b-[#ffffff21] border-b-[#41414121] dark:bg-[#00000026] py-2 backdrop-blur-sm sm:mb-20 ${
+        className={`sticky top-0 z-50 mb-12 w-full border-b-[0.5px] border-b-[#41414121] py-2 backdrop-blur-sm dark:border-b-[#ffffff21] dark:bg-[#00000026] sm:mb-20 ${
           mobileNavOpen ? "bg-[#00000068] backdrop-blur-lg" : ""
         }`}
       >
@@ -78,7 +78,7 @@ export const Navigation = () => {
               target="_blank"
               rel="noreferrer"
             >
-              <SparklesIcon className="w-4 h-4 " />
+              <SparklesIcon className="h-4 w-4" />
             </a>
           </div>
           <div className="flex gap-2">
@@ -90,7 +90,7 @@ export const Navigation = () => {
                       <Button
                         variant="outline"
                         size="icon"
-                        className="border-[#41414121] dark:border-[#ffffff36] bg-transparent hover:bg-transparent"
+                        className="border-[#41414121] bg-transparent hover:bg-transparent dark:border-[#ffffff36]"
                       >
                         <History className="h-5 w-5" />
                       </Button>
@@ -144,13 +144,13 @@ export const Navigation = () => {
           />
           <ActiveLink mobileItem hasBorder label="FAQ" href="/faq" />
           <a
-            className="flex items-center gap-2 px-8 py-4 text-xl font-semibold border-b border-[#ffffff29]"
+            className="flex items-center gap-2 border-b border-[#ffffff29] px-8 py-4 text-xl font-semibold"
             href="https://kwikvote.featurebase.app/fr/roadmap"
             target="_blank"
             rel="noreferrer"
           >
             Roadmap
-            <SparklesIcon className="w-4 h-4 " />
+            <SparklesIcon className="h-4 w-4" />
           </a>
         </div>
       )}

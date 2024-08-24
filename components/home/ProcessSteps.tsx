@@ -52,7 +52,7 @@ export const ProcessSteps = () => {
             >
               <Card
                 key={index}
-                className="flex aspect-square max-w-[150px] flex-col items-center justify-between dark:bg-[#ffffff05] p-5 pt-0 text-center md:max-w-[220px] md:flex-1 lg:max-w-[250px] bg-gray-100/20"
+                className="flex aspect-square max-w-[150px] flex-col items-center justify-between bg-gray-100/20 p-5 pt-0 text-center dark:bg-[#ffffff05] md:max-w-[220px] md:flex-1 lg:max-w-[250px]"
               >
                 {isClient && (
                   <Image

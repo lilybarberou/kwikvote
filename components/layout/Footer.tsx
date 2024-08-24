@@ -9,7 +9,7 @@ export const Footer = () => {
 
   return (
     <footer className="mt-auto w-full">
-      <div className="mt-20 border-t-[0.5px] bg-gray-100/20 dark:bg-transparent dark:border-t-[#ffffff21] border-t-[#41414121] py-2">
+      <div className="mt-20 border-t-[0.5px] border-t-[#41414121] bg-gray-100/20 py-2 dark:border-t-[#ffffff21] dark:bg-transparent">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4">
           <a
             className="flex items-center gap-2 rounded-md border border-[#3b82f6a3] px-3 py-2"

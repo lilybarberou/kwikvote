@@ -120,17 +120,17 @@ const SlotsDeleteTab = () => {
   return (
     <AccordionItem value="slots">
       <AccordionTrigger>Gérer les créneaux</AccordionTrigger>
-      <AccordionContent className="grid grid-cols-3 pt-3 px-1">
+      <AccordionContent className="grid grid-cols-3 px-1 pt-3">
         {poll?.slots.map((slot) => (
           <div key={slot.id} className="whitespace-nowrap text-center">
             <Popover>
               <PopoverTrigger asChild>
                 <Button size="icon" className="mb-2">
-                  <TrashIcon className="w-4 h-4" />
+                  <TrashIcon className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="flex items-center flex-col gap-2 max-w-[200px]">
-                <p className="text-sm text-center">
+              <PopoverContent className="flex max-w-[200px] flex-col items-center gap-2">
+                <p className="text-center text-sm">
                   Confirmer la suppression du créneau
                 </p>
                 <PopoverClose asChild>
@@ -234,8 +234,8 @@ const ManagePollTab = () => {
               Supprimer le sondage
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="flex items-center flex-col gap-2 max-w-[200px]">
-            <p className="text-sm text-center">
+          <PopoverContent className="flex max-w-[200px] flex-col items-center gap-2">
+            <p className="text-center text-sm">
               Confirmer la suppression du sondage
             </p>
             <PopoverClose asChild>
