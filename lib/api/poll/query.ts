@@ -1,6 +1,6 @@
 "use server";
 
-import { action } from "@/lib/safe-action";
+import { action, adminAction, pollPwAction } from "@/lib/safe-action";
 import { prisma } from "@/prisma/db";
 import { z } from "zod";
 
@@ -64,18 +64,35 @@ export const getPollById = action
     return { ...rest, hasPassword: !!password };
   });
 
-export const isPollPasswordValid = action
-  .schema(z.object({ pollId: z.string(), password: z.string() }))
-  .action(async ({ parsedInput: { pollId, password } }) => {
-    if (password === process.env.ADMIN_PASSWORD) return true;
+export const isPollPasswordValid = pollPwAction.action(async () => {
+  return true;
+});
 
-    const poll = await prisma.poll.findFirst({
-      where: { id: pollId },
-      select: { password: true },
+export const getPolls = adminAction
+  .schema(async (s) =>
+    s.merge(
+      z.object({
+        limit: z.number().optional(),
+        offset: z.number().optional(),
+        query: z.string().optional(),
+      }),
+    ),
+  )
+  .action(async ({ parsedInput: { offset, limit, query: _query } }) => {
+    const query = _query?.toLowerCase();
+
+    return await prisma.poll.findMany({
+      skip: offset,
+      take: limit,
+      where: {
+        OR: [
+          { email: { contains: query } },
+          { title: { contains: query, mode: "insensitive" } },
+          { description: { contains: query, mode: "insensitive" } },
+        ],
+      },
+      orderBy: { createdAt: "desc" },
     });
-    if (!poll) throw new Error("Poll not found");
-
-    return poll.password === password;
   });
 
 export type GetPollById = GetDataFromAction<typeof getPollById>;

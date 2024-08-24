@@ -10,6 +10,11 @@ declare namespace NodeJS {
   }
 }
 
+interface SuccessResponse {
+  success: boolean;
+  message: string;
+}
+
 // Define the generic response type based on SafeAction type
 interface ApiResponse<S extends any, Data> {
   data?: Data & CommonResponseData<S>;
@@ -18,5 +23,5 @@ interface ApiResponse<S extends any, Data> {
 }
 
 type GetDataFromAction<TFunc extends (...args: any[]) => any> = NonNullable<
-  Awaited<ReturnType<TFunc>>
->["data"];
+  Exclude<NonNullable<Awaited<ReturnType<TFunc>>>["data"], SuccessResponse>
+>;
