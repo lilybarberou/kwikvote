@@ -6,6 +6,7 @@ import {
   createPollSchema,
   updatePollSchema,
 } from "@/lib/schema/poll-schema";
+import { sendDiscordMessage } from "@/lib/utils.server";
 import { prisma } from "@/prisma/db";
 import { CronSchedule } from "@prisma/client";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
@@ -68,6 +69,13 @@ export const createPoll = action
         data: cronScheduleTimes,
       });
     }
+
+    // send discord notification
+    sendDiscordMessage({
+      title: `Nouveau sondage "${poll.title}"`,
+      description: data.email,
+      fields: [{ name: "Lien", value: `${process.env.DOMAIN}poll/${poll.id}` }],
+    });
 
     return poll.id;
   });
