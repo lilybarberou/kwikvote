@@ -74,7 +74,9 @@ export const createPoll = action
     sendDiscordMessage({
       title: `Nouveau sondage "${poll.title}"`,
       description: data.email,
-      fields: [{ name: "Lien", value: `${process.env.DOMAIN}poll/${poll.id}` }],
+      fields: [
+        { name: "Lien", value: `${process.env.DOMAIN}/poll/${poll.id}` },
+      ],
     });
 
     return poll.id;
