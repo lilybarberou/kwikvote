@@ -90,10 +90,18 @@ export const DialogVote = (props: Props) => {
 
       // submit name only
       updateVoteNameMutation.mutate(
-        { voteId: currentVoteId, name: data.name },
+        {
+          voteId: currentVoteId,
+          name: data.name,
+          subscription: subscription || undefined,
+        },
         {
           onSuccess: () => {
-            addVote({ ...votes[currentVoteId], name: data.name });
+            addVote({
+              ...votes[currentVoteId],
+              name: data.name,
+              subscriptions: subscription ? [subscription] : [],
+            });
             addLocalVote(pollId, currentVoteId);
             closeDialog();
             reset();
