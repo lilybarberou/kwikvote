@@ -39,6 +39,14 @@ export const PollForm = () => {
     control,
     name: "slots",
   });
+  const {
+    fields: initialVotesFields,
+    append: appendInitialVote,
+    remove: removeInitialVote,
+  } = useFieldArray({
+    control,
+    name: "initialVotes",
+  });
 
   const submitPoll = handleSubmit(async (data) => {
     // convert hours to ms
@@ -275,6 +283,51 @@ export const PollForm = () => {
       >
         Ajouter un créneau
       </Button>
+
+      {/* PRIORITY VOTES */}
+      {type === "2" && (
+        <div className="space-y-4">
+          <div>
+            <h2 className="mb-2 mt-4 text-2xl font-bold">Votes prioritaires</h2>
+            <p className="text-muted-foreground">
+              Ces votes ne seront pas soumis aux listes d'attente.
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            {initialVotesFields.map((vote, index) => (
+              <div key={index} className="flex gap-2">
+                <Input
+                  {...register(`initialVotes.${index}.name`)}
+                  placeholder="Saisir un nom..."
+                />
+                <Button
+                  className="min-w-9"
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => removeInitialVote(index)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+          {!!initialVotesFields.length && (
+            <p className="text-xs text-muted-foreground">
+              Par défaut, tous les choix sont sur "oui". Ils pourront être
+              modifiés une fois le sondage créé.
+            </p>
+          )}
+          <Button
+            className="mt-2 w-full"
+            type="button"
+            variant="secondary"
+            onClick={() => appendInitialVote({ name: "" })}
+          >
+            Ajouter un vote prioritaire
+          </Button>
+        </div>
+      )}
       <Button disabled={createPollMutation.isPending} className="mt-4">
         Créer
         {createPollMutation.isPending && (
