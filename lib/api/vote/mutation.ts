@@ -636,10 +636,22 @@ export const sendNotifications = async ({
 
 export const updateVoteName = action
   .schema(updateVoteNameSchema)
-  .action(async ({ parsedInput: { voteId, name } }) => {
+  .action(async ({ parsedInput: { voteId, name, subscription } }) => {
     await prisma.vote.update({
       where: { id: voteId },
-      data: { name },
+      data: {
+        name,
+        subscriptions: {
+          connectOrCreate: subscription
+            ? {
+                where: { endpoint: subscription.endpoint },
+                create: {
+                  ...subscription,
+                },
+              }
+            : undefined,
+        },
+      },
     });
   });
 

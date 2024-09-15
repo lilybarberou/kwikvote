@@ -32,5 +32,12 @@ export type DeleteVoteSchema = z.infer<typeof deleteVoteSchema>;
 export const updateVoteNameSchema = z.object({
   voteId: z.string(),
   name: z.string(),
+  subscription: z
+    .object({
+      endpoint: z.string(),
+      auth: z.string(),
+      p256dh: z.string(),
+    })
+    .optional(),
 });
 export type UpdateVoteNameSchema = z.infer<typeof updateVoteNameSchema>;
