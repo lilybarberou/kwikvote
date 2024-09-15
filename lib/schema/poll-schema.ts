@@ -21,6 +21,11 @@ export const pollFormSchema = z.object({
       maxParticipants: z.coerce.number().positive(),
     }),
   ),
+  initialVotes: z.array(
+    z.object({
+      name: z.string().min(1),
+    }),
+  ),
 });
 export type PollFormSchema = z.infer<typeof pollFormSchema>;
 
@@ -40,6 +45,11 @@ export const createPollSchema = z.object({
   timeBeforeAllowedType: z.number(),
   msBeforeAllowed: z.number(),
   slots: z.array(createSlotSchema),
+  initialVotes: z.array(
+    z.object({
+      name: z.string().min(1),
+    }),
+  ),
 });
 export type CreatePollSchema = z.infer<typeof createPollSchema>;
 

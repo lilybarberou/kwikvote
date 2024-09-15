@@ -8,21 +8,57 @@ import {
 } from "@/lib/schema/poll-schema";
 import { sendDiscordMessage } from "@/lib/utils.server";
 import { prisma } from "@/prisma/db";
-import { CronSchedule } from "@prisma/client";
+import { CronSchedule, VoteChoice } from "@prisma/client";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 export const createPoll = action
   .schema(createPollSchema)
-  .action(async ({ parsedInput: data }) => {
+  .action(async ({ parsedInput: { initialVotes, ...data } }) => {
     const poll = await prisma.poll.create({
-      include: { slots: true },
+      include: { slots: true, votes: true },
       data: {
         ...data,
         slots: {
           create: data.slots.map((slot: CreateSlotSchema) => slot),
         },
+        votes: {
+          createMany: {
+            data: initialVotes.map((vote) => ({
+              name: vote.name,
+              hasPriority: true,
+            })),
+          },
+        },
       },
     });
+
+    if (initialVotes && !!initialVotes.length) {
+      const slotsIds = poll.slots.map((slot) => slot.id);
+
+      // add votes in slots registered arrays
+      await prisma.slot.updateMany({
+        where: { id: { in: slotsIds } },
+        data: {
+          registered: {
+            set: poll.votes.map((vote) => vote.id),
+          },
+        },
+      });
+
+      // fill initial votes with "yes" choices
+      await prisma.voteChoice.createMany({
+        data: poll.votes.flatMap((vote) => {
+          return slotsIds.map(
+            (slotId) =>
+              ({
+                slotId,
+                voteId: vote.id,
+                choice: 1,
+              }) as VoteChoice,
+          );
+        }),
+      });
+    }
 
     // calculate all cron schedule times
     if (poll.type === 2) {

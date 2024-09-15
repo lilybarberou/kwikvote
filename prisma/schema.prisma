@@ -51,6 +51,7 @@ model Vote {
   id            String         @id @default(uuid())
   pollId        String
   name          String
+  hasPriority   Boolean        @default(false)
   subscriptions Subscription[]
   choices       VoteChoice[]
   createdAt     DateTime       @default(now())
