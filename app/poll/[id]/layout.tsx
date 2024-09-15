@@ -8,12 +8,13 @@ export async function generateMetadata({
 }: {
   params: { id: string };
 }): Promise<Metadata> {
-  const poll = await getPollById({ pollId: params.id }).then(
-    handleServerResponse,
-  );
+  const data = await getPollById({ pollId: params.id });
+  if (data?.serverError) return { title: "Ce sondage n'existe pas" };
+
+  const poll = handleServerResponse(data);
 
   return {
-    title: poll.title,
+    title: poll?.title,
   };
 }
 
