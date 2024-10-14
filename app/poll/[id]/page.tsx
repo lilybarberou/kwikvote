@@ -33,22 +33,20 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/use-toast";
+import { usePoll } from "@/hooks/use-poll";
 import { useSubscription } from "@/hooks/use-subscription";
-import { getPollById } from "@/lib/api/poll/query";
 import { CreateSubscriptionSchema } from "@/lib/schema/subscription-schema";
 import { useCommentsStore } from "@/lib/store/commentsStore";
-import { useHistoryStore } from "@/lib/store/historyStore";
 import { useNotificationsStore } from "@/lib/store/notificationsStore";
 import { useVotesStore } from "@/lib/store/votesStore";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
 import { AnimatePresence, motion } from "framer-motion";
 import { BarChart3, Bell, BellRing, Megaphone } from "lucide-react";
 import Link from "next/link";
 import { parseAsString, useQueryState } from "nuqs";
 import { useEffect, useState } from "react";
 
-export default function PollPage({ params }: { params: { id: string } }) {
+export default function PollPage() {
   const [tab] = useQueryState("tab", parseAsString.withDefault("votes"));
 
   const alreadyVisited =
@@ -64,27 +62,14 @@ export default function PollPage({ params }: { params: { id: string } }) {
     subscription,
   } = useNotificationsStore();
 
-  const { initVotes, votes } = useVotesStore();
-  const { addPollToHistory, removePollFromHistory } = useHistoryStore();
-  const { comments, initComments } = useCommentsStore();
+  const { votes } = useVotesStore();
+  const { comments } = useCommentsStore();
   const { toast } = useToast();
   const { createSubscriptionMutation } = useSubscription();
 
-  const { data: poll, isLoading } = useQuery({
-    queryKey: ["getPollById", params.id],
-    queryFn: async () => {
-      const res = await getPollById({ pollId: params.id });
-      const data = res?.data!;
-
-      if (data) {
-        initVotes(data.votes);
-        initComments(data.comments);
-        addPollToHistory(params.id, data.title || "");
-      } else removePollFromHistory(params.id);
-
-      return data;
-    },
-  });
+  const {
+    getPollByIdQuery: { data: poll, isLoading },
+  } = usePoll({ enabled: { getPollById: true } });
   const isRegistrationPoll = poll?.type == 2;
   const hasSomeVotes = Object.values(votes).some((v) =>
     v.subscriptions.some((s) => s.endpoint === subscription?.endpoint),

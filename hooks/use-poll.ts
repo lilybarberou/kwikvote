@@ -3,6 +3,7 @@ import { createPoll, deletePoll, updatePoll } from "@/lib/api/poll/mutation";
 import {
   getPollById,
   getPolls,
+  getPollsByEmail,
   isPollPasswordValid,
 } from "@/lib/api/poll/query";
 import { CreatePollSchema, UpdatePollSchema } from "@/lib/schema/poll-schema";
@@ -23,6 +24,7 @@ type Props = {
   enabled?: {
     getPollById?: boolean;
     getPolls?: boolean;
+    getPollsByEmail?: boolean;
   };
 } | null;
 
@@ -31,9 +33,10 @@ const LIMIT = 12;
 export const usePoll = (
   props: Props = { enabled: { getPollById: false, getPolls: false } },
 ) => {
-  const [{ password, q: query }] = useQueryStates({
+  const [{ password, q: query, email }] = useQueryStates({
     password: parseAsString.withDefault(""),
     q: parseAsString.withDefault(""),
+    email: parseAsString.withDefault(""),
   });
 
   let enabled = {} as NonNullable<Props>["enabled"];
@@ -65,6 +68,16 @@ export const usePoll = (
       return data;
     },
     enabled: enabled?.getPollById,
+  });
+
+  const getPollsByEmailKey = ["getPollsByEmail", email.toLowerCase()];
+  const getPollsByEmailQuery = useQuery({
+    queryKey: getPollsByEmailKey,
+    queryFn: async () => {
+      const res = await getPollsByEmail(email.toLowerCase()!);
+      return res?.data;
+    },
+    enabled: enabled?.getPollsByEmail,
   });
 
   const getPollsKey = ["getPolls", query];
@@ -151,12 +164,13 @@ export const usePoll = (
     // # QUERIES
     getPollByIdQuery,
     getPollsQuery,
+    getPollsByEmailQuery,
     // # MUTATIONS
     createPollMutation,
     deletePollMutation,
     updatePollMutation,
     checkPollPasswordMutation,
     // # COMPUTED
-    keys: { getPollsKey },
+    keys: { getPollsKey, getPollByIdKey },
   };
 };
