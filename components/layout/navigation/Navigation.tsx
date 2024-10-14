@@ -113,7 +113,7 @@ export const Navigation = () => {
               className="h-10 w-10 p-0 sm:h-auto sm:w-auto sm:px-4 sm:py-2"
               asChild
             >
-              <Link href="/poll/create">
+              <Link href="/poll/creer">
                 <PlusCircle className="h-5 w-5 sm:hidden" />
                 <span className="hidden sm:block">Créer un sondage</span>
               </Link>

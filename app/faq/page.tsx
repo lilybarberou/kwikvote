@@ -3,6 +3,8 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "FAQ",
+  description:
+    "Des questions à propos de KwikVote ? Trouvez vos réponses dans cette FAQ.",
 };
 
 export default function Page() {

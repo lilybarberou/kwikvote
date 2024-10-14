@@ -142,7 +142,7 @@ export default function PollPage() {
         <p className="text-2xl font-bold">Ce sondage n'existe pas</p>
         <p className="text-center text-muted-foreground">
           Vous pouvez créer un sondage via la{" "}
-          <Link className="text-primary" href="/poll/create">
+          <Link className="text-primary" href="/poll/creer">
             page de création
           </Link>
           .

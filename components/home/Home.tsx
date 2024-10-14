@@ -70,7 +70,7 @@ export const Home = () => {
       </h2>
       <div className="mb-14 flex gap-2">
         <Button asChild variant="secondary">
-          <Link href="/poll/create">Créer mon sondage</Link>
+          <Link href="/poll/creer">Créer mon sondage</Link>
         </Button>
         <Button
           asChild
