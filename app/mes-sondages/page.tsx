@@ -4,6 +4,7 @@ import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Mes sondages",
+  description: "Retrouvez la liste de vos sondages créés sur KwikVote.",
 };
 
 export default function Page() {
