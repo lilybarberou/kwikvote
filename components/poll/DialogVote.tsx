@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { usePoll } from "@/hooks/use-poll";
 import { useVote } from "@/hooks/use-vote";
 import { useLocalVotesStore } from "@/lib/store/localVotesStore";
 import { useNotificationsStore } from "@/lib/store/notificationsStore";
@@ -47,6 +48,9 @@ type Props = {
 export const DialogVote = (props: Props) => {
   const { id: pollId } = useParams() as { id: string };
 
+  const {
+    keys: { getPollByIdKey },
+  } = usePoll({});
   const queryClient = useQueryClient();
   const params = useParams() as { id: string };
   const { createVoteMutation, deleteVoteMutation, updateVoteNameMutation } =
@@ -137,7 +141,7 @@ export const DialogVote = (props: Props) => {
         if (isRegistrationPoll) {
           // update local slots with new sorts
           queryClient.invalidateQueries({
-            queryKey: ["getPollById", params.id],
+            queryKey: getPollByIdKey,
           });
         }
         addVote({
@@ -162,7 +166,7 @@ export const DialogVote = (props: Props) => {
 
           if (isRegistrationPoll) {
             queryClient.invalidateQueries({
-              queryKey: ["getPollById", params.id],
+              queryKey: getPollByIdKey,
             });
           }
 

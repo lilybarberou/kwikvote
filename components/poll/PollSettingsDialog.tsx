@@ -10,7 +10,6 @@ import {
 import { cn, getDate, sameDay, timeTwoDigit } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PopoverClose } from "@radix-ui/react-popover";
-import { useQueryClient } from "@tanstack/react-query";
 import { SettingsIcon, TrashIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { createContext, useContext, useRef, useState } from "react";
@@ -47,23 +46,24 @@ export const PollSettingsDialog = () => {
   const [step, helpers] = useStep(2);
   const [password, setPassword] = useState("");
 
-  const queryClient = useQueryClient();
-  const params = useParams() as { id: string };
-  const poll = queryClient.getQueryData<GetPollById>([
-    "getPollById",
-    params.id,
-  ])!;
+  const {
+    getPollByIdQuery: { data: poll },
+  } = usePoll({ enabled: { getPollById: true } });
 
   return (
-    <Context.Provider value={{ ...helpers, poll, password, setPassword }}>
+    <Context.Provider
+      value={{ ...helpers, poll: poll!, password, setPassword }}
+    >
       <Dialog>
         <DialogTrigger asChild>
           <Button size="icon" variant="ghost">
             <SettingsIcon />
           </Button>
         </DialogTrigger>
-        <DialogContent className={cn(step === 1 && "w-[400px]")}>
-          <DialogHeader>Paramètres du sondage</DialogHeader>
+        <DialogContent className={cn(step === 1 && "w-11/12 max-w-[400px]")}>
+          <DialogHeader className="text-left">
+            Paramètres du sondage
+          </DialogHeader>
           {step === 1 && <FirstStep />}
           {step === 2 && <SecondStep />}
         </DialogContent>
