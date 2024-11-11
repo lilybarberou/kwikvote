@@ -260,8 +260,8 @@ export default function PollPage() {
           {poll.hasPassword && <PollSettingsDialog />}
         </div>
         <TabsContent value="votes">
-          {poll.type === 1 && <PollSlots slots={poll.slots} />}
-          {poll.type === 2 && <RegistrationPoll poll={poll} />}
+          {poll.type === 1 && <PollSlots />}
+          {poll.type === 2 && <RegistrationPoll />}
         </TabsContent>
         <TabsContent value="comments">
           <PollComments />

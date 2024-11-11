@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { GetPollById } from "@/lib/api/poll/query";
+import { usePoll } from "@/hooks/use-poll";
 import { useVotesStore } from "@/lib/store/votesStore";
 import { getDate, sameDay, timeTwoDigit } from "@/lib/utils";
 import {
@@ -18,82 +18,31 @@ import {
   HelpCircle,
   XCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { parseAsString, useQueryState } from "nuqs";
 
 import { Button } from "../ui/button";
-import { Dialog, DialogTrigger } from "../ui/dialog";
 import { DialogVote } from "./DialogVote";
 
-type Props = {
-  slots: NonNullable<GetPollById>["slots"];
-};
+export const PollSlots = () => {
+  const [_, setVoteId] = useQueryState("vote", parseAsString);
 
-export const PollSlots = (props: Props) => {
   const { votes } = useVotesStore();
-  const [currentVoteId, setCurrentVoteId] = useState("");
-  const [dialogOpen, setDialogOpen] = useState(false);
 
-  const TotalUpvotes = ({ slotId }: { slotId: string }) => {
-    const total = Object.values(votes).reduce(
-      (acc, vote) => {
-        const choice = vote.choices.find((choice) => choice.slotId === slotId);
-        if (choice?.choice === 1) acc[0]++;
-        else if (choice?.choice === 3) acc[1]++;
-        return acc;
-      },
-      [0, 0],
-    );
-
-    return (
-      <TableCell className="text-center">
-        <div className="flex items-center justify-center gap-1 text-green-400">
-          {total[0]}
-          <VoteIcon choice={1} />
-          {total[1] > 0 && (
-            <span className="ml-2 flex items-center gap-1 text-yellow-200">
-              {total[1]} <VoteIcon choice={3} />
-            </span>
-          )}
-        </div>
-      </TableCell>
-    );
-  };
-
-  const VoteIcon = ({ choice }: { choice: number }) => {
-    switch (choice) {
-      case 1:
-        return <CheckCircle className="inline-block h-4 w-4 text-green-400" />;
-      case 2:
-        return <XCircle className="inline-block h-4 w-4 text-red-400" />;
-      case 3:
-        return (
-          <HelpCircle className="inline-block h-4 w-4 text-[#eeee00] dark:text-yellow-200" />
-        );
-    }
-  };
-
-  const closeDialog = () => setDialogOpen(false);
+  const {
+    getPollByIdQuery: { data: poll },
+  } = usePoll({ enabled: { getPollById: true } });
+  const slots = poll?.slots || [];
 
   return (
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-      <DialogVote
-        pollType={1}
-        setCurrentVoteId={setCurrentVoteId}
-        currentVoteId={currentVoteId}
-        slots={props.slots}
-        closeDialog={closeDialog}
-      />
+    <>
+      <DialogVote />
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>
-              <DialogTrigger asChild>
-                <Button onClick={() => setCurrentVoteId("")}>
-                  Nouveau vote
-                </Button>
-              </DialogTrigger>
+              <Button onClick={() => setVoteId("new")}>Nouveau vote</Button>
             </TableHead>
-            {props.slots.map((slot) => (
+            {slots.map((slot) => (
               <TableHead key={slot.id} className="py-4">
                 {sameDay(new Date(slot.startDate), new Date(slot.endDate)) ? (
                   <div className="whitespace-nowrap text-center">
@@ -125,7 +74,7 @@ export const PollSlots = (props: Props) => {
                 <CircleUserRound className="h-5 w-5" />
               </span>
             </TableCell>
-            {props.slots.map((slot) => (
+            {slots.map((slot) => (
               <TotalUpvotes slotId={slot.id} key={slot.id} />
             ))}
             <TableCell />
@@ -141,21 +90,60 @@ export const PollSlots = (props: Props) => {
                 </TableCell>
               ))}
               <TableCell className="flex justify-center py-2">
-                <DialogTrigger asChild>
-                  <Button
-                    onClick={() => setCurrentVoteId(vote.id)}
-                    className="h-8 w-8"
-                    size="icon"
-                    variant="outline"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
+                <Button
+                  onClick={() => setVoteId(vote.id)}
+                  className="h-8 w-8"
+                  size="icon"
+                  variant="outline"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
-    </Dialog>
+    </>
   );
+};
+
+const TotalUpvotes = ({ slotId }: { slotId: string }) => {
+  const { votes } = useVotesStore();
+
+  const total = Object.values(votes).reduce(
+    (acc, vote) => {
+      const choice = vote.choices.find((choice) => choice.slotId === slotId);
+      if (choice?.choice === 1) acc[0]++;
+      else if (choice?.choice === 3) acc[1]++;
+      return acc;
+    },
+    [0, 0],
+  );
+
+  return (
+    <TableCell className="text-center">
+      <div className="flex items-center justify-center gap-1 text-green-400">
+        {total[0]}
+        <VoteIcon choice={1} />
+        {total[1] > 0 && (
+          <span className="ml-2 flex items-center gap-1 text-yellow-200">
+            {total[1]} <VoteIcon choice={3} />
+          </span>
+        )}
+      </div>
+    </TableCell>
+  );
+};
+
+const VoteIcon = ({ choice }: { choice: number }) => {
+  switch (choice) {
+    case 1:
+      return <CheckCircle className="inline-block h-4 w-4 text-green-400" />;
+    case 2:
+      return <XCircle className="inline-block h-4 w-4 text-red-400" />;
+    case 3:
+      return (
+        <HelpCircle className="inline-block h-4 w-4 text-[#eeee00] dark:text-yellow-200" />
+      );
+  }
 };
