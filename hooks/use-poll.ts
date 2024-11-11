@@ -160,6 +160,14 @@ export const usePoll = (
     },
   });
 
+  // # COMPUTED
+  const { data: poll } = getPollByIdQuery;
+
+  const computed = {
+    isFreePoll: poll?.type === 1,
+    isRegistrationPoll: poll?.type === 2,
+  };
+
   return {
     // # QUERIES
     getPollByIdQuery,
@@ -172,5 +180,7 @@ export const usePoll = (
     checkPollPasswordMutation,
     // # COMPUTED
     keys: { getPollsKey, getPollByIdKey },
+    pollId,
+    computed,
   };
 };

@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { GetPollById } from "@/lib/api/poll/query";
+import { usePoll } from "@/hooks/use-poll";
 import { useAlertStore } from "@/lib/store/alertStore";
 import { useLocalVotesStore } from "@/lib/store/localVotesStore";
 import { useNotificationsStore } from "@/lib/store/notificationsStore";
@@ -21,17 +21,13 @@ import {
   timeTwoDigit,
 } from "@/lib/utils";
 import { Edit, XIcon } from "lucide-react";
+import { parseAsString, useQueryState } from "nuqs";
 import { Fragment, useState } from "react";
 
 import { Button } from "../ui/button";
 import { Checkbox } from "../ui/checkbox";
-import { Dialog, DialogTrigger } from "../ui/dialog";
 import { DialogVote } from "./DialogVote";
 import { RegistrationPollHelp } from "./RegistrationPollHelp";
-
-type Props = {
-  poll: NonNullable<GetPollById>;
-};
 
 type VotesBySlotId = {
   [slotId: string]: {
@@ -39,20 +35,25 @@ type VotesBySlotId = {
   };
 };
 
-export const RegistrationPoll = ({ poll }: Props) => {
-  const [currentVoteId, setCurrentVoteId] = useState("");
-  const [dialogOpen, setDialogOpen] = useState(false);
+export const RegistrationPoll = () => {
+  const [_, setVoteId] = useQueryState("vote", parseAsString);
+
   const [showAllNotComing, setShowAllNotComing] = useState(false);
+
   const { votes } = useVotesStore();
   const { subscription } = useNotificationsStore();
   const { alerts, updateAlert } = useAlertStore();
   const { localVotes } = useLocalVotesStore();
 
-  const slots = poll.slots;
+  const {
+    getPollByIdQuery: { data: poll },
+    pollId,
+  } = usePoll({ enabled: { getPollById: true } });
+  const slots = poll?.slots ?? [];
 
   const TBA = getFormattedTimeBeforeAllowed({
-    timeBeforeAllowedType: poll.timeBeforeAllowedType,
-    msBeforeAllowed: poll.msBeforeAllowed,
+    timeBeforeAllowedType: poll?.timeBeforeAllowedType ?? 1,
+    msBeforeAllowed: poll?.msBeforeAllowed ?? 0,
   });
 
   type SlotArrayKey =
@@ -75,8 +76,6 @@ export const RegistrationPoll = ({ poll }: Props) => {
     { key: "notComing", label: "Ne viennent pas" },
   ];
 
-  const closeDialog = () => setDialogOpen(false);
-
   let votesBySlotId: VotesBySlotId = {};
   slots.forEach((slot) => {
     votesBySlotId[slot.id] = { 1: [], 2: [] };
@@ -94,19 +93,11 @@ export const RegistrationPoll = ({ poll }: Props) => {
   });
 
   return (
-    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-      <DialogVote
-        setCurrentVoteId={setCurrentVoteId}
-        pollType={2}
-        currentVoteId={currentVoteId}
-        slots={slots}
-        closeDialog={closeDialog}
-      />
-      <DialogTrigger asChild>
-        <Button className="mb-2 mt-7" onClick={() => setCurrentVoteId("")}>
-          Nouvelle inscription
-        </Button>
-      </DialogTrigger>
+    <>
+      <DialogVote />
+      <Button className="mb-2 mt-7" onClick={() => setVoteId("new")}>
+        Nouvelle inscription
+      </Button>
 
       {/* INFO */}
       {!alerts.pollLegend && (
@@ -235,7 +226,7 @@ export const RegistrationPoll = ({ poll }: Props) => {
                           vote?.subscriptions?.some(
                             (sub) => sub.endpoint === subscription?.endpoint,
                           ) ||
-                          localVotes[poll.id]?.some(
+                          localVotes[pollId]?.some(
                             (localVoteId) => localVoteId === voteId,
                           );
 
@@ -246,25 +237,24 @@ export const RegistrationPoll = ({ poll }: Props) => {
                         )
                           return null;
                         return (
-                          <DialogTrigger key={voteId} asChild>
-                            <TableCell
-                              className="block bg-background px-1 py-1"
-                              onClick={() => setCurrentVoteId(voteId)}
+                          <TableCell
+                            className="block bg-background px-1 py-1"
+                            onClick={() => setVoteId(voteId)}
+                            key={voteId}
+                          >
+                            <Button
+                              className={cn(
+                                "w-full p-2",
+                                isAuthorOfVote &&
+                                  "bg-primary/80 !text-white hover:bg-primary/70 dark:bg-primary/40 dark:hover:bg-primary/30",
+                              )}
+                              variant="ghost"
                             >
-                              <Button
-                                className={cn(
-                                  "w-full p-2",
-                                  isAuthorOfVote &&
-                                    "bg-primary/80 !text-white hover:bg-primary/70 dark:bg-primary/40 dark:hover:bg-primary/30",
-                                )}
-                                variant="ghost"
-                              >
-                                <p className="max-w-[200px] truncate">
-                                  {vote?.name}
-                                </p>
-                              </Button>
-                            </TableCell>
-                          </DialogTrigger>
+                              <p className="max-w-[200px] truncate">
+                                {vote?.name}
+                              </p>
+                            </Button>
+                          </TableCell>
                         );
                       })}
                   </TableRow>
@@ -274,6 +264,6 @@ export const RegistrationPoll = ({ poll }: Props) => {
           })}
         </TableBody>
       </Table>
-    </Dialog>
+    </>
   );
 };
