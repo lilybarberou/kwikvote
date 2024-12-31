@@ -1,0 +1,20 @@
+# Utiliser une image Node.js légère
+FROM node:20
+
+# Définir le répertoire de travail
+WORKDIR /app
+
+# Installer Prisma uniquement
+RUN npm install prisma
+
+# Copier le fichier schema.prisma pour Prisma Studio
+COPY prisma ./prisma
+
+# Exécuter `prisma generate` pour générer le client
+RUN npx prisma generate
+
+# Exposer le port de Prisma Studio (par défaut 5555)
+EXPOSE 5555
+
+# Commande pour lancer Prisma Studio
+CMD ["npx", "prisma", "studio"]
