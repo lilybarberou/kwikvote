@@ -1,0 +1,18 @@
+# Utiliser une image Node.js légère
+FROM node:18-alpine
+
+# Définir le répertoire de travail
+WORKDIR /app
+
+# Installer les dépendances
+RUN npm install prisma @prisma/client date-fns date-fns-tz node-cron web-push
+
+# Copier le fichier schema.prisma pour Prisma Studio
+COPY prisma ./prisma
+COPY cron.js ./cron.js
+
+# Exécuter `prisma generate` pour générer le client
+RUN npx prisma generate
+
+# Commande pour lancer le cron
+CMD ["node", "cron.js"]
