@@ -1,14 +1,15 @@
 "use server";
 
+import { env } from "@/lib/env";
 import { action } from "@/lib/safe-action";
 import { createCommentSchema } from "@/lib/schema/comment-schema";
 import { prisma } from "@/prisma/db";
 import webpush from "web-push";
 
 webpush.setVapidDetails(
-  "mailto:" + process.env.NEXT_PUBLIC_VAPID_EMAIL,
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY,
+  "mailto:" + env.NEXT_PUBLIC_VAPID_EMAIL,
+  env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+  env.VAPID_PRIVATE_KEY,
 );
 
 export const createComment = action
@@ -42,7 +43,7 @@ export const createComment = action
     const payload = JSON.stringify({
       title: "Nouveau commentaire !",
       body: `Il y a un nouveau commentaire de ${comment.author} sur le sondage ${votes[0].poll.title}`,
-      link: `${process.env.DOMAIN}/poll/${comment.pollId}?tab=comments`,
+      link: `${env.DOMAIN}/poll/${comment.pollId}?tab=comments`,
     });
 
     // OBJECT TO GET UNIQUE SUBS

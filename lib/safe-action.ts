@@ -2,6 +2,8 @@ import { prisma } from "@/prisma/db";
 import { createSafeActionClient } from "next-safe-action";
 import { z } from "zod";
 
+import { env } from "./env";
+
 export const action = createSafeActionClient();
 
 // ADMIN ACTION
@@ -11,7 +13,7 @@ export const adminAction = action
   .use(async ({ next, clientInput }) => {
     const data = adminActionSchema.parse(clientInput);
 
-    if (data.password !== process.env.ADMIN_PASSWORD)
+    if (data.password !== env.ADMIN_PASSWORD)
       throw new Error("Invalid password");
 
     return next();
@@ -27,7 +29,7 @@ export const pollPwAction = action
   .use(async ({ next, clientInput }) => {
     const { password, pollId } = pollPwActionSchema.parse(clientInput);
 
-    if (password === process.env.ADMIN_PASSWORD) return next();
+    if (password === env.ADMIN_PASSWORD) return next();
 
     const poll = await prisma.poll.findFirst({
       where: { id: pollId },

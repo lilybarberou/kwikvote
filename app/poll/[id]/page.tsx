@@ -35,6 +35,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { usePoll } from "@/hooks/use-poll";
 import { useSubscription } from "@/hooks/use-subscription";
+import { env } from "@/lib/env";
 import { CreateSubscriptionSchema } from "@/lib/schema/subscription-schema";
 import { useCommentsStore } from "@/lib/store/commentsStore";
 import { useNotificationsStore } from "@/lib/store/notificationsStore";
@@ -121,7 +122,7 @@ export default function PollPage() {
 
     const subscription = await swRegistration.pushManager
       .subscribe({
-        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+        applicationServerKey: env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
         userVisibleOnly: true,
       })
       .then((sub) => sub.toJSON());

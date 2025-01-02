@@ -1,5 +1,6 @@
 "use server";
 
+import { env } from "@/lib/env";
 import { action } from "@/lib/safe-action";
 import {
   createVoteSchema,
@@ -15,9 +16,9 @@ import { fr } from "date-fns/locale/fr";
 import webpush from "web-push";
 
 webpush.setVapidDetails(
-  "mailto:" + process.env.NEXT_PUBLIC_VAPID_EMAIL,
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY,
+  "mailto:" + env.NEXT_PUBLIC_VAPID_EMAIL,
+  env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+  env.VAPID_PRIVATE_KEY,
 );
 
 export const createVote = action
@@ -605,7 +606,7 @@ export const sendNotifications = async ({
       const payload = JSON.stringify({
         title: "Vous êtes inscrit !",
         body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${formattedTime} !`,
-        link: `${process.env.DOMAIN}/poll/${pollId}`,
+        link: `${env.DOMAIN}/poll/${pollId}`,
       });
 
       votes.forEach((vote) => {
