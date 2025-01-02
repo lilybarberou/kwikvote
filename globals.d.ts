@@ -1,15 +1,3 @@
-declare namespace NodeJS {
-  interface ProcessEnv {
-    ADMIN_PASSWORD: string;
-    DATABASE_URL: string;
-    DOMAIN: string;
-    NEXT_PUBLIC_VAPID_EMAIL: string;
-    NEXT_PUBLIC_VAPID_PUBLIC_KEY: string;
-    PORT: string;
-    VAPID_PRIVATE_KEY: string;
-  }
-}
-
 interface SuccessResponse {
   success: boolean;
   message: string;

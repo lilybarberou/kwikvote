@@ -1,3 +1,5 @@
+import { env } from "./env";
+
 export const sendDiscordMessage = async ({
   title,
   description,
@@ -7,7 +9,7 @@ export const sendDiscordMessage = async ({
   description?: string;
   fields?: { name: string; value: string; inline?: boolean }[];
 }) => {
-  await fetch(process.env.DISCORD_WEBHOOK_URL!, {
+  await fetch(env.DISCORD_WEBHOOK_URL!, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

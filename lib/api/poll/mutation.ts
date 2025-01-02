@@ -1,5 +1,6 @@
 "use server";
 
+import { env } from "@/lib/env";
 import { action, pollPwAction } from "@/lib/safe-action";
 import {
   CreateSlotSchema,
@@ -74,9 +75,7 @@ export const createPoll = action
     sendDiscordMessage({
       title: `Nouveau sondage "${poll.title}"`,
       description: data.email,
-      fields: [
-        { name: "Lien", value: `${process.env.DOMAIN}/poll/${poll.id}` },
-      ],
+      fields: [{ name: "Lien", value: `${env.DOMAIN}/poll/${poll.id}` }],
     });
 
     return poll.id;
