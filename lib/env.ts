@@ -6,7 +6,6 @@ export const env = createEnv({
     ADMIN_PASSWORD: z.string(),
     DATABASE_URL: z.string(),
     DOMAIN: z.string(),
-    PORT: z.string(),
     VAPID_PRIVATE_KEY: z.string(),
     DISCORD_WEBHOOK_URL: z.string(),
   },
