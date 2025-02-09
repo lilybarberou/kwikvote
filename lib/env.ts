@@ -3,16 +3,17 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    ADMIN_PASSWORD: z.string(),
-    DATABASE_URL: z.string(),
-    DOMAIN: z.string(),
-    VAPID_PRIVATE_KEY: z.string(),
-    DISCORD_WEBHOOK_URL: z.string(),
+    ADMIN_PASSWORD: z.string().min(1),
+    DATABASE_URL: z.string().min(1),
+    DOMAIN: z.string().url(),
+    VAPID_PRIVATE_KEY: z.string().min(1),
+    DISCORD_WEBHOOK_URL: z.string().min(1),
+    UMAMI_WEBSITE_ID: z.string().min(1),
   },
 
   client: {
-    NEXT_PUBLIC_VAPID_EMAIL: z.string(),
-    NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string(),
+    NEXT_PUBLIC_VAPID_EMAIL: z.string().min(1),
+    NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string().min(1),
   },
   experimental__runtimeEnv: {
     ...process.env,

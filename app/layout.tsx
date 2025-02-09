@@ -2,6 +2,7 @@ import { Providers } from "@/components/Providers";
 import { Footer } from "@/components/layout/Footer";
 import { Navigation } from "@/components/layout/navigation/Navigation";
 import { Toaster } from "@/components/ui/toaster";
+import { env } from "@/lib/env";
 import { fontSans } from "@/lib/fonts";
 import type { Metadata } from "next";
 import Script from "next/script";
@@ -44,8 +45,8 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <head>
         <Script
-          src="https://cloud.umami.is/script.js"
-          data-website-id="1737b9ee-eca6-41c3-82c5-d0a58c2b4ea0"
+          src="https://umami.lilybarberou.fr/script.js"
+          data-website-id={env.UMAMI_WEBSITE_ID}
         />
       </head>
       <body
