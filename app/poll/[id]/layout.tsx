@@ -6,9 +6,10 @@ import { PropsWithChildren } from "react";
 export async function generateMetadata({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  const data = await getPollById({ pollId: params.id });
+  const { id } = await params;
+  const data = await getPollById({ pollId: id });
   if (data?.serverError) return { title: "Ce sondage n'existe pas" };
 
   const poll = handleServerResponse(data);
