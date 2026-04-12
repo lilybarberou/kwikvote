@@ -8,6 +8,7 @@
     "build": "pnpm prisma && next build",
     "start": "next start",
     "lint": "eslint .",
+    "db:clone": "node scripts/clone-db.mjs",
     "prisma": "npx prisma generate && npx prisma db push",
     "studio": "npx prisma studio",
     "doppler": "doppler secrets download --format env --no-file > .env",
