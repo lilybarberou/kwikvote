@@ -6,6 +6,7 @@ import { env } from "@/lib/env";
 import { fontSans } from "@/lib/fonts";
 import type { Metadata } from "next";
 import Script from "next/script";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import "./globals.css";
 
@@ -52,14 +53,16 @@ export default function RootLayout({
       <body
         className={`flex min-h-screen flex-col items-center bg-background font-sans antialiased ${fontSans.variable}`}
       >
-        <Providers>
-          <Navigation />
-          <main className="w-full max-w-6xl px-4">
-            {children}
-            <Toaster />
-          </main>
-          <Footer />
-        </Providers>
+        <NuqsAdapter>
+          <Providers>
+            <Navigation />
+            <main className="w-full max-w-6xl px-4">
+              {children}
+              <Toaster />
+            </main>
+            <Footer />
+          </Providers>
+        </NuqsAdapter>
       </body>
     </html>
   );
