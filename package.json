@@ -3,8 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "pnpm doppler && dotenv -c -- next dev",
-    "dev-offline": "next dev",
+    "dev": "next dev",
     "build": "pnpm prisma && next build",
     "start": "next start",
     "lint": "eslint .",
