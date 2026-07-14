@@ -19,5 +19,15 @@ self.addEventListener("push", async (event) => {
 
 self.addEventListener("notificationclick", function (event) {
   event.notification.close();
-  event.waitUntil(self.clients.openWindow(event.notification.tag));
+
+  const notificationUrl = new URL(
+    event.notification.tag || "/",
+    self.location.origin,
+  );
+  const targetUrl = new URL(
+    `${notificationUrl.pathname}${notificationUrl.search}${notificationUrl.hash}`,
+    self.location.origin,
+  );
+
+  event.waitUntil(self.clients.openWindow(targetUrl.href));
 });
