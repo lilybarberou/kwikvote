@@ -242,12 +242,7 @@ export const DialogVote = (props: Props) => {
                       >
                         <SelectValue placeholder="À définir" />
                       </SelectTrigger>
-                      <SelectContent
-                        ref={(ref) => {
-                          if (!ref) return;
-                          ref.ontouchstart = (e) => e.preventDefault();
-                        }}
-                      >
+                      <SelectContent>
                         <SelectItem value="1">Oui</SelectItem>
                         <SelectItem value="2">Non</SelectItem>
                         {isFreePoll && (
