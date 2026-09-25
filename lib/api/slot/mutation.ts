@@ -28,11 +28,15 @@ webpush.setVapidDetails(
 
 export const deleteSlotById = pollPwAction
   .schema(async (s) => s.extend({ slotId: z.string() }))
-  .action(async ({ parsedInput: { slotId } }) => {
-    const deletedSlot = await prisma.slot.delete({ where: { id: slotId } });
+  .action(async ({ parsedInput: { pollId, slotId } }) => {
+    // only a slot of the poll whose password was checked
+    const { count } = await prisma.slot.deleteMany({
+      where: { id: slotId, pollId },
+    });
+    if (!count) throw new Error("Slot not found");
 
     const poll = await prisma.poll.findUnique({
-      where: { id: deletedSlot.pollId },
+      where: { id: pollId },
       include: {
         slots: {
           orderBy: slotsOrderBy,
