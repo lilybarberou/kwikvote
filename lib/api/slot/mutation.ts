@@ -1,12 +1,30 @@
 "use server";
 
-import { getSlotArrays, slotsOrderBy } from "@/lib/registration";
+import { env } from "@/lib/env";
+import {
+  compareSlots,
+  getCronSchedulesData,
+  getSlotArrays,
+  reconcileSlotsArrays,
+  slotsOrderBy,
+} from "@/lib/registration";
 import { pollPwAction } from "@/lib/safe-action";
-import { checkTimeBeforeAllow } from "@/lib/utils";
+import { updateSlotSchema } from "@/lib/schema/slot-schema";
+import { checkTimeBeforeAllow, sameDay } from "@/lib/utils";
 import { prisma } from "@/prisma/db";
+import { format } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
+import { fr } from "date-fns/locale/fr";
+import webpush from "web-push";
 import { z } from "zod";
 
 import { PollWithSlots, sendNotifications } from "../vote/mutation";
+
+webpush.setVapidDetails(
+  "mailto:" + env.NEXT_PUBLIC_VAPID_EMAIL,
+  env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+  env.VAPID_PRIVATE_KEY,
+);
 
 export const deleteSlotById = pollPwAction
   .schema(async (s) => s.extend({ slotId: z.string() }))
@@ -65,6 +83,200 @@ export const deleteSlotById = pollPwAction
       });
     }
   });
+
+export const updateSlotById = pollPwAction
+  .schema(async (s) =>
+    s.merge(updateSlotSchema).refine((data) => data.endDate > data.startDate, {
+      message: "End date must be after start date",
+      path: ["endDate"],
+    }),
+  )
+  .action(
+    async ({
+      parsedInput: { pollId, slotId, startDate, endDate, exceptEndpoint },
+    }) => {
+      const poll = await prisma.poll.findUnique({
+        where: { id: pollId },
+        include: {
+          slots: {
+            orderBy: slotsOrderBy,
+          },
+        },
+      });
+
+      const slot = poll?.slots.find((slot) => slot.id === slotId);
+      if (!poll || !slot) throw new Error("Slot not found");
+
+      const oldSlot = { startDate: slot.startDate, endDate: slot.endDate };
+      const isStartDateUpdated =
+        slot.startDate.getTime() !== startDate.getTime();
+      const isEndDateUpdated = slot.endDate.getTime() !== endDate.getTime();
+      if (!isStartDateUpdated && !isEndDateUpdated) return { success: true };
+
+      const initialPoll = JSON.parse(
+        JSON.stringify(poll.slots),
+      ) as PollWithSlots["slots"];
+
+      slot.startDate = startDate;
+      slot.endDate = endDate;
+      poll.slots.sort(compareSlots);
+
+      // slots order and reregistration times changed -> apply registration rules again
+      const shouldReconcile = poll.type === 2 && isStartDateUpdated;
+      if (shouldReconcile) {
+        const votes = await prisma.vote.findMany({
+          where: { pollId },
+          select: {
+            id: true,
+            choices: { select: { slotId: true, choice: true } },
+          },
+        });
+        const choicesByVoteId = votes.reduce(
+          (obj, vote) => {
+            obj[vote.id] = Object.fromEntries(
+              vote.choices.map((choice) => [choice.slotId, choice.choice]),
+            );
+            return obj;
+          },
+          {} as Record<string, Record<string, number>>,
+        );
+
+        reconcileSlotsArrays({
+          slots: poll.slots,
+          choicesByVoteId,
+          timeBeforeAllowedPassed: checkTimeBeforeAllow({
+            timeBeforeAllowedType: poll.timeBeforeAllowedType,
+            msBeforeAllowed: poll.msBeforeAllowed,
+            slots: poll.slots,
+          }),
+        });
+      }
+
+      const updatedSlots = shouldReconcile
+        ? poll.slots.filter((slot) => {
+            const initialSlot = initialPoll.find((s) => s.id === slot.id)!;
+            return (
+              JSON.stringify(getSlotArrays(slot)) !==
+              JSON.stringify(getSlotArrays(initialSlot))
+            );
+          })
+        : [];
+
+      // a cron schedule already due does nothing more than the reconcile above
+      const cronSchedules = shouldReconcile
+        ? getCronSchedulesData({
+            pollId,
+            timeBeforeAllowedType: poll.timeBeforeAllowedType,
+            msBeforeAllowed: poll.msBeforeAllowed,
+            slots: poll.slots,
+          })
+        : [];
+
+      await prisma.$transaction([
+        prisma.slot.update({
+          where: { id: slotId },
+          data: { startDate, endDate },
+        }),
+        ...updatedSlots.map((slot) =>
+          prisma.slot.update({
+            where: { id: slot.id },
+            data: getSlotArrays(slot),
+          }),
+        ),
+        ...(shouldReconcile
+          ? [
+              prisma.cronSchedule.deleteMany({ where: { pollId } }),
+              prisma.cronSchedule.createMany({ data: cronSchedules }),
+            ]
+          : []),
+      ]);
+
+      // people who got registered
+      if (shouldReconcile) {
+        sendNotifications({
+          poll,
+          pollId,
+          voteId: "",
+          initialPoll,
+          newPoll: poll,
+        }).catch((err) => console.log(err));
+      }
+
+      sendSlotUpdateNotifications({
+        pollId,
+        slotId,
+        pollTitle: poll.title,
+        oldSlot,
+        newSlot: { startDate, endDate },
+        exceptEndpoint,
+      }).catch((err) => console.log(err));
+
+      return { success: true };
+    },
+  );
+
+const sendSlotUpdateNotifications = async ({
+  pollId,
+  slotId,
+  pollTitle,
+  oldSlot,
+  newSlot,
+  exceptEndpoint,
+}: {
+  pollId: string;
+  slotId: string;
+  pollTitle: string;
+  oldSlot: { startDate: Date; endDate: Date };
+  newSlot: { startDate: Date; endDate: Date };
+  exceptEndpoint?: string;
+}) => {
+  const subscriptions = await prisma.subscription.findMany({
+    where: {
+      votes: { some: { pollId } },
+      endpoint: exceptEndpoint ? { not: exceptEndpoint } : undefined,
+    },
+    select: {
+      auth: true,
+      endpoint: true,
+      p256dh: true,
+    },
+  });
+  if (!subscriptions.length) return;
+
+  const oldStartFr = toZonedTime(oldSlot.startDate, "Europe/Paris");
+  const newStartFr = toZonedTime(newSlot.startDate, "Europe/Paris");
+  const newEndFr = toZonedTime(newSlot.endDate, "Europe/Paris");
+  const formatDate = (date: Date) =>
+    format(date, "eeee d MMMM", { locale: fr });
+  const formatTime = (date: Date) => format(date, "HH:mm", { locale: fr });
+
+  const newSlotLabel = sameDay(newStartFr, newEndFr)
+    ? `${formatDate(newStartFr)} de ${formatTime(newStartFr)} à ${formatTime(newEndFr)}`
+    : `du ${formatDate(newStartFr)} à ${formatTime(newStartFr)} au ${formatDate(newEndFr)} à ${formatTime(newEndFr)}`;
+
+  const payload = JSON.stringify({
+    title: "Changement d'horaire",
+    body: `Le créneau du ${formatDate(oldStartFr)} à ${formatTime(oldStartFr)} du sondage ${pollTitle} a changé : ${newSlotLabel}.`,
+    // the link is used as notification tag, one per slot so they don't replace each other
+    link: `${env.DOMAIN}/poll/${pollId}?tab=votes&slot=${slotId}`,
+  });
+
+  subscriptions.forEach((sub) => {
+    webpush
+      .sendNotification(
+        {
+          endpoint: sub.endpoint,
+          keys: {
+            auth: sub.auth,
+            p256dh: sub.p256dh,
+          },
+        },
+        payload,
+      )
+      .then((res) => console.log("notif envoyée: ", res.statusCode))
+      .catch((err) => console.log(err));
+  });
+};
 
 const updateSlotsArray = async ({
   poll,
