@@ -30,27 +30,7 @@ const doStuff = async () => {
       },
       select: {
         id: true,
-        poll: {
-          select: {
-            id: true,
-            title: true,
-            timeBeforeAllowedType: true,
-            msBeforeAllowed: true,
-            slots: {
-              select: {
-                id: true,
-                startDate: true,
-                maxParticipants: true,
-                registered: true,
-                waitingList: true,
-                waitingListReregistered: true,
-                notComing: true,
-              },
-              // same order as the app (lib/registration.ts slotsOrderBy)
-              orderBy: [{ startDate: "asc" }, { id: "asc" }],
-            },
-          },
-        },
+        pollId: true,
       },
     });
 
@@ -58,97 +38,147 @@ const doStuff = async () => {
     if (cronSchedules.length === 0)
       return console.log("No cron schedules found");
 
-    const pollsDone = [];
+    const pollIds = [
+      ...new Set(cronSchedules.map((cronSchedule) => cronSchedule.pollId)),
+    ];
 
-    for (const cronSchedule of cronSchedules) {
-      if (pollsDone.includes(cronSchedule.poll.id)) continue;
-      pollsDone.push(cronSchedule.poll.id);
-      const poll = cronSchedule.poll;
+    // each poll on its own: an error on one doesn't block the others
+    for (const pollId of pollIds) {
+      const cronScheduleIds = cronSchedules
+        .filter((cronSchedule) => cronSchedule.pollId === pollId)
+        .map((cronSchedule) => cronSchedule.id);
 
-      const initialPoll = JSON.parse(JSON.stringify(poll.slots));
-      let newPoll = undefined;
+      try {
+        // same lock as the app (prisma/db.ts withPollLock): votes, slots updates and
+        // this cron must not recompute a poll's slots arrays at the same time
+        const registration = await prisma.$transaction(
+          async (tx) => {
+            await tx.$executeRaw`SELECT set_config('lock_timeout', '10s', true)`;
+            await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${pollId}))`;
 
-      const timeBeforeAllowedPassed = checkTimeBeforeAllow({
-        timeBeforeAllowedType: poll.timeBeforeAllowedType,
-        msBeforeAllowed: poll.msBeforeAllowed,
-        slots: poll.slots,
-      });
+            // delete these cron schedules as stuff is done (kept if it fails)
+            await tx.cronSchedule.deleteMany({
+              where: { id: { in: cronScheduleIds } },
+            });
 
-      // check if still place in registered
-      let voteIdToRegister = "";
-      poll.slots.forEach((slot) => {
-        const isNotFull = slot.registered.length < slot.maxParticipants;
-        const timePassed = timeBeforeAllowedPassed[slot.id];
-        const isWaitingListReregisteredNotEmpty =
-          slot.waitingListReregistered.length > 0;
+            const poll = await tx.poll.findUnique({
+              where: { id: pollId },
+              select: {
+                id: true,
+                title: true,
+                timeBeforeAllowedType: true,
+                msBeforeAllowed: true,
+                slots: {
+                  select: {
+                    id: true,
+                    startDate: true,
+                    maxParticipants: true,
+                    registered: true,
+                    waitingList: true,
+                    waitingListReregistered: true,
+                    notComing: true,
+                  },
+                  // same order as the app (lib/registration.ts slotsOrderBy)
+                  orderBy: [{ startDate: "asc" }, { id: "asc" }],
+                },
+              },
+            });
+            if (!poll) return;
 
-        if (isNotFull && timePassed && isWaitingListReregisteredNotEmpty) {
-          voteIdToRegister = slot.waitingListReregistered[0];
-        }
-      });
-      console.log("voteIdToRegister: ", voteIdToRegister);
+            const initialPoll = JSON.parse(JSON.stringify(poll.slots));
+            let newPoll = undefined;
 
-      if (voteIdToRegister) {
-        newPoll = await updateSlotsArray({
-          poll,
-          voteId: voteIdToRegister,
-          timeBeforeAllowedPassed,
-        });
+            const timeBeforeAllowedPassed = checkTimeBeforeAllow({
+              timeBeforeAllowedType: poll.timeBeforeAllowedType,
+              msBeforeAllowed: poll.msBeforeAllowed,
+              slots: poll.slots,
+            });
 
-        sendNotifications({
-          poll: newPoll,
-          pollId: poll.id,
-          voteId: voteIdToRegister,
-          initialPoll,
-          newPoll,
-        });
-      }
-      // move wlr to wl if time passed
-      else {
-        poll.slots.forEach((slot) => {
-          if (timeBeforeAllowedPassed[slot.id]) {
-            slot.waitingList = [
-              ...slot.waitingList,
-              ...slot.waitingListReregistered,
-            ];
-            slot.waitingListReregistered = [];
-          }
-        });
-      }
+            // check if still place in registered
+            let voteIdToRegister = "";
+            poll.slots.forEach((slot) => {
+              const isNotFull = slot.registered.length < slot.maxParticipants;
+              const timePassed = timeBeforeAllowedPassed[slot.id];
+              const isWaitingListReregisteredNotEmpty =
+                slot.waitingListReregistered.length > 0;
 
-      // update changed slots arrays in db (not the dates, the slot may have been updated meanwhile)
-      for (const slot of newPoll ? newPoll.slots : poll.slots) {
-        const data = {
-          registered: slot.registered,
-          waitingList: slot.waitingList,
-          waitingListReregistered: slot.waitingListReregistered,
-          notComing: slot.notComing,
-        };
-        const initialSlot = initialPoll.find(
-          (initialSlot) => initialSlot.id === slot.id,
+              if (
+                isNotFull &&
+                timePassed &&
+                isWaitingListReregisteredNotEmpty
+              ) {
+                voteIdToRegister = slot.waitingListReregistered[0];
+              }
+            });
+            console.log("voteIdToRegister: ", voteIdToRegister);
+
+            if (voteIdToRegister) {
+              newPoll = await updateSlotsArray({
+                tx,
+                poll,
+                voteId: voteIdToRegister,
+                timeBeforeAllowedPassed,
+              });
+            }
+            // move wlr to wl if time passed
+            else {
+              poll.slots.forEach((slot) => {
+                if (timeBeforeAllowedPassed[slot.id]) {
+                  slot.waitingList = [
+                    ...slot.waitingList,
+                    ...slot.waitingListReregistered,
+                  ];
+                  slot.waitingListReregistered = [];
+                }
+              });
+            }
+
+            // update changed slots arrays in db (not the dates)
+            for (const slot of newPoll ? newPoll.slots : poll.slots) {
+              const data = {
+                registered: slot.registered,
+                waitingList: slot.waitingList,
+                waitingListReregistered: slot.waitingListReregistered,
+                notComing: slot.notComing,
+              };
+              const initialSlot = initialPoll.find(
+                (initialSlot) => initialSlot.id === slot.id,
+              );
+              const initialData = {
+                registered: initialSlot.registered,
+                waitingList: initialSlot.waitingList,
+                waitingListReregistered: initialSlot.waitingListReregistered,
+                notComing: initialSlot.notComing,
+              };
+              if (JSON.stringify(data) === JSON.stringify(initialData))
+                continue;
+
+              await tx.slot.update({
+                where: { id: slot.id },
+                data,
+              });
+            }
+
+            if (voteIdToRegister) {
+              return {
+                poll: newPoll,
+                pollId: poll.id,
+                voteId: voteIdToRegister,
+                initialPoll,
+                newPoll,
+              };
+            }
+          },
+          { isolationLevel: "ReadCommitted", maxWait: 10000, timeout: 30000 },
         );
-        const initialData = {
-          registered: initialSlot.registered,
-          waitingList: initialSlot.waitingList,
-          waitingListReregistered: initialSlot.waitingListReregistered,
-          notComing: initialSlot.notComing,
-        };
-        if (JSON.stringify(data) === JSON.stringify(initialData)) continue;
 
-        await prisma.slot.update({
-          where: { id: slot.id },
-          data,
-        });
+        if (registration) {
+          sendNotifications(registration).catch((err) => console.log(err));
+        }
+      } catch (err) {
+        console.log(err);
       }
     }
-
-    // delete all these cron schedules as stuff is done
-    const idsToDelete = cronSchedules.map((cronSchedule) => cronSchedule.id);
-    await prisma.cronSchedule.deleteMany({
-      where: {
-        id: { in: idsToDelete },
-      },
-    });
 
     console.log("ok");
   } catch (err) {
@@ -156,10 +186,15 @@ const doStuff = async () => {
   }
 };
 
-const updateSlotsArray = async ({ poll, voteId, timeBeforeAllowedPassed }) => {
+const updateSlotsArray = async ({
+  tx,
+  poll,
+  voteId,
+  timeBeforeAllowedPassed,
+}) => {
   let isRegisteredOnce = false;
 
-  const currentVoteData = await prisma.vote.findUnique({
+  const currentVoteData = await tx.vote.findUnique({
     where: { id: voteId },
     select: {
       choices: {
@@ -269,6 +304,7 @@ const updateSlotsArray = async ({ poll, voteId, timeBeforeAllowedPassed }) => {
 
   if (voteIdToRegister) {
     poll = await updateSlotsArray({
+      tx,
       poll,
       voteId: voteIdToRegister,
       timeBeforeAllowedPassed,

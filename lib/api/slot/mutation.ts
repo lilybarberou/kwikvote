@@ -11,7 +11,8 @@ import {
 import { pollPwAction } from "@/lib/safe-action";
 import { updateSlotSchema } from "@/lib/schema/slot-schema";
 import { checkTimeBeforeAllow, sameDay } from "@/lib/utils";
-import { prisma } from "@/prisma/db";
+import { prisma, withPollLock } from "@/prisma/db";
+import { Prisma } from "@prisma/client";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { fr } from "date-fns/locale/fr";
@@ -29,62 +30,69 @@ webpush.setVapidDetails(
 export const deleteSlotById = pollPwAction
   .schema(async (s) => s.extend({ slotId: z.string() }))
   .action(async ({ parsedInput: { pollId, slotId } }) => {
-    // only a slot of the poll whose password was checked
-    const { count } = await prisma.slot.deleteMany({
-      where: { id: slotId, pollId },
-    });
-    if (!count) throw new Error("Slot not found");
+    const registration = await withPollLock(pollId, async (tx) => {
+      // only a slot of the poll whose password was checked
+      const { count } = await tx.slot.deleteMany({
+        where: { id: slotId, pollId },
+      });
+      if (!count) throw new Error("Slot not found");
 
-    const poll = await prisma.poll.findUnique({
-      where: { id: pollId },
-      include: {
-        slots: {
-          orderBy: slotsOrderBy,
+      const poll = await tx.poll.findUnique({
+        where: { id: pollId },
+        include: {
+          slots: {
+            orderBy: slotsOrderBy,
+          },
         },
-      },
-    });
-    if (!poll) return;
+      });
+      if (!poll) return;
 
-    const initialPoll = JSON.parse(
-      JSON.stringify(poll.slots),
-    ) as PollWithSlots["slots"];
+      const initialPoll = JSON.parse(
+        JSON.stringify(poll.slots),
+      ) as PollWithSlots["slots"];
 
-    // check if someone can be registered
-    let voteIdToRegister = "";
-    poll.slots.forEach((slot) => {
-      if (slot.waitingListReregistered.length > 0) {
-        voteIdToRegister = slot.waitingListReregistered[0];
-      }
-    });
-
-    if (voteIdToRegister) {
-      const timeBeforeAllowedPassed = checkTimeBeforeAllow({
-        timeBeforeAllowedType: poll.timeBeforeAllowedType,
-        msBeforeAllowed: poll.msBeforeAllowed,
-        slots: poll.slots,
+      // check if someone can be registered
+      let voteIdToRegister = "";
+      poll.slots.forEach((slot) => {
+        if (slot.waitingListReregistered.length > 0) {
+          voteIdToRegister = slot.waitingListReregistered[0];
+        }
       });
 
-      const newPoll = await updateSlotsArray({
-        poll,
-        voteId: voteIdToRegister,
-        timeBeforeAllowedPassed: timeBeforeAllowedPassed,
-      });
-
-      // update slots in db
-      for (const slot of newPoll.slots) {
-        await prisma.slot.update({
-          where: { id: slot.id },
-          data: getSlotArrays(slot),
+      if (voteIdToRegister) {
+        const timeBeforeAllowedPassed = checkTimeBeforeAllow({
+          timeBeforeAllowedType: poll.timeBeforeAllowedType,
+          msBeforeAllowed: poll.msBeforeAllowed,
+          slots: poll.slots,
         });
-      }
 
-      sendNotifications({
-        poll: newPoll,
-        pollId: poll.id,
-        voteId: voteIdToRegister,
-        initialPoll,
-        newPoll,
-      });
+        const newPoll = await updateSlotsArray({
+          tx,
+          poll,
+          voteId: voteIdToRegister,
+          timeBeforeAllowedPassed: timeBeforeAllowedPassed,
+        });
+
+        // update slots in db
+        for (const slot of newPoll.slots) {
+          await tx.slot.update({
+            where: { id: slot.id },
+            data: getSlotArrays(slot),
+          });
+        }
+
+        return {
+          poll: newPoll,
+          pollId: poll.id,
+          voteId: voteIdToRegister,
+          initialPoll,
+          newPoll,
+        };
+      }
+    });
+
+    if (registration) {
+      sendNotifications(registration).catch((err) => console.log(err));
     }
   });
 
@@ -99,101 +107,104 @@ export const updateSlotById = pollPwAction
     async ({
       parsedInput: { pollId, slotId, startDate, endDate, exceptEndpoint },
     }) => {
-      const poll = await prisma.poll.findUnique({
-        where: { id: pollId },
-        include: {
-          slots: {
-            orderBy: slotsOrderBy,
-          },
-        },
-      });
-
-      const slot = poll?.slots.find((slot) => slot.id === slotId);
-      if (!poll || !slot) throw new Error("Slot not found");
-
-      const oldSlot = { startDate: slot.startDate, endDate: slot.endDate };
-      const isStartDateUpdated =
-        slot.startDate.getTime() !== startDate.getTime();
-      const isEndDateUpdated = slot.endDate.getTime() !== endDate.getTime();
-      if (!isStartDateUpdated && !isEndDateUpdated) return { success: true };
-
-      const initialPoll = JSON.parse(
-        JSON.stringify(poll.slots),
-      ) as PollWithSlots["slots"];
-
-      slot.startDate = startDate;
-      slot.endDate = endDate;
-      poll.slots.sort(compareSlots);
-
-      // slots order and reregistration times changed -> apply registration rules again
-      const shouldReconcile = poll.type === 2 && isStartDateUpdated;
-      if (shouldReconcile) {
-        const votes = await prisma.vote.findMany({
-          where: { pollId },
-          select: {
-            id: true,
-            choices: { select: { slotId: true, choice: true } },
+      const update = await withPollLock(pollId, async (tx) => {
+        const poll = await tx.poll.findUnique({
+          where: { id: pollId },
+          include: {
+            slots: {
+              orderBy: slotsOrderBy,
+            },
           },
         });
-        const choicesByVoteId = votes.reduce(
-          (obj, vote) => {
-            obj[vote.id] = Object.fromEntries(
-              vote.choices.map((choice) => [choice.slotId, choice.choice]),
-            );
-            return obj;
-          },
-          {} as Record<string, Record<string, number>>,
-        );
 
-        reconcileSlotsArrays({
-          slots: poll.slots,
-          choicesByVoteId,
-          timeBeforeAllowedPassed: checkTimeBeforeAllow({
-            timeBeforeAllowedType: poll.timeBeforeAllowedType,
-            msBeforeAllowed: poll.msBeforeAllowed,
+        const slot = poll?.slots.find((slot) => slot.id === slotId);
+        if (!poll || !slot) throw new Error("Slot not found");
+
+        const oldSlot = { startDate: slot.startDate, endDate: slot.endDate };
+        const isStartDateUpdated =
+          slot.startDate.getTime() !== startDate.getTime();
+        const isEndDateUpdated = slot.endDate.getTime() !== endDate.getTime();
+        if (!isStartDateUpdated && !isEndDateUpdated) return;
+
+        const initialPoll = JSON.parse(
+          JSON.stringify(poll.slots),
+        ) as PollWithSlots["slots"];
+
+        slot.startDate = startDate;
+        slot.endDate = endDate;
+        poll.slots.sort(compareSlots);
+
+        // slots order and reregistration times changed -> apply registration rules again
+        const shouldReconcile = poll.type === 2 && isStartDateUpdated;
+        if (shouldReconcile) {
+          const votes = await tx.vote.findMany({
+            where: { pollId },
+            select: {
+              id: true,
+              choices: { select: { slotId: true, choice: true } },
+            },
+          });
+          const choicesByVoteId = votes.reduce(
+            (obj, vote) => {
+              obj[vote.id] = Object.fromEntries(
+                vote.choices.map((choice) => [choice.slotId, choice.choice]),
+              );
+              return obj;
+            },
+            {} as Record<string, Record<string, number>>,
+          );
+
+          reconcileSlotsArrays({
             slots: poll.slots,
-          }),
-        });
-      }
+            choicesByVoteId,
+            timeBeforeAllowedPassed: checkTimeBeforeAllow({
+              timeBeforeAllowedType: poll.timeBeforeAllowedType,
+              msBeforeAllowed: poll.msBeforeAllowed,
+              slots: poll.slots,
+            }),
+          });
+        }
 
-      const updatedSlots = shouldReconcile
-        ? poll.slots.filter((slot) => {
-            const initialSlot = initialPoll.find((s) => s.id === slot.id)!;
-            return (
-              JSON.stringify(getSlotArrays(slot)) !==
-              JSON.stringify(getSlotArrays(initialSlot))
-            );
-          })
-        : [];
+        const updatedSlots = shouldReconcile
+          ? poll.slots.filter((slot) => {
+              const initialSlot = initialPoll.find((s) => s.id === slot.id)!;
+              return (
+                JSON.stringify(getSlotArrays(slot)) !==
+                JSON.stringify(getSlotArrays(initialSlot))
+              );
+            })
+          : [];
 
-      // a cron schedule already due does nothing more than the reconcile above
-      const cronSchedules = shouldReconcile
-        ? getCronSchedulesData({
-            pollId,
-            timeBeforeAllowedType: poll.timeBeforeAllowedType,
-            msBeforeAllowed: poll.msBeforeAllowed,
-            slots: poll.slots,
-          })
-        : [];
+        // a cron schedule already due does nothing more than the reconcile above
+        const cronSchedules = shouldReconcile
+          ? getCronSchedulesData({
+              pollId,
+              timeBeforeAllowedType: poll.timeBeforeAllowedType,
+              msBeforeAllowed: poll.msBeforeAllowed,
+              slots: poll.slots,
+            })
+          : [];
 
-      await prisma.$transaction([
-        prisma.slot.update({
+        await tx.slot.update({
           where: { id: slotId },
           data: { startDate, endDate },
-        }),
-        ...updatedSlots.map((slot) =>
-          prisma.slot.update({
+        });
+        for (const slot of updatedSlots) {
+          await tx.slot.update({
             where: { id: slot.id },
             data: getSlotArrays(slot),
-          }),
-        ),
-        ...(shouldReconcile
-          ? [
-              prisma.cronSchedule.deleteMany({ where: { pollId } }),
-              prisma.cronSchedule.createMany({ data: cronSchedules }),
-            ]
-          : []),
-      ]);
+          });
+        }
+        if (shouldReconcile) {
+          await tx.cronSchedule.deleteMany({ where: { pollId } });
+          await tx.cronSchedule.createMany({ data: cronSchedules });
+        }
+
+        return { poll, initialPoll, oldSlot, shouldReconcile };
+      });
+      // dates not changed
+      if (!update) return { success: true };
+      const { poll, initialPoll, oldSlot, shouldReconcile } = update;
 
       // people who got registered
       if (shouldReconcile) {
@@ -283,10 +294,12 @@ const sendSlotUpdateNotifications = async ({
 };
 
 const updateSlotsArray = async ({
+  tx,
   poll,
   voteId,
   timeBeforeAllowedPassed,
 }: {
+  tx: Prisma.TransactionClient;
   poll: PollWithSlots;
   voteId: string;
   timeBeforeAllowedPassed: Record<string, boolean>;
@@ -294,7 +307,7 @@ const updateSlotsArray = async ({
   console.log(voteId);
   let isRegisteredOnce = false;
 
-  const currentVoteData = await prisma.vote.findUnique({
+  const currentVoteData = await tx.vote.findUnique({
     where: { id: voteId },
     select: {
       choices: {
@@ -438,6 +451,7 @@ const updateSlotsArray = async ({
 
   if (voteIdToRegister) {
     poll = await updateSlotsArray({
+      tx,
       poll,
       voteId: voteIdToRegister,
       timeBeforeAllowedPassed,
