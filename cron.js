@@ -88,6 +88,14 @@ const doStuff = async () => {
             const initialPoll = JSON.parse(JSON.stringify(poll.slots));
             let newPoll = undefined;
 
+            // ids of deleted votes can have been left by past concurrent writes:
+            // skip them (the app removes them with lib/registration.ts repairDeletedVotes)
+            const votes = await tx.vote.findMany({
+              where: { pollId },
+              select: { id: true },
+            });
+            const voteIds = new Set(votes.map((vote) => vote.id));
+
             const timeBeforeAllowedPassed = checkTimeBeforeAllow({
               timeBeforeAllowedType: poll.timeBeforeAllowedType,
               msBeforeAllowed: poll.msBeforeAllowed,
@@ -99,15 +107,12 @@ const doStuff = async () => {
             poll.slots.forEach((slot) => {
               const isNotFull = slot.registered.length < slot.maxParticipants;
               const timePassed = timeBeforeAllowedPassed[slot.id];
-              const isWaitingListReregisteredNotEmpty =
-                slot.waitingListReregistered.length > 0;
+              const firstReregistered = slot.waitingListReregistered.find(
+                (id) => voteIds.has(id),
+              );
 
-              if (
-                isNotFull &&
-                timePassed &&
-                isWaitingListReregisteredNotEmpty
-              ) {
-                voteIdToRegister = slot.waitingListReregistered[0];
+              if (isNotFull && timePassed && firstReregistered) {
+                voteIdToRegister = firstReregistered;
               }
             });
             console.log("voteIdToRegister: ", voteIdToRegister);
@@ -115,6 +120,7 @@ const doStuff = async () => {
             if (voteIdToRegister) {
               newPoll = await updateSlotsArray({
                 tx,
+                voteIds,
                 poll,
                 voteId: voteIdToRegister,
                 timeBeforeAllowedPassed,
@@ -188,6 +194,7 @@ const doStuff = async () => {
 
 const updateSlotsArray = async ({
   tx,
+  voteIds,
   poll,
   voteId,
   timeBeforeAllowedPassed,
@@ -294,17 +301,19 @@ const updateSlotsArray = async ({
   poll.slots.forEach((slot) => {
     const isNotFull = slot.registered.length < slot.maxParticipants;
     const timePassed = timeBeforeAllowedPassed[slot.id];
-    const isWaitingListReregisteredNotEmpty =
-      slot.waitingListReregistered.length > 0;
+    const firstReregistered = slot.waitingListReregistered.find((id) =>
+      voteIds.has(id),
+    );
 
-    if (isNotFull && timePassed && isWaitingListReregisteredNotEmpty) {
-      voteIdToRegister = slot.waitingListReregistered[0];
+    if (isNotFull && timePassed && firstReregistered) {
+      voteIdToRegister = firstReregistered;
     }
   });
 
   if (voteIdToRegister) {
     poll = await updateSlotsArray({
       tx,
+      voteIds,
       poll,
       voteId: voteIdToRegister,
       timeBeforeAllowedPassed,
