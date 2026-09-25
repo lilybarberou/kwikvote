@@ -1,5 +1,6 @@
 "use server";
 
+import { getSlotArrays, slotsOrderBy } from "@/lib/registration";
 import { pollPwAction } from "@/lib/safe-action";
 import { checkTimeBeforeAllow } from "@/lib/utils";
 import { prisma } from "@/prisma/db";
@@ -16,9 +17,7 @@ export const deleteSlotById = pollPwAction
       where: { id: deletedSlot.pollId },
       include: {
         slots: {
-          orderBy: {
-            startDate: "asc",
-          },
+          orderBy: slotsOrderBy,
         },
       },
     });
@@ -53,7 +52,7 @@ export const deleteSlotById = pollPwAction
       for (const slot of newPoll.slots) {
         await prisma.slot.update({
           where: { id: slot.id },
-          data: slot,
+          data: getSlotArrays(slot),
         });
       }
 

@@ -46,9 +46,8 @@ const doStuff = async () => {
                 waitingListReregistered: true,
                 notComing: true,
               },
-              orderBy: {
-                startDate: "asc",
-              },
+              // same order as the app (lib/registration.ts slotsOrderBy)
+              orderBy: [{ startDate: "asc" }, { id: "asc" }],
             },
           },
         },
@@ -117,11 +116,28 @@ const doStuff = async () => {
         });
       }
 
-      // update slots in db
+      // update changed slots arrays in db (not the dates, the slot may have been updated meanwhile)
       for (const slot of newPoll ? newPoll.slots : poll.slots) {
+        const data = {
+          registered: slot.registered,
+          waitingList: slot.waitingList,
+          waitingListReregistered: slot.waitingListReregistered,
+          notComing: slot.notComing,
+        };
+        const initialSlot = initialPoll.find(
+          (initialSlot) => initialSlot.id === slot.id,
+        );
+        const initialData = {
+          registered: initialSlot.registered,
+          waitingList: initialSlot.waitingList,
+          waitingListReregistered: initialSlot.waitingListReregistered,
+          notComing: initialSlot.notComing,
+        };
+        if (JSON.stringify(data) === JSON.stringify(initialData)) continue;
+
         await prisma.slot.update({
           where: { id: slot.id },
-          data: slot,
+          data,
         });
       }
     }

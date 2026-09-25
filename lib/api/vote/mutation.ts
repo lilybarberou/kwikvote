@@ -1,6 +1,7 @@
 "use server";
 
 import { env } from "@/lib/env";
+import { getSlotArrays, slotsOrderBy } from "@/lib/registration";
 import { action } from "@/lib/safe-action";
 import {
   createVoteSchema,
@@ -115,9 +116,7 @@ export const createVote = action
         where: { id: data.pollId },
         include: {
           slots: {
-            orderBy: {
-              startDate: "asc",
-            },
+            orderBy: slotsOrderBy,
           },
         },
       });
@@ -148,7 +147,7 @@ export const createVote = action
       for (const slot of newPoll.slots) {
         await prisma.slot.update({
           where: { id: slot.id },
-          data: slot,
+          data: getSlotArrays(slot),
         });
       }
 
@@ -338,9 +337,7 @@ export const deleteVote = action
         where: { id: pollId },
         include: {
           slots: {
-            orderBy: {
-              startDate: "asc",
-            },
+            orderBy: slotsOrderBy,
           },
         },
       });
@@ -398,7 +395,7 @@ export const deleteVote = action
       for (const slot of newPoll.slots) {
         await prisma.slot.update({
           where: { id: slot.id },
-          data: slot,
+          data: getSlotArrays(slot),
         });
       }
     }
