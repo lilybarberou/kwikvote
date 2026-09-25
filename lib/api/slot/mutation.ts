@@ -101,7 +101,8 @@ export const deleteSlotById = pollPwAction
       return {
         poll: newPoll,
         pollId: poll.id,
-        voteId: voteIdToRegister,
+        // nobody to leave out: nobody voted, everyone registered is notified
+        voteId: "",
         initialPoll,
         newPoll,
       };
