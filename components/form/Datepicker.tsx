@@ -20,6 +20,7 @@ export const DatePicker = (props: any) => {
     <Controller
       control={props.control}
       name={props.name}
+      rules={props.rules}
       render={({ field }) => (
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
@@ -41,11 +42,14 @@ export const DatePicker = (props: any) => {
               lang="fr"
               locale={fr}
               selected={field.value}
+              defaultMonth={field.value}
               onSelect={(e) => {
                 field.onChange(e);
                 setOpen(false);
               }}
               mode="single"
+              // clicking the selected day keeps it instead of clearing it
+              required
               initialFocus
             />
           </PopoverContent>
