@@ -8,8 +8,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { usePoll } from "@/hooks/use-poll";
 import { PollFormSchema, pollFormSchema } from "@/lib/schema/poll-schema";
+import { parisDateTimeToUtc } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { fromZonedTime } from "date-fns-tz";
 import { Loader2, X } from "lucide-react";
 import Image from "next/image";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
@@ -49,25 +49,11 @@ export const PollForm = () => {
     }
 
     // gen slots utc date from date/time
-    const slots = data.slots.map((slot) => {
-      const startDate = new Date(slot.startDate);
-      const [hours, minutes] = slot.startTime.split(":");
-      const slotDateTime = new Date(startDate.setHours(+hours, +minutes, 0, 0));
-      const utcSlot = fromZonedTime(slotDateTime, "Europe/Paris");
-
-      const endDate = new Date(slot.endDate);
-      const [endHours, endMinutes] = slot.endTime.split(":");
-      const endDateTime = new Date(
-        endDate.setHours(+endHours, +endMinutes, 0, 0),
-      );
-      const utcEndSlot = fromZonedTime(endDateTime, "Europe/Paris");
-
-      return {
-        maxParticipants: slot.maxParticipants,
-        startDate: utcSlot,
-        endDate: utcEndSlot,
-      };
-    });
+    const slots = data.slots.map((slot) => ({
+      maxParticipants: slot.maxParticipants,
+      startDate: parisDateTimeToUtc(slot.startDate, slot.startTime),
+      endDate: parisDateTimeToUtc(slot.endDate, slot.endTime),
+    }));
 
     createPollMutation.mutate({
       ...data,
