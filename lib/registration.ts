@@ -36,6 +36,46 @@ export const getSlotArrays = ({
   notComing,
 });
 
+// ids of deleted votes can have been left in the arrays by past concurrent
+// writes: they would take a spot forever and break the votes recursion
+export const removeDeletedVotes = <T extends SlotArrays>({
+  slots,
+  voteIds,
+}: {
+  slots: T[];
+  voteIds: string[];
+}) => {
+  const existingVoteIds = new Set(voteIds);
+  let isRemoved = false;
+
+  slots.forEach((slot) => {
+    for (const key of [
+      "registered",
+      "waitingList",
+      "waitingListReregistered",
+      "notComing",
+    ] as const) {
+      const ids = slot[key].filter((id) => existingVoteIds.has(id));
+      if (ids.length !== slot[key].length) isRemoved = true;
+      slot[key] = ids;
+    }
+  });
+
+  return isRemoved;
+};
+
+export const getChoicesByVoteId = (
+  votes: { id: string; choices: { slotId: string; choice: number }[] }[],
+) =>
+  Object.fromEntries(
+    votes.map((vote) => [
+      vote.id,
+      Object.fromEntries(
+        vote.choices.map((choice) => [choice.slotId, choice.choice]),
+      ),
+    ]),
+  );
+
 /**
  * Re-applies the registration rules on all the slots of a poll, after their
  * order or their reregistration time changed (slot dates update).
@@ -154,6 +194,31 @@ export const reconcileSlotsArrays = <T extends SlotArrays>({
     }
   }
 
+  return slots;
+};
+
+// removes the deleted votes and, if there were some, applies the registration
+// rules again so their spots go to the first of the waiting lists
+export const repairDeletedVotes = <T extends SlotArrays>({
+  slots,
+  votes,
+  timeBeforeAllowedPassed,
+}: {
+  slots: T[];
+  votes: { id: string; choices: { slotId: string; choice: number }[] }[];
+  timeBeforeAllowedPassed: Record<string, boolean>;
+}) => {
+  const isRemoved = removeDeletedVotes({
+    slots,
+    voteIds: votes.map((vote) => vote.id),
+  });
+  if (isRemoved) {
+    reconcileSlotsArrays({
+      slots,
+      choicesByVoteId: getChoicesByVoteId(votes),
+      timeBeforeAllowedPassed,
+    });
+  }
   return slots;
 };
 

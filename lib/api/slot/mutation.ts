@@ -6,9 +6,12 @@ import {
 } from "@/lib/notifications.server";
 import {
   compareSlots,
+  getChoicesByVoteId,
   getCronSchedulesData,
   getSlotArrays,
   reconcileSlotsArrays,
+  removeDeletedVotes,
+  repairDeletedVotes,
   slotsOrderBy,
 } from "@/lib/registration";
 import { pollPwAction } from "@/lib/safe-action";
@@ -44,6 +47,24 @@ export const deleteSlotById = pollPwAction
         JSON.stringify(poll.slots),
       ) as PollWithSlots["slots"];
 
+      const timeBeforeAllowedPassed = checkTimeBeforeAllow({
+        timeBeforeAllowedType: poll.timeBeforeAllowedType,
+        msBeforeAllowed: poll.msBeforeAllowed,
+        slots: poll.slots,
+      });
+
+      repairDeletedVotes({
+        slots: poll.slots,
+        votes: await tx.vote.findMany({
+          where: { pollId },
+          select: {
+            id: true,
+            choices: { select: { slotId: true, choice: true } },
+          },
+        }),
+        timeBeforeAllowedPassed,
+      });
+
       // check if someone can be registered
       let voteIdToRegister = "";
       poll.slots.forEach((slot) => {
@@ -52,36 +73,38 @@ export const deleteSlotById = pollPwAction
         }
       });
 
-      if (voteIdToRegister) {
-        const timeBeforeAllowedPassed = checkTimeBeforeAllow({
-          timeBeforeAllowedType: poll.timeBeforeAllowedType,
-          msBeforeAllowed: poll.msBeforeAllowed,
-          slots: poll.slots,
+      const newPoll = voteIdToRegister
+        ? await updateSlotsArray({
+            tx,
+            poll,
+            voteId: voteIdToRegister,
+            timeBeforeAllowedPassed,
+          })
+        : poll;
+
+      // update changed slots in db
+      for (const slot of newPoll.slots) {
+        const initialSlot = initialPoll.find((s) => s.id === slot.id)!;
+        if (
+          JSON.stringify(getSlotArrays(slot)) ===
+          JSON.stringify(getSlotArrays(initialSlot))
+        )
+          continue;
+
+        await tx.slot.update({
+          where: { id: slot.id },
+          data: getSlotArrays(slot),
         });
-
-        const newPoll = await updateSlotsArray({
-          tx,
-          poll,
-          voteId: voteIdToRegister,
-          timeBeforeAllowedPassed: timeBeforeAllowedPassed,
-        });
-
-        // update slots in db
-        for (const slot of newPoll.slots) {
-          await tx.slot.update({
-            where: { id: slot.id },
-            data: getSlotArrays(slot),
-          });
-        }
-
-        return {
-          poll: newPoll,
-          pollId: poll.id,
-          voteId: voteIdToRegister,
-          initialPoll,
-          newPoll,
-        };
       }
+
+      // people registered by the repair or the recursion
+      return {
+        poll: newPoll,
+        pollId: poll.id,
+        voteId: voteIdToRegister,
+        initialPoll,
+        newPoll,
+      };
     });
 
     if (registration) {
@@ -137,19 +160,14 @@ export const updateSlotById = pollPwAction
               choices: { select: { slotId: true, choice: true } },
             },
           });
-          const choicesByVoteId = votes.reduce(
-            (obj, vote) => {
-              obj[vote.id] = Object.fromEntries(
-                vote.choices.map((choice) => [choice.slotId, choice.choice]),
-              );
-              return obj;
-            },
-            {} as Record<string, Record<string, number>>,
-          );
+          removeDeletedVotes({
+            slots: poll.slots,
+            voteIds: votes.map((vote) => vote.id),
+          });
 
           reconcileSlotsArrays({
             slots: poll.slots,
-            choicesByVoteId,
+            choicesByVoteId: getChoicesByVoteId(votes),
             timeBeforeAllowedPassed: checkTimeBeforeAllow({
               timeBeforeAllowedType: poll.timeBeforeAllowedType,
               msBeforeAllowed: poll.msBeforeAllowed,
