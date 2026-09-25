@@ -9,7 +9,7 @@ import {
   updateVoteNameSchema,
 } from "@/lib/schema/vote-schema";
 import { checkTimeBeforeAllow } from "@/lib/utils";
-import { prisma } from "@/prisma/db";
+import { prisma, withPollLock } from "@/prisma/db";
 import { Prisma } from "@prisma/client";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
@@ -25,36 +25,70 @@ webpush.setVapidDetails(
 export const createVote = action
   .schema(createVoteSchema)
   .action(async ({ parsedInput: data }) => {
-    const voteInDB = await prisma.vote.findUnique({
-      where: { id: data.id },
-      select: {
-        choices: {
-          select: {
-            id: true,
-            slotId: true,
-            choice: true,
+    const registration = await withPollLock(data.pollId, async (tx) => {
+      const voteInDB = await tx.vote.findUnique({
+        where: { id: data.id },
+        select: {
+          choices: {
+            select: {
+              id: true,
+              slotId: true,
+              choice: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    // UPDATE VOTE IN DB
-    await prisma.vote.upsert({
-      where: {
-        id: data.id,
-      },
-      update: {
-        name: data.name,
-        choices: {
-          upsert: data.choices.map(
-            (choice: { id: string; slotId: string; choice: number }) => ({
-              where: {
-                id: choice.id,
-              },
-              update: {
-                choice: choice.choice,
-              },
-              create: {
+      // UPDATE VOTE IN DB
+      await tx.vote.upsert({
+        where: {
+          id: data.id,
+        },
+        update: {
+          name: data.name,
+          choices: {
+            upsert: data.choices.map(
+              (choice: { id: string; slotId: string; choice: number }) => ({
+                where: {
+                  id: choice.id,
+                },
+                update: {
+                  choice: choice.choice,
+                },
+                create: {
+                  id: choice.id,
+                  choice: choice.choice,
+                  slot: {
+                    connect: {
+                      id: choice.slotId,
+                    },
+                  },
+                },
+              }),
+            ),
+          },
+          subscriptions: data.subscription
+            ? {
+                connectOrCreate: {
+                  where: { endpoint: data.subscription.endpoint },
+                  create: {
+                    ...data.subscription,
+                  },
+                },
+              }
+            : undefined,
+        },
+        create: {
+          id: data.id,
+          name: data.name,
+          poll: {
+            connect: {
+              id: data.pollId,
+            },
+          },
+          choices: {
+            create: data.choices.map(
+              (choice: { id: string; slotId: string; choice: number }) => ({
                 id: choice.id,
                 choice: choice.choice,
                 slot: {
@@ -62,106 +96,78 @@ export const createVote = action
                     id: choice.slotId,
                   },
                 },
-              },
-            }),
-          ),
-        },
-        subscriptions: data.subscription
-          ? {
-              connectOrCreate: {
-                where: { endpoint: data.subscription.endpoint },
-                create: {
-                  ...data.subscription,
-                },
-              },
-            }
-          : undefined,
-      },
-      create: {
-        id: data.id,
-        name: data.name,
-        poll: {
-          connect: {
-            id: data.pollId,
+              }),
+            ),
           },
-        },
-        choices: {
-          create: data.choices.map(
-            (choice: { id: string; slotId: string; choice: number }) => ({
-              id: choice.id,
-              choice: choice.choice,
-              slot: {
-                connect: {
-                  id: choice.slotId,
+          subscriptions: data.subscription
+            ? {
+                connectOrCreate: {
+                  where: { endpoint: data.subscription.endpoint },
+                  create: {
+                    ...data.subscription,
+                  },
                 },
-              },
-            }),
-          ),
+              }
+            : undefined,
         },
-        subscriptions: data.subscription
-          ? {
-              connectOrCreate: {
-                where: { endpoint: data.subscription.endpoint },
-                create: {
-                  ...data.subscription,
-                },
-              },
-            }
-          : undefined,
-      },
+      });
+
+      if (data.pollType == 2) {
+        const poll = await tx.poll.findUnique({
+          where: { id: data.pollId },
+          include: {
+            slots: {
+              orderBy: slotsOrderBy,
+            },
+          },
+        });
+
+        if (!poll) throw new Error("Sondage introuvable");
+
+        const initialPoll = JSON.parse(
+          JSON.stringify(poll.slots),
+        ) as PollWithSlots["slots"];
+
+        const timeBeforeAllowedPassed = checkTimeBeforeAllow({
+          timeBeforeAllowedType: poll.timeBeforeAllowedType,
+          msBeforeAllowed: poll.msBeforeAllowed,
+          slots: poll.slots,
+        });
+
+        const newPoll = await updateSlotsArrayAfterCreation({
+          tx,
+          poll,
+          timeBeforeAllowedPassed,
+          voteId: data.id,
+          initialVoteChoices: data.choices,
+          initialVoteOldChoices: voteInDB?.choices,
+          firstCall: true,
+          voteExists: !!voteInDB,
+        });
+
+        // update slots in db
+        for (const slot of newPoll.slots) {
+          await tx.slot.update({
+            where: { id: slot.id },
+            data: getSlotArrays(slot),
+          });
+        }
+
+        return { poll, newPoll, initialPoll };
+      }
     });
 
-    if (data.pollType == 2) {
-      const poll = await prisma.poll.findUnique({
-        where: { id: data.pollId },
-        include: {
-          slots: {
-            orderBy: slotsOrderBy,
-          },
-        },
-      });
-
-      if (!poll) throw new Error("Sondage introuvable");
-
-      const initialPoll = JSON.parse(
-        JSON.stringify(poll.slots),
-      ) as PollWithSlots["slots"];
-
-      const timeBeforeAllowedPassed = checkTimeBeforeAllow({
-        timeBeforeAllowedType: poll.timeBeforeAllowedType,
-        msBeforeAllowed: poll.msBeforeAllowed,
-        slots: poll.slots,
-      });
-
-      const newPoll = await updateSlotsArrayAfterCreation({
-        poll,
-        timeBeforeAllowedPassed,
-        voteId: data.id,
-        initialVoteChoices: data.choices,
-        initialVoteOldChoices: voteInDB?.choices,
-        firstCall: true,
-        voteExists: !!voteInDB,
-      });
-
-      // update slots in db
-      for (const slot of newPoll.slots) {
-        await prisma.slot.update({
-          where: { id: slot.id },
-          data: getSlotArrays(slot),
-        });
-      }
-
+    if (registration) {
       sendNotifications({
         voteId: data.id,
         pollId: data.pollId,
-        poll,
-        newPoll,
-        initialPoll,
-      });
+        ...registration,
+      }).catch((err) => console.log(err));
     }
   });
 
 const updateSlotsArrayAfterCreation = async ({
+  tx,
   poll,
   voteId,
   initialVoteChoices,
@@ -170,6 +176,7 @@ const updateSlotsArrayAfterCreation = async ({
   timeBeforeAllowedPassed,
   firstCall,
 }: {
+  tx: Prisma.TransactionClient;
   poll: PollWithSlots;
   voteId: string;
   initialVoteChoices: Choice[];
@@ -181,7 +188,7 @@ const updateSlotsArrayAfterCreation = async ({
   let isRegisteredOnce = false;
 
   // check si le vote existe (uniquement pour celui reçu dans l'api)
-  const currentVoteData = await prisma.vote.findUnique({
+  const currentVoteData = await tx.vote.findUnique({
     where: { id: voteId },
     select: {
       choices: {
@@ -315,6 +322,7 @@ const updateSlotsArrayAfterCreation = async ({
 
   if (voteIdToRegister) {
     poll = await updateSlotsArrayAfterCreation({
+      tx,
       poll,
       voteId: voteIdToRegister,
       initialVoteChoices,
@@ -329,96 +337,110 @@ const updateSlotsArrayAfterCreation = async ({
 export const deleteVote = action
   .schema(deleteVoteSchema)
   .action(async ({ parsedInput: { voteId, pollId, pollType } }) => {
-    let newPoll: PollWithSlots | undefined = undefined;
-
-    // REMOVE VOTE FROM ALL SLOTS ARRAYS
-    if (pollType == 2) {
-      const poll = await prisma.poll.findUnique({
-        where: { id: pollId },
-        include: {
-          slots: {
-            orderBy: slotsOrderBy,
-          },
-        },
-      });
-
-      if (!poll) throw new Error("Sondage introuvable");
-
-      const initialPoll = JSON.parse(
-        JSON.stringify(poll.slots),
-      ) as PollWithSlots["slots"];
-
-      // remove vote from all slots arrays
-      poll.slots.forEach((slot) => {
-        slot.registered = slot.registered.filter((id) => id != voteId);
-        slot.waitingList = slot.waitingList.filter((id) => id != voteId);
-        slot.waitingListReregistered = slot.waitingListReregistered.filter(
-          (id) => id != voteId,
-        );
-        slot.notComing = slot.notComing.filter((id) => id != voteId);
-      });
-      newPoll = JSON.parse(JSON.stringify(poll)) as PollWithSlots;
-
-      // check if someone can be registered
-      let voteIdToRegister = "";
-      poll.slots.forEach((slot) => {
-        if (slot.registered.length < slot.maxParticipants) {
-          if (slot.waitingList.length > 0) {
-            voteIdToRegister = slot.waitingList[0];
+    const registration = await withPollLock(pollId, async (tx) => {
+      let newPoll: PollWithSlots | undefined = undefined;
+      let registrationUpdate:
+        | {
+            poll: PollWithSlots;
+            newPoll: PollWithSlots;
+            initialPoll: PollWithSlots["slots"];
           }
+        | undefined = undefined;
+
+      // REMOVE VOTE FROM ALL SLOTS ARRAYS
+      if (pollType == 2) {
+        const poll = await tx.poll.findUnique({
+          where: { id: pollId },
+          include: {
+            slots: {
+              orderBy: slotsOrderBy,
+            },
+          },
+        });
+
+        if (!poll) throw new Error("Sondage introuvable");
+
+        const initialPoll = JSON.parse(
+          JSON.stringify(poll.slots),
+        ) as PollWithSlots["slots"];
+
+        // remove vote from all slots arrays
+        poll.slots.forEach((slot) => {
+          slot.registered = slot.registered.filter((id) => id != voteId);
+          slot.waitingList = slot.waitingList.filter((id) => id != voteId);
+          slot.waitingListReregistered = slot.waitingListReregistered.filter(
+            (id) => id != voteId,
+          );
+          slot.notComing = slot.notComing.filter((id) => id != voteId);
+        });
+        newPoll = JSON.parse(JSON.stringify(poll)) as PollWithSlots;
+
+        // check if someone can be registered
+        let voteIdToRegister = "";
+        poll.slots.forEach((slot) => {
+          if (slot.registered.length < slot.maxParticipants) {
+            if (slot.waitingList.length > 0) {
+              voteIdToRegister = slot.waitingList[0];
+            }
+          }
+        });
+
+        if (voteIdToRegister) {
+          const timeBeforeAllowedPassed = checkTimeBeforeAllow({
+            timeBeforeAllowedType: poll.timeBeforeAllowedType,
+            msBeforeAllowed: poll.msBeforeAllowed,
+            slots: poll.slots,
+          });
+
+          newPoll = await updateSlotsArrayAfterDelete({
+            tx,
+            poll,
+            voteId: voteIdToRegister,
+            timeBeforeAllowedPassed,
+          });
+
+          registrationUpdate = { poll, newPoll, initialPoll };
         }
+
+        // update slots in db
+        for (const slot of newPoll.slots) {
+          await tx.slot.update({
+            where: { id: slot.id },
+            data: getSlotArrays(slot),
+          });
+        }
+      }
+
+      await tx.voteChoice.deleteMany({ where: { voteId } });
+
+      await tx.vote.delete({
+        where: { id: voteId },
       });
 
-      if (voteIdToRegister) {
-        const timeBeforeAllowedPassed = checkTimeBeforeAllow({
-          timeBeforeAllowedType: poll.timeBeforeAllowedType,
-          msBeforeAllowed: poll.msBeforeAllowed,
-          slots: poll.slots,
-        });
-
-        newPoll = await updateSlotsArrayAfterDelete({
-          poll,
-          voteId: voteIdToRegister,
-          timeBeforeAllowedPassed,
-        });
-
-        sendNotifications({
-          voteId,
-          pollId,
-          poll,
-          newPoll,
-          initialPoll,
-        });
-      }
-
-      // update slots in db
-      for (const slot of newPoll.slots) {
-        await prisma.slot.update({
-          where: { id: slot.id },
-          data: getSlotArrays(slot),
-        });
-      }
-    }
-
-    await prisma.voteChoice.deleteMany({ where: { voteId } });
-
-    await prisma.vote.delete({
-      where: { id: voteId },
+      return registrationUpdate;
     });
+
+    if (registration) {
+      sendNotifications({ voteId, pollId, ...registration }).catch((err) =>
+        console.log(err),
+      );
+    }
   });
 
 const updateSlotsArrayAfterDelete = async ({
+  tx,
   poll,
   voteId,
   timeBeforeAllowedPassed,
 }: {
+  tx: Prisma.TransactionClient;
   poll: PollWithSlots;
   voteId: string;
   timeBeforeAllowedPassed: Record<string, boolean>;
 }): Promise<PollWithSlots> => {
   let isRegisteredOnce = false;
 
-  const currentVoteData = await prisma.vote.findUnique({
+  const currentVoteData = await tx.vote.findUnique({
     where: { id: voteId },
     select: {
       choices: {
@@ -524,6 +546,7 @@ const updateSlotsArrayAfterDelete = async ({
 
   if (voteIdToRegister) {
     poll = await updateSlotsArrayAfterDelete({
+      tx,
       poll,
       voteId: voteIdToRegister,
       timeBeforeAllowedPassed,
