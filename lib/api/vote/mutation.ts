@@ -1,6 +1,6 @@
 "use server";
 
-import { env } from "@/lib/env";
+import { sendNotifications } from "@/lib/notifications.server";
 import { getSlotArrays, slotsOrderBy } from "@/lib/registration";
 import { action } from "@/lib/safe-action";
 import {
@@ -11,16 +11,6 @@ import {
 import { checkTimeBeforeAllow } from "@/lib/utils";
 import { prisma, withPollLock } from "@/prisma/db";
 import { Prisma } from "@prisma/client";
-import { format } from "date-fns";
-import { toZonedTime } from "date-fns-tz";
-import { fr } from "date-fns/locale/fr";
-import webpush from "web-push";
-
-webpush.setVapidDetails(
-  "mailto:" + env.NEXT_PUBLIC_VAPID_EMAIL,
-  env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-  env.VAPID_PRIVATE_KEY,
-);
 
 export const createVote = action
   .schema(createVoteSchema)
@@ -554,105 +544,6 @@ const updateSlotsArrayAfterDelete = async ({
   }
 
   return poll;
-};
-
-export const sendNotifications = async ({
-  pollId,
-  poll,
-  voteId,
-  newPoll,
-  initialPoll,
-}: {
-  pollId: string;
-  poll: PollWithSlots;
-  voteId: string;
-  newPoll: PollWithSlots;
-  initialPoll: PollWithSlots["slots"];
-}) => {
-  // get new people registered to send notifications
-  const votesNewlyRegistered = newPoll.slots.reduce(
-    (obj, slot) => {
-      obj.votesBySlot[slot.id] = [];
-
-      const oldRegistered = initialPoll.find(
-        (initialSlot) => initialSlot.id === slot.id,
-      )!.registered;
-
-      // get id addded in registered
-      const newRegistered = slot.registered.filter(
-        (id) => !oldRegistered.includes(id),
-      );
-
-      // push ids which are not in array yet
-      newRegistered.forEach((id) => {
-        if (!obj.votes.includes(id) && id !== voteId) {
-          obj.votes.push(id);
-          obj.votesBySlot[slot.id].push(id);
-        }
-      });
-
-      return obj;
-    },
-    { votesBySlot: {}, votes: [] } as {
-      votesBySlot: { [slotId: string]: string[] };
-      votes: string[];
-    },
-  );
-
-  // get subs from all the votes
-  const votesWithSub = await prisma.vote.findMany({
-    where: {
-      id: { in: votesNewlyRegistered.votes },
-    },
-    select: {
-      id: true,
-      subscriptions: {
-        select: {
-          auth: true,
-          endpoint: true,
-          p256dh: true,
-        },
-      },
-    },
-  });
-
-  Object.entries(votesNewlyRegistered.votesBySlot).forEach(
-    ([slotId, votes]) => {
-      const slot = poll.slots.find((slot) => slot.id === slotId)!;
-      const frSlotDate = toZonedTime(slot.startDate, "Europe/Paris");
-      const formattedDate = format(frSlotDate, "eeee d", { locale: fr });
-      const formattedTime = format(frSlotDate, "HH:mm", { locale: fr });
-
-      const payload = JSON.stringify({
-        title: "Vous êtes inscrit !",
-        body: `Bonne nouvelle, vous avez intégré les inscrits du ${formattedDate} à ${formattedTime} !`,
-        link: `${env.DOMAIN}/poll/${pollId}`,
-      });
-
-      votes.forEach((vote) => {
-        const voteSubs = votesWithSub.find(
-          (voteWithSub) => voteWithSub.id === vote,
-        )?.subscriptions;
-        if (!voteSubs) return;
-
-        voteSubs.forEach((sub) => {
-          webpush
-            .sendNotification(
-              {
-                endpoint: sub.endpoint,
-                keys: {
-                  auth: sub.auth,
-                  p256dh: sub.p256dh,
-                },
-              },
-              payload,
-            )
-            .then((res) => console.log("notif envoyée: ", res.statusCode))
-            .catch((err) => console.log(err));
-        });
-      });
-    },
-  );
 };
 
 export const updateVoteName = action

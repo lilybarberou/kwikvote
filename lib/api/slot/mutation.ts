@@ -1,6 +1,9 @@
 "use server";
 
-import { env } from "@/lib/env";
+import {
+  sendNotifications,
+  sendSlotUpdateNotifications,
+} from "@/lib/notifications.server";
 import {
   compareSlots,
   getCronSchedulesData,
@@ -10,22 +13,12 @@ import {
 } from "@/lib/registration";
 import { pollPwAction } from "@/lib/safe-action";
 import { updateSlotSchema } from "@/lib/schema/slot-schema";
-import { checkTimeBeforeAllow, sameDay } from "@/lib/utils";
-import { prisma, withPollLock } from "@/prisma/db";
+import { checkTimeBeforeAllow } from "@/lib/utils";
+import { withPollLock } from "@/prisma/db";
 import { Prisma } from "@prisma/client";
-import { format } from "date-fns";
-import { toZonedTime } from "date-fns-tz";
-import { fr } from "date-fns/locale/fr";
-import webpush from "web-push";
 import { z } from "zod";
 
-import { PollWithSlots, sendNotifications } from "../vote/mutation";
-
-webpush.setVapidDetails(
-  "mailto:" + env.NEXT_PUBLIC_VAPID_EMAIL,
-  env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-  env.VAPID_PRIVATE_KEY,
-);
+import { PollWithSlots } from "../vote/mutation";
 
 export const deleteSlotById = pollPwAction
   .schema(async (s) => s.extend({ slotId: z.string() }))
@@ -229,69 +222,6 @@ export const updateSlotById = pollPwAction
       return { success: true };
     },
   );
-
-const sendSlotUpdateNotifications = async ({
-  pollId,
-  slotId,
-  pollTitle,
-  oldSlot,
-  newSlot,
-  exceptEndpoint,
-}: {
-  pollId: string;
-  slotId: string;
-  pollTitle: string;
-  oldSlot: { startDate: Date; endDate: Date };
-  newSlot: { startDate: Date; endDate: Date };
-  exceptEndpoint?: string;
-}) => {
-  const subscriptions = await prisma.subscription.findMany({
-    where: {
-      votes: { some: { pollId } },
-      endpoint: exceptEndpoint ? { not: exceptEndpoint } : undefined,
-    },
-    select: {
-      auth: true,
-      endpoint: true,
-      p256dh: true,
-    },
-  });
-  if (!subscriptions.length) return;
-
-  const oldStartFr = toZonedTime(oldSlot.startDate, "Europe/Paris");
-  const newStartFr = toZonedTime(newSlot.startDate, "Europe/Paris");
-  const newEndFr = toZonedTime(newSlot.endDate, "Europe/Paris");
-  const formatDate = (date: Date) =>
-    format(date, "eeee d MMMM", { locale: fr });
-  const formatTime = (date: Date) => format(date, "HH:mm", { locale: fr });
-
-  const newSlotLabel = sameDay(newStartFr, newEndFr)
-    ? `${formatDate(newStartFr)} de ${formatTime(newStartFr)} à ${formatTime(newEndFr)}`
-    : `du ${formatDate(newStartFr)} à ${formatTime(newStartFr)} au ${formatDate(newEndFr)} à ${formatTime(newEndFr)}`;
-
-  const payload = JSON.stringify({
-    title: "Changement d'horaire",
-    body: `Le créneau du ${formatDate(oldStartFr)} à ${formatTime(oldStartFr)} du sondage ${pollTitle} a changé : ${newSlotLabel}.`,
-    // the link is used as notification tag, one per slot so they don't replace each other
-    link: `${env.DOMAIN}/poll/${pollId}?tab=votes&slot=${slotId}`,
-  });
-
-  subscriptions.forEach((sub) => {
-    webpush
-      .sendNotification(
-        {
-          endpoint: sub.endpoint,
-          keys: {
-            auth: sub.auth,
-            p256dh: sub.p256dh,
-          },
-        },
-        payload,
-      )
-      .then((res) => console.log("notif envoyée: ", res.statusCode))
-      .catch((err) => console.log(err));
-  });
-};
 
 const updateSlotsArray = async ({
   tx,
