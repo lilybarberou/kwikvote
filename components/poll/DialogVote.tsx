@@ -120,7 +120,6 @@ export const DialogVote = (props: Props) => {
     // CASE CREATE
     const mutationData = {
       pollId,
-      pollType,
       id: currentVoteId || v4(),
       name: data.name,
       choices: slots.map((slot) => {
@@ -158,7 +157,7 @@ export const DialogVote = (props: Props) => {
 
   const removeVote = async () => {
     deleteVoteMutation.mutate(
-      { pollId, pollType, voteId: currentVoteId },
+      { pollId, voteId: currentVoteId },
       {
         onSuccess: () => {
           deleteVote(currentVoteId);

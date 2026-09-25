@@ -4,7 +4,6 @@ export const createVoteSchema = z.object({
   id: z.string(),
   name: z.string(),
   pollId: z.string(),
-  pollType: z.number(),
   choices: z.array(
     z.object({
       id: z.string(),
@@ -25,7 +24,6 @@ export type CreateVoteSchema = z.infer<typeof createVoteSchema>;
 export const deleteVoteSchema = z.object({
   voteId: z.string(),
   pollId: z.string(),
-  pollType: z.number(),
 });
 export type DeleteVoteSchema = z.infer<typeof deleteVoteSchema>;
 

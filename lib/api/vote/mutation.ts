@@ -16,9 +16,32 @@ export const createVote = action
   .schema(createVoteSchema)
   .action(async ({ parsedInput: data }) => {
     const registration = await withPollLock(data.pollId, async (tx) => {
+      const poll = await tx.poll.findUnique({
+        where: { id: data.pollId },
+        include: {
+          slots: {
+            orderBy: slotsOrderBy,
+          },
+        },
+      });
+      if (!poll) throw new Error("Sondage introuvable");
+
+      // one choice per slot of this poll: yes, no (or maybe in a free poll)
+      const validChoices = poll.type === 2 ? [1, 2] : [1, 2, 3];
+      const isEveryChoiceValid =
+        data.choices.length === poll.slots.length &&
+        data.choices.every((choice) => validChoices.includes(choice.choice)) &&
+        poll.slots.every(
+          (slot) =>
+            data.choices.filter((choice) => choice.slotId === slot.id)
+              .length === 1,
+        );
+      if (!isEveryChoiceValid) throw new Error("Choix invalides");
+
       const voteInDB = await tx.vote.findUnique({
         where: { id: data.id },
         select: {
+          pollId: true,
           choices: {
             select: {
               id: true,
@@ -28,6 +51,10 @@ export const createVote = action
           },
         },
       });
+
+      // an existing vote can only be edited in its own poll
+      if (voteInDB && voteInDB.pollId !== data.pollId)
+        throw new Error("Vote introuvable");
 
       // UPDATE VOTE IN DB
       await tx.vote.upsert({
@@ -102,18 +129,7 @@ export const createVote = action
         },
       });
 
-      if (data.pollType == 2) {
-        const poll = await tx.poll.findUnique({
-          where: { id: data.pollId },
-          include: {
-            slots: {
-              orderBy: slotsOrderBy,
-            },
-          },
-        });
-
-        if (!poll) throw new Error("Sondage introuvable");
-
+      if (poll.type === 2) {
         const initialPoll = JSON.parse(
           JSON.stringify(poll.slots),
         ) as PollWithSlots["slots"];
@@ -326,8 +342,15 @@ const updateSlotsArrayAfterCreation = async ({
 
 export const deleteVote = action
   .schema(deleteVoteSchema)
-  .action(async ({ parsedInput: { voteId, pollId, pollType } }) => {
+  .action(async ({ parsedInput: { voteId, pollId } }) => {
     const registration = await withPollLock(pollId, async (tx) => {
+      // only a vote of this poll
+      const vote = await tx.vote.findFirst({
+        where: { id: voteId, pollId },
+        select: { id: true },
+      });
+      if (!vote) throw new Error("Vote introuvable");
+
       let newPoll: PollWithSlots | undefined = undefined;
       let registrationUpdate:
         | {
@@ -337,19 +360,18 @@ export const deleteVote = action
           }
         | undefined = undefined;
 
-      // REMOVE VOTE FROM ALL SLOTS ARRAYS
-      if (pollType == 2) {
-        const poll = await tx.poll.findUnique({
-          where: { id: pollId },
-          include: {
-            slots: {
-              orderBy: slotsOrderBy,
-            },
+      const poll = await tx.poll.findUnique({
+        where: { id: pollId },
+        include: {
+          slots: {
+            orderBy: slotsOrderBy,
           },
-        });
+        },
+      });
+      if (!poll) throw new Error("Sondage introuvable");
 
-        if (!poll) throw new Error("Sondage introuvable");
-
+      // REMOVE VOTE FROM ALL SLOTS ARRAYS
+      if (poll.type === 2) {
         const initialPoll = JSON.parse(
           JSON.stringify(poll.slots),
         ) as PollWithSlots["slots"];
