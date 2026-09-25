@@ -32,6 +32,18 @@ export const timeTwoDigit = (date: Date) => {
   return format(new Date(date), "HH:mm", { locale: fr });
 };
 
+// date/time picked in the form are france time
+export const parisDateTimeToUtc = (date: Date, time: string) => {
+  const [hours, minutes] = time.split(":");
+  const dateTime = new Date(new Date(date).setHours(+hours, +minutes, 0, 0));
+  return fromZonedTime(dateTime, "Europe/Paris");
+};
+
+export const utcToParisDateTime = (date: Date) => {
+  const dateFr = toZonedTime(date, "Europe/Paris");
+  return { date: dateFr, time: format(dateFr, "HH:mm") };
+};
+
 export const getFormattedTimeBeforeAllowed = ({
   timeBeforeAllowedType,
   msBeforeAllowed,
