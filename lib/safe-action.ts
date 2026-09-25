@@ -37,7 +37,9 @@ export const pollPwAction = action
     });
     if (!poll) throw new Error("Poll not found");
 
-    if (poll.password !== password) throw new Error("Invalid password");
+    // a poll created without password can't be managed
+    if (!poll.password || poll.password !== password)
+      throw new Error("Invalid password");
 
     return next();
   });
