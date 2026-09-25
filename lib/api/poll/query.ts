@@ -1,5 +1,6 @@
 "use server";
 
+import { slotsOrderBy } from "@/lib/registration";
 import { action, adminAction, pollPwAction } from "@/lib/safe-action";
 import { prisma } from "@/prisma/db";
 import { z } from "zod";
@@ -39,7 +40,7 @@ export const getPollById = action
         msBeforeAllowed: true,
         comments: true,
         slots: {
-          orderBy: { startDate: "asc" },
+          orderBy: slotsOrderBy,
         },
         votes: {
           select: {
@@ -48,9 +49,7 @@ export const getPollById = action
             subscriptions: { select: { endpoint: true } },
             choices: {
               select: { id: true, choice: true, slotId: true },
-              orderBy: {
-                slot: { startDate: "asc" },
-              },
+              orderBy: slotsOrderBy.map((orderBy) => ({ slot: orderBy })),
             },
           },
           orderBy: { createdAt: "asc" },
