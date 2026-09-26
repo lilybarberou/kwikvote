@@ -6,7 +6,7 @@ import {
   repairDeletedVotes,
   slotsOrderBy,
 } from "@/lib/registration";
-import { action } from "@/lib/safe-action";
+import { ActionError, action } from "@/lib/safe-action";
 import {
   createVoteSchema,
   deleteVoteSchema,
@@ -28,19 +28,25 @@ export const createVote = action
           },
         },
       });
-      if (!poll) throw new Error("Sondage introuvable");
+      if (!poll) throw new ActionError("Ce sondage n'existe plus");
 
-      // one choice per slot of this poll: yes, no (or maybe in a free poll)
-      const validChoices = poll.type === 2 ? [1, 2] : [1, 2, 3];
-      const isEveryChoiceValid =
+      // one choice per slot of this poll
+      const isOneChoicePerSlot =
         data.choices.length === poll.slots.length &&
-        data.choices.every((choice) => validChoices.includes(choice.choice)) &&
         poll.slots.every(
           (slot) =>
             data.choices.filter((choice) => choice.slotId === slot.id)
               .length === 1,
         );
-      if (!isEveryChoiceValid) throw new Error("Choix invalides");
+      if (!isOneChoicePerSlot)
+        throw new ActionError(
+          "Les créneaux du sondage ont changé, vérifiez vos choix",
+        );
+
+      // yes, no (or maybe in a free poll)
+      const validChoices = poll.type === 2 ? [1, 2] : [1, 2, 3];
+      if (!data.choices.every((choice) => validChoices.includes(choice.choice)))
+        throw new ActionError("Choix invalides");
 
       const initialPoll = JSON.parse(
         JSON.stringify(poll.slots),
@@ -83,7 +89,7 @@ export const createVote = action
 
       // an existing vote can only be edited in its own poll
       if (voteInDB && voteInDB.pollId !== data.pollId)
-        throw new Error("Vote introuvable");
+        throw new ActionError("Ce vote n'appartient pas à ce sondage");
 
       // UPDATE VOTE IN DB
       await tx.vote.upsert({
@@ -370,7 +376,7 @@ export const deleteVote = action
         where: { id: voteId, pollId },
         select: { id: true },
       });
-      if (!vote) throw new Error("Vote introuvable");
+      if (!vote) throw new ActionError("Ce vote a déjà été supprimé");
 
       let newPoll: PollWithSlots | undefined = undefined;
       let registrationUpdate:
@@ -389,7 +395,7 @@ export const deleteVote = action
           },
         },
       });
-      if (!poll) throw new Error("Sondage introuvable");
+      if (!poll) throw new ActionError("Ce sondage n'existe plus");
 
       // REMOVE VOTE FROM ALL SLOTS ARRAYS
       if (poll.type === 2) {

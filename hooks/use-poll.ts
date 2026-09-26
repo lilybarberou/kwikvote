@@ -10,7 +10,7 @@ import { CreatePollSchema, UpdatePollSchema } from "@/lib/schema/poll-schema";
 import { useCommentsStore } from "@/lib/store/commentsStore";
 import { useHistoryStore } from "@/lib/store/historyStore";
 import { useVotesStore } from "@/lib/store/votesStore";
-import { handleServerResponse } from "@/lib/utils";
+import { getErrorMessage, handleServerResponse } from "@/lib/utils";
 import {
   useInfiniteQuery,
   useMutation,
@@ -109,10 +109,10 @@ export const usePoll = (
     onSuccess: async (pollId) => {
       router.push(`/poll/${pollId}?created=true`);
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Erreur lors de la création du sondage",
-        description: "Veuillez réessayer plus tard",
+        description: getErrorMessage(error),
       });
     },
   });
@@ -125,10 +125,10 @@ export const usePoll = (
     onSuccess: async (_, input) => {
       removePollFromHistory(input.pollId);
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Erreur lors de la suppression du sondage",
-        description: "Veuillez réessayer plus tard",
+        description: getErrorMessage(error),
       });
     },
   });
@@ -145,10 +145,10 @@ export const usePoll = (
         title: "Sondage mis à jour",
       });
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Erreur lors de la modification du sondage",
-        description: "Veuillez réessayer plus tard",
+        description: getErrorMessage(error),
       });
     },
   });

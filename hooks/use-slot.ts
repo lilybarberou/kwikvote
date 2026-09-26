@@ -1,7 +1,7 @@
 import { useToast } from "@/components/ui/use-toast";
 import { deleteSlotById, updateSlotById } from "@/lib/api/slot/mutation";
 import { UpdateSlotSchema } from "@/lib/schema/slot-schema";
-import { handleServerResponse } from "@/lib/utils";
+import { getErrorMessage, handleServerResponse } from "@/lib/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 
@@ -22,10 +22,10 @@ export const useSlot = () => {
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: getPollByIdKey });
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Erreur lors de la suppression du créneau",
-        description: "Veuillez réessayer plus tard",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     },
@@ -43,10 +43,10 @@ export const useSlot = () => {
         title: "Créneau mis à jour",
       });
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Erreur lors de la modification du créneau",
-        description: "Veuillez réessayer plus tard",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     },

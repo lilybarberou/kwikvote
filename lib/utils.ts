@@ -73,7 +73,7 @@ export function handleServerResponse<
     throw new Error("An error occurred");
   }
   if (response.serverError) {
-    throw new Error(response.serverError);
+    throw new ServerActionError(response.serverError);
   }
 
   if (response.validationErrors) {
@@ -96,6 +96,15 @@ export function handleServerResponse<
   // Handle case where no data is present
   throw new Error("No data available in the response.");
 }
+
+// error returned by a server action, its message is meant for the user
+export class ServerActionError extends Error {}
+
+// description of a mutation error toast
+export const getErrorMessage = (error: Error) =>
+  error instanceof ServerActionError
+    ? error.message
+    : "Veuillez réessayer plus tard";
 
 // Define a type guard to check if an object has a success property
 // Define a type for the object with success and message properties

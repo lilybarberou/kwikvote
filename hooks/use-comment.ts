@@ -1,7 +1,7 @@
 import { useToast } from "@/components/ui/use-toast";
 import { createComment } from "@/lib/api/comment/mutations";
 import { CreateCommentSchema } from "@/lib/schema/comment-schema";
-import { handleServerResponse } from "@/lib/utils";
+import { getErrorMessage, handleServerResponse } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 
 export const useComment = () => {
@@ -14,10 +14,10 @@ export const useComment = () => {
       return handleServerResponse(data);
     },
     onSuccess: async () => {},
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Erreur lors de la création du commentaire",
-        description: "Veuillez réessayer plus tard",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     },

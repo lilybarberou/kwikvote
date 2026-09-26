@@ -14,7 +14,7 @@ import {
   repairDeletedVotes,
   slotsOrderBy,
 } from "@/lib/registration";
-import { pollPwAction } from "@/lib/safe-action";
+import { ActionError, pollPwAction } from "@/lib/safe-action";
 import { updateSlotSchema } from "@/lib/schema/slot-schema";
 import { checkTimeBeforeAllow } from "@/lib/utils";
 import { withPollLock } from "@/prisma/db";
@@ -31,7 +31,7 @@ export const deleteSlotById = pollPwAction
       const { count } = await tx.slot.deleteMany({
         where: { id: slotId, pollId },
       });
-      if (!count) throw new Error("Slot not found");
+      if (!count) throw new ActionError("Ce créneau a déjà été supprimé");
 
       const poll = await tx.poll.findUnique({
         where: { id: pollId },
@@ -137,7 +137,7 @@ export const updateSlotById = pollPwAction
         });
 
         const slot = poll?.slots.find((slot) => slot.id === slotId);
-        if (!poll || !slot) throw new Error("Slot not found");
+        if (!poll || !slot) throw new ActionError("Ce créneau n'existe plus");
 
         const oldSlot = { startDate: slot.startDate, endDate: slot.endDate };
         const isStartDateUpdated =
