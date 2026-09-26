@@ -9,7 +9,7 @@ import {
   DeleteVoteSchema,
   UpdateVoteNameSchema,
 } from "@/lib/schema/vote-schema";
-import { handleServerResponse } from "@/lib/utils";
+import { getErrorMessage, handleServerResponse } from "@/lib/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export const useVote = () => {
@@ -27,14 +27,14 @@ export const useVote = () => {
         queryKey: ["getPollById", input.pollId],
       });
     },
-    onError: (_, input) => {
+    onError: (error, input) => {
       // the poll may have changed meanwhile (slot or vote deleted)
       queryClient.invalidateQueries({
         queryKey: ["getPollById", input.pollId],
       });
       toast({
         title: "Erreur lors de la création du vote",
-        description: "Veuillez réessayer plus tard",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     },
@@ -45,10 +45,10 @@ export const useVote = () => {
       const data = await updateVoteName(input);
       return handleServerResponse(data);
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Erreur lors de la modification du vote",
-        description: "Veuillez réessayer plus tard",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     },
@@ -64,14 +64,14 @@ export const useVote = () => {
         queryKey: ["getPollById", input.pollId],
       });
     },
-    onError: (_, input) => {
+    onError: (error, input) => {
       // the poll may have changed meanwhile (vote already deleted)
       queryClient.invalidateQueries({
         queryKey: ["getPollById", input.pollId],
       });
       toast({
         title: "Erreur lors de la suppression du vote",
-        description: "Veuillez réessayer plus tard",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     },
