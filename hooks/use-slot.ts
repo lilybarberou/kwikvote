@@ -17,10 +17,17 @@ export const useSlot = () => {
   const deleteSlotByIdMutation = useMutation({
     mutationFn: async (input: { slotId: string; password: string }) => {
       const data = await deleteSlotById({ ...input, pollId });
-      return data?.data;
+      return handleServerResponse(data);
     },
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: getPollByIdKey });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur lors de la suppression du créneau",
+        description: "Veuillez réessayer plus tard",
+        variant: "destructive",
+      });
     },
   });
 

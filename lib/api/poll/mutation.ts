@@ -61,4 +61,6 @@ export const updatePoll = pollPwAction
       where: { id: pollId },
       data: { title, description },
     });
+
+    return { success: true };
   });
