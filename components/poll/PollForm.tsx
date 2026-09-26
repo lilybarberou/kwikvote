@@ -150,10 +150,10 @@ export const PollForm = () => {
             control={control}
             name="timeBeforeAllowedType"
             render={({ field }) => (
+              // not {...field}: its onChange would also get the change events of the hours input
               <RadioGroup
                 className="flex flex-col gap-3"
-                defaultValue={String(field.value)}
-                {...field}
+                value={field.value}
                 onValueChange={field.onChange}
               >
                 <div className="flex items-center gap-3">
@@ -175,7 +175,7 @@ export const PollForm = () => {
                     className="flex items-center gap-2 font-normal"
                   >
                     <Input
-                      onFocus={() => field.onChange(2)}
+                      onFocus={() => field.onChange("2")}
                       className="w-14"
                       type="number"
                       {...register("hoursBeforeAllowed")}
