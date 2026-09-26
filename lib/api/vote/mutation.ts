@@ -189,6 +189,8 @@ export const createVote = action
         ...registration,
       }).catch((err) => console.log(err));
     }
+
+    return { success: true };
   });
 
 const updateSlotsArrayAfterCreation = async ({
@@ -470,6 +472,8 @@ export const deleteVote = action
         console.log(err),
       );
     }
+
+    return { success: true };
   });
 
 const updateSlotsArrayAfterDelete = async ({
@@ -620,6 +624,8 @@ export const updateVoteName = action
         },
       },
     });
+
+    return { success: true };
   });
 
 export type PollWithSlots = Prisma.PollGetPayload<{ include: { slots: true } }>;

@@ -2,6 +2,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { createSubscription } from "@/lib/api/subscription/mutation";
 import { CreateSubscriptionSchema } from "@/lib/schema/subscription-schema";
 import { useNotificationsStore } from "@/lib/store/notificationsStore";
+import { handleServerResponse } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 
 export const useSubscription = () => {
@@ -12,7 +13,7 @@ export const useSubscription = () => {
   const createSubscriptionMutation = useMutation({
     mutationFn: async (input: CreateSubscriptionSchema) => {
       const data = await createSubscription(input);
-      return data?.data;
+      return handleServerResponse(data);
     },
     onSuccess: async (_, input) => {
       init({

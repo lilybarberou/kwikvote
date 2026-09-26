@@ -1,6 +1,7 @@
 import { useToast } from "@/components/ui/use-toast";
 import { createComment } from "@/lib/api/comment/mutations";
 import { CreateCommentSchema } from "@/lib/schema/comment-schema";
+import { handleServerResponse } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 
 export const useComment = () => {
@@ -10,7 +11,7 @@ export const useComment = () => {
   const createCommentMutation = useMutation({
     mutationFn: async (input: CreateCommentSchema) => {
       const data = await createComment(input);
-      return data?.data;
+      return handleServerResponse(data);
     },
     onSuccess: async () => {},
     onError: () => {

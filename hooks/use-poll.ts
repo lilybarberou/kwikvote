@@ -104,7 +104,7 @@ export const usePoll = (
   const createPollMutation = useMutation({
     mutationFn: async (input: CreatePollSchema) => {
       const data = await createPoll(input);
-      return data?.data;
+      return handleServerResponse(data);
     },
     onSuccess: async (pollId) => {
       router.push(`/poll/${pollId}?created=true`);
@@ -120,7 +120,7 @@ export const usePoll = (
   const deletePollMutation = useMutation({
     mutationFn: async (input: { pollId: string; password: string }) => {
       const data = await deletePoll(input);
-      return data?.data;
+      return handleServerResponse(data);
     },
     onSuccess: async (_, input) => {
       removePollFromHistory(input.pollId);
@@ -136,7 +136,7 @@ export const usePoll = (
   const updatePollMutation = useMutation({
     mutationFn: async (input: UpdatePollSchema) => {
       const data = await updatePoll({ pollId: pollId, ...input });
-      return data?.data;
+      return handleServerResponse(data);
     },
     onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: getPollByIdKey });
@@ -153,6 +153,7 @@ export const usePoll = (
     },
   });
 
+  // an invalid password is a server error: no data, handled as false
   const checkPollPasswordMutation = useMutation({
     mutationFn: async (password: string) => {
       const data = await isPollPasswordValid({ pollId, password });

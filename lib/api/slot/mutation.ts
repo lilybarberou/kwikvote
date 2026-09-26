@@ -111,6 +111,8 @@ export const deleteSlotById = pollPwAction
     if (registration) {
       sendNotifications(registration).catch((err) => console.log(err));
     }
+
+    return { success: true };
   });
 
 export const updateSlotById = pollPwAction
