@@ -1,18 +1,23 @@
 # Utiliser une image Node.js légère
-FROM node:18-alpine
+FROM node:22-alpine
 
 # Définir le répertoire de travail
 WORKDIR /app
 
-# Installer les dépendances
-RUN npm install prisma @prisma/client date-fns date-fns-tz node-cron web-push
+# OpenSSL est nécessaire au moteur Prisma ; garder pnpm aligné sur packageManager.
+RUN apk add --no-cache openssl \
+    && npm install --global pnpm@10.15.0
 
-# Copier le fichier schema.prisma pour Prisma Studio
+# Installer les versions verrouillées, y compris Prisma pour la génération.
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod=false --ignore-scripts
+
+# Copier le schéma Prisma et le cron
 COPY prisma ./prisma
 COPY cron.js ./cron.js
 
 # Exécuter `prisma generate` pour générer le client
-RUN npx prisma generate
+RUN pnpm exec prisma generate
 
 # Commande pour lancer le cron
 CMD ["node", "cron.js"]
