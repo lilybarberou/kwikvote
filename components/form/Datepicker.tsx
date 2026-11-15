@@ -26,10 +26,17 @@ export const DatePicker = (props: any) => {
           <PopoverTrigger asChild>
             <Button
               {...field}
+              // the visible label is not linked to the button: its name
+              // says which date it is, then the date
+              aria-label={
+                props.label && field.value
+                  ? `${props.label} : ${format(field.value, "PPP", { locale: fr })}`
+                  : props.label
+              }
               variant={"outline"}
               className="w-[220px] justify-start text-left font-normal"
             >
-              <CalendarIcon className="mr-2 h-4 w-4" />
+              <CalendarIcon aria-hidden className="mr-2 h-4 w-4" />
               {field.value ? (
                 format(field.value, "PPP", { locale: fr })
               ) : (
@@ -37,7 +44,10 @@ export const DatePicker = (props: any) => {
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
+          <PopoverContent
+            aria-label={props.label ?? "Calendrier"}
+            className="w-auto p-0"
+          >
             <Calendar
               lang="fr"
               locale={fr}

@@ -67,22 +67,26 @@ export const PollForm = () => {
 
   return (
     <form onSubmit={submitPoll} className="flex flex-col gap-4">
-      <p className="text-sm font-semibold">Je choisis mon type de sondage...</p>
+      <p id="type-label" className="text-sm font-semibold">
+        Je choisis mon type de sondage...
+      </p>
       <Controller
         control={control}
         name="type"
         render={({ field }) => (
           <RadioGroup
+            aria-labelledby="type-label"
             className="mb-8 flex gap-4"
             defaultValue={String(field.value)}
             {...field}
             onValueChange={field.onChange}
           >
             <div>
-              <RadioGroupItem value="1" id="type-1" className="peer hidden" />
+              {/* sr-only, not hidden: the radios stay reachable with the keyboard */}
+              <RadioGroupItem value="1" id="type-1" className="peer sr-only" />
               <Label
                 htmlFor="type-1"
-                className="!ml-0 flex h-44 min-w-[150px] cursor-pointer flex-col items-center justify-center rounded border border-[#41414121] p-3 peer-data-[state=checked]:bg-[#d9d9d91a] dark:border-[#ffffff33] dark:peer-data-[state=checked]:bg-[#ffffff1a]"
+                className="!ml-0 flex h-44 min-w-[150px] cursor-pointer flex-col items-center justify-center rounded border border-[#41414121] p-3 ring-offset-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-data-[state=checked]:bg-[#d9d9d91a] dark:border-[#ffffff33] dark:peer-data-[state=checked]:bg-[#ffffff1a]"
               >
                 <p className="mb-2">Sondage libre</p>
                 <Image
@@ -90,15 +94,16 @@ export const PollForm = () => {
                   width={400}
                   height={400}
                   src="/images/poll-11.png"
-                  alt="Sondage libre"
+                  // the label text names the choice
+                  alt=""
                 />
               </Label>
             </div>
             <div>
-              <RadioGroupItem value="2" id="type-2" className="peer hidden" />
+              <RadioGroupItem value="2" id="type-2" className="peer sr-only" />
               <Label
                 htmlFor="type-2"
-                className="!ml-0 flex h-44 cursor-pointer flex-col items-center justify-center rounded border border-[#41414121] p-3 text-center peer-data-[state=checked]:bg-[#d9d9d91a] dark:border-[#ffffff33] dark:peer-data-[state=checked]:bg-[#ffffff1a]"
+                className="!ml-0 flex h-44 cursor-pointer flex-col items-center justify-center rounded border border-[#41414121] p-3 text-center ring-offset-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-data-[state=checked]:bg-[#d9d9d91a] dark:border-[#ffffff33] dark:peer-data-[state=checked]:bg-[#ffffff1a]"
               >
                 <p className="mb-2">Sondage avec liste d'attente</p>
                 <Image
@@ -106,7 +111,7 @@ export const PollForm = () => {
                   width={400}
                   height={400}
                   src="/images/poll-22.png"
-                  alt="Sondage avec liste d'attente"
+                  alt=""
                 />
               </Label>
             </div>
@@ -115,9 +120,12 @@ export const PollForm = () => {
       />
       <div className="flex flex-col gap-2">
         <Label htmlFor="title">
-          Titre du sondage<span className="text-red-600">*</span>
+          Titre du sondage
+          <span aria-hidden className="text-red-600">
+            *
+          </span>
         </Label>
-        <Input {...register("title")} id="title" />
+        <Input {...register("title")} id="title" aria-required />
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="description">Description</Label>
@@ -131,7 +139,12 @@ export const PollForm = () => {
               (Servira uniquement à retrouver vos différents sondages)
             </span>
           </Label>
-          <Input {...register("email")} id="email" inputMode="email" />
+          <Input
+            {...register("email")}
+            id="email"
+            inputMode="email"
+            autoComplete="email"
+          />
         </div>
         <div className="flex flex-col justify-between gap-2">
           <Label htmlFor="password">
@@ -145,13 +158,16 @@ export const PollForm = () => {
       </div>
       {type === "2" && (
         <div className="flex flex-col gap-3">
-          <Label>Les réinscrits pourront être inscrits à partir de :</Label>
+          <Label id="time-before-allowed-label">
+            Les réinscrits pourront être inscrits à partir de :
+          </Label>
           <Controller
             control={control}
             name="timeBeforeAllowedType"
             render={({ field }) => (
               // not {...field}: its onChange would also get the change events of the hours input
               <RadioGroup
+                aria-labelledby="time-before-allowed-label"
                 className="flex flex-col gap-3"
                 value={field.value}
                 onValueChange={field.onChange}
@@ -175,6 +191,7 @@ export const PollForm = () => {
                     className="flex items-center gap-2 font-normal"
                   >
                     <Input
+                      aria-label="Nombre d'heures avant la date de début"
                       onFocus={() => field.onChange("2")}
                       className="w-14"
                       type="number"
@@ -208,9 +225,10 @@ export const PollForm = () => {
               </Button>
             )}
             <div className="flex flex-col gap-2">
-              <Label htmlFor="start">Date de début</Label>
+              <Label>Date de début</Label>
               <div className="flex flex-wrap gap-2">
                 <DatePicker
+                  label="Date de début"
                   control={control}
                   name={`slots.${index}.startDate`}
                 />
@@ -218,31 +236,50 @@ export const PollForm = () => {
                   name={`slots.${index}.startTime`}
                   control={control}
                   render={({ field }) => (
-                    <Input type="time" className="w-fit" {...field} />
+                    <Input
+                      type="time"
+                      className="w-fit"
+                      aria-label="Heure de début"
+                      {...field}
+                    />
                   )}
                 />
               </div>
-              <Label htmlFor="end">Date de fin</Label>
+              <Label>Date de fin</Label>
               <div className="flex flex-wrap gap-2">
-                <DatePicker control={control} name={`slots.${index}.endDate`} />
+                <DatePicker
+                  label="Date de fin"
+                  control={control}
+                  name={`slots.${index}.endDate`}
+                />
                 <Controller
                   name={`slots.${index}.endTime`}
                   control={control}
                   render={({ field }) => (
-                    <Input type="time" className="w-fit" {...field} />
+                    <Input
+                      type="time"
+                      className="w-fit"
+                      aria-label="Heure de fin"
+                      {...field}
+                    />
                   )}
                 />
               </div>
               {type == "2" && (
                 <>
-                  <label htmlFor="maxParticipants">
+                  <label htmlFor={`slots.${index}.maxParticipants`}>
                     Maximum de participants
                   </label>
                   <Controller
                     name={`slots.${index}.maxParticipants`}
                     control={control}
                     render={({ field }) => (
-                      <Input type="number" className="w-20" {...field} />
+                      <Input
+                        id={`slots.${index}.maxParticipants`}
+                        type="number"
+                        className="w-20"
+                        {...field}
+                      />
                     )}
                   />
                 </>

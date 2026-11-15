@@ -321,6 +321,7 @@ const EditSlotDialog = ({
           <Label>Date de début{parisTimeHint}</Label>
           <div className="flex flex-wrap gap-2">
             <DatePicker
+              label="Date de début"
               control={control}
               name="startDate"
               rules={{ deps: "endTime" }}
@@ -342,6 +343,7 @@ const EditSlotDialog = ({
           <Label>Date de fin{parisTimeHint}</Label>
           <div className="flex flex-wrap gap-2">
             <DatePicker
+              label="Date de fin"
               control={control}
               name="endDate"
               rules={{ deps: "endTime" }}

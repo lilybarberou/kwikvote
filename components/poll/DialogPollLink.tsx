@@ -67,11 +67,7 @@ export const DialogPollLink = () => {
           </div>
         </AlertDialogDescription>
         <AlertDialogFooter>
-          <AlertDialogAction
-            autoFocus
-            onClick={() => setCreated(null)}
-            tabIndex={2}
-          >
+          <AlertDialogAction autoFocus onClick={() => setCreated(null)}>
             Fermer
           </AlertDialogAction>
         </AlertDialogFooter>
