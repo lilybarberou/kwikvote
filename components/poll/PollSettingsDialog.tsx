@@ -94,6 +94,7 @@ const FirstStep = () => {
     e.preventDefault();
     const password = inputPassword.current?.value;
     if (!password) return;
+    setError(false);
 
     checkPollPasswordMutation.mutate(password, {
       onSuccess: (isValid) => {
@@ -113,9 +114,25 @@ const FirstStep = () => {
         type="password"
         autoComplete="current-password"
         aria-label="Mot de passe"
+        aria-invalid={error}
+        aria-describedby={error ? "error-poll-password" : undefined}
         className={cn(error && "border-red-800")}
       />
-      <Button type="submit" className="mt-3">
+      {/* not only the red color: the error is read and linked to the field */}
+      {error && (
+        <p
+          id="error-poll-password"
+          role="alert"
+          className="text-sm text-destructive dark:text-red-400"
+        >
+          Mot de passe incorrect
+        </p>
+      )}
+      <Button
+        type="submit"
+        className="mt-3"
+        disabled={checkPollPasswordMutation.isPending}
+      >
         Valider
       </Button>
     </form>
