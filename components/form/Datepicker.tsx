@@ -12,9 +12,13 @@ import { fr } from "date-fns/locale/fr";
 import { Calendar as CalendarIcon } from "lucide-react";
 import * as React from "react";
 import { Controller } from "react-hook-form";
+import { useIsClient } from "usehooks-ts";
 
 export const DatePicker = (props: any) => {
   const [open, setOpen] = React.useState(false);
+  // the creation page is prerendered at build time: its default date (today)
+  // is only known in the browser
+  const isClient = useIsClient();
 
   return (
     <Controller
@@ -29,7 +33,7 @@ export const DatePicker = (props: any) => {
               // the visible label is not linked to the button: its name
               // says which date it is, then the date
               aria-label={
-                props.label && field.value
+                props.label && field.value && isClient
                   ? `${props.label} : ${format(field.value, "PPP", { locale: fr })}`
                   : props.label
               }
@@ -37,7 +41,7 @@ export const DatePicker = (props: any) => {
               className="w-[220px] justify-start text-left font-normal"
             >
               <CalendarIcon aria-hidden className="mr-2 h-4 w-4" />
-              {field.value ? (
+              {!isClient ? null : field.value ? (
                 format(field.value, "PPP", { locale: fr })
               ) : (
                 <span>Sélectionner une date</span>
