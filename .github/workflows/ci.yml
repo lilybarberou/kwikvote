@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# read-only token: the jobs only check out the code and run the checks
+permissions:
+  contents: read
+
+# a new push to a pull request cancels its previous run; on main, every commit
+# keeps its own result
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# test doubles only, never real secrets: lib/env.ts needs every variable, the
+# push service and the Discord webhook point to nowhere
+env:
+  NEXT_TELEMETRY_DISABLED: 1
+  ADMIN_PASSWORD: dummy-admin
+  DOMAIN: http://localhost:3000
+  UMAMI_WEBSITE_ID: dummy
+  DISCORD_WEBHOOK_URL: http://127.0.0.1:9/discord
+  NEXT_PUBLIC_VAPID_EMAIL: test@example.com
+  NEXT_PUBLIC_VAPID_PUBLIC_KEY: BLR-3PpqcyVOATnyN_e7jQRPtKCp0f9KCPg1cgjFJKWm2B-MME0AbCxEfhh8i9wHIkBForlYHLHFi2niiDVm0SY
+  VAPID_PRIVATE_KEY: nSKRyrgRA3mrRn85pL4m28Wch9s53yMi8VcmEretQac
+
+# Never `pnpm build` nor `pnpm prisma` here: they run `prisma db push`.
+# The actions are pinned to a commit, with their version in a comment.
+
+jobs:
+  checks:
+    name: Lint and types
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # pnpm at the version of packageManager in package.json
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      # the Node of the deployment (nixpacks.toml)
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: npx prisma generate
+      - run: pnpm lint
+      - run: npx tsc --noEmit
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # required by lib/env.ts, never reached by the build: nothing listens there
+      DATABASE_URL: postgresql://build:build@127.0.0.1:1/unused
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: npx prisma generate
+      - run: npx next build
