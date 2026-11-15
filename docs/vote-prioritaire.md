@@ -408,6 +408,9 @@ alors la priorité déjà enregistrée au lieu de l'effacer.
   réelle de `cron.js` sur cette base. Ce parcours a révélé un bug corrigé : à la
   modification d'un vote existant, la case « Prioritaire » n'apparaissait
   qu'après avoir changé le choix.
+- Ces parcours font maintenant partie du dépôt : `pnpm test:e2e`
+  (`e2e/vote-prioritaire.spec.ts`, `e2e/concurrence.spec.ts`), voir
+  `docs/e2e.md`.
 
 ## 4. Points à valider avant déploiement
 
