@@ -1,8 +1,11 @@
 import { z } from "zod";
 
+// shared with the vote form (components/poll/DialogVote.tsx)
+export const VOTE_NAME_MAX_LENGTH = 100;
+
 export const createVoteSchema = z.object({
   id: z.string(),
-  name: z.string(),
+  name: z.string().max(VOTE_NAME_MAX_LENGTH),
   pollId: z.string(),
   choices: z.array(
     z.object({
@@ -29,7 +32,7 @@ export type DeleteVoteSchema = z.infer<typeof deleteVoteSchema>;
 
 export const updateVoteNameSchema = z.object({
   voteId: z.string(),
-  name: z.string(),
+  name: z.string().max(VOTE_NAME_MAX_LENGTH),
   subscription: z
     .object({
       endpoint: z.string(),
