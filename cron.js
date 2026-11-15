@@ -4,6 +4,14 @@ const { format } = require("date-fns/format");
 const { fr } = require("date-fns/locale/fr");
 const cron = require("node-cron");
 const { toZonedTime } = require("date-fns-tz");
+// the registration rules of the app, not a copy: lib/registration.ts, loaded
+// by node itself (type stripping, Node 22.18 or later)
+const {
+  checkTimeBeforeAllow,
+  getChoicesByVoteId,
+  getSlotsInVoteOrder,
+  openReregistrations,
+} = require("./lib/registration.ts");
 
 const prismaClientSingleton = () => {
   return new PrismaClient();
@@ -80,15 +88,19 @@ const doStuff = async () => {
             if (!poll) return;
 
             const initialPoll = JSON.parse(JSON.stringify(poll.slots));
-            let newPoll = undefined;
 
-            // ids of deleted votes can have been left by past concurrent writes:
-            // skip them (the app removes them with lib/registration.ts repairDeletedVotes)
+            // the choices of every vote of the poll; the ids of deleted votes
+            // left by past concurrent writes are skipped (the app removes them
+            // with lib/registration.ts repairDeletedVotes)
             const votes = await tx.vote.findMany({
               where: { pollId },
-              select: { id: true },
+              select: {
+                id: true,
+                choices: {
+                  select: { slotId: true, choice: true, priority: true },
+                },
+              },
             });
-            const voteIds = new Set(votes.map((vote) => vote.id));
 
             const timeBeforeAllowedPassed = checkTimeBeforeAllow({
               timeBeforeAllowedType: poll.timeBeforeAllowedType,
@@ -96,45 +108,16 @@ const doStuff = async () => {
               slots: poll.slots,
             });
 
-            // check if still place in registered
-            let voteIdToRegister = "";
-            poll.slots.forEach((slot) => {
-              const isNotFull = slot.registered.length < slot.maxParticipants;
-              const timePassed = timeBeforeAllowedPassed[slot.id];
-              const firstReregistered = slot.waitingListReregistered.find(
-                (id) => voteIds.has(id),
-              );
-
-              if (isNotFull && timePassed && firstReregistered) {
-                voteIdToRegister = firstReregistered;
-              }
+            // the same rules as the app: the reregistered people of the
+            // opened slots get the free spots, the others join the waiting list
+            openReregistrations({
+              slots: poll.slots,
+              choicesByVoteId: getChoicesByVoteId(votes),
+              timeBeforeAllowedPassed,
             });
-            console.log("voteIdToRegister: ", voteIdToRegister);
-
-            if (voteIdToRegister) {
-              newPoll = await updateSlotsArray({
-                tx,
-                voteIds,
-                poll,
-                voteId: voteIdToRegister,
-                timeBeforeAllowedPassed,
-              });
-            }
-            // move wlr to wl if time passed
-            else {
-              poll.slots.forEach((slot) => {
-                if (timeBeforeAllowedPassed[slot.id]) {
-                  slot.waitingList = [
-                    ...slot.waitingList,
-                    ...slot.waitingListReregistered,
-                  ];
-                  slot.waitingListReregistered = [];
-                }
-              });
-            }
 
             // update changed slots arrays in db (not the dates)
-            for (const slot of newPoll ? newPoll.slots : poll.slots) {
+            for (const slot of poll.slots) {
               const data = {
                 registered: slot.registered,
                 waitingList: slot.waitingList,
@@ -159,15 +142,15 @@ const doStuff = async () => {
               });
             }
 
-            if (voteIdToRegister) {
-              return {
-                poll: newPoll,
-                pollId: poll.id,
-                voteId: voteIdToRegister,
-                initialPoll,
-                newPoll,
-              };
-            }
+            // the people newly registered are notified
+            const isSomeoneRegistered = poll.slots.some((slot) => {
+              const before = initialPoll.find(
+                (initialSlot) => initialSlot.id === slot.id,
+              ).registered;
+              return slot.registered.some((id) => !before.includes(id));
+            });
+            if (isSomeoneRegistered)
+              return { poll, pollId: poll.id, initialPoll, newPoll: poll };
           },
           { isolationLevel: "ReadCommitted", maxWait: 10000, timeout: 30000 },
         );
@@ -186,202 +169,7 @@ const doStuff = async () => {
   }
 };
 
-const updateSlotsArray = async ({
-  tx,
-  voteIds,
-  poll,
-  voteId,
-  timeBeforeAllowedPassed,
-}) => {
-  let isRegisteredOnce = false;
-
-  const currentVoteData = await tx.vote.findUnique({
-    where: { id: voteId },
-    select: {
-      choices: {
-        select: {
-          id: true,
-          slotId: true,
-          choice: true,
-          priority: true,
-        },
-      },
-    },
-  });
-
-  // priority slots first, like the app
-  for (const slot of getSlotsInVoteOrder(poll.slots, currentVoteData.choices)) {
-    const timePassed = timeBeforeAllowedPassed[slot.id];
-    const currentVoteChoice = currentVoteData.choices.find(
-      (choice) => choice.slotId == slot.id,
-    );
-    const isChoiceYes = currentVoteChoice?.choice == 1;
-
-    const isAllowedToRegister = () => !isRegisteredOnce || timePassed;
-    const isFull = () => slot.registered.length >= slot.maxParticipants;
-
-    if (isChoiceYes) {
-      const isRegistered = slot.registered.includes(voteId);
-
-      // premier créneau où il est inscrit, on le laisse inscrit
-      if (isRegistered && !isRegisteredOnce) {
-        isRegisteredOnce = true;
-        continue;
-      }
-      // déjà inscrit dans un créneau précédent, on l'enlève des inscrits
-      // (passera en liste d'attente dans la logique suivante)
-      else if (isRegistered && isRegisteredOnce) {
-        // if time passed and reregistered allowed we can leave it
-        if (timePassed) {
-          isRegisteredOnce = true;
-          continue;
-        }
-        // else remove from registered (will be in reregistered waiting list)
-        else slot.registered = slot.registered.filter((id) => id !== voteId);
-      }
-      // not registered yet -> actually in wl or wlr
-      else {
-        const isWaitingList = slot.waitingList.includes(voteId);
-        const isWaitingListReregistered =
-          slot.waitingListReregistered.includes(voteId);
-        const isAllowedToRegister =
-          !isRegisteredOnce || timeBeforeAllowedPassed[slot.id];
-
-        if (isFull()) {
-          // if allowed to reregister -> must be in wl
-          if (isAllowedToRegister) {
-            if (isWaitingListReregistered)
-              slot.waitingListReregistered =
-                slot.waitingListReregistered.filter((id) => id !== voteId);
-            else continue;
-          }
-          // else -> must be in wlr
-          else {
-            if (isWaitingList)
-              slot.waitingList = slot.waitingList.filter((id) => id !== voteId);
-            else continue;
-          }
-        } else {
-          // if allowed to reregister -> remove from all wl -> will be in registered
-          if (isAllowedToRegister) {
-            slot.waitingListReregistered = slot.waitingListReregistered.filter(
-              (id) => id !== voteId,
-            );
-            slot.waitingList = slot.waitingList.filter((id) => id !== voteId);
-          }
-          // else -> must be in wlr
-          else {
-            if (isWaitingList)
-              slot.waitingList = slot.waitingList.filter((id) => id !== voteId);
-            else continue;
-          }
-        }
-      }
-    }
-    // no changes if still no
-    else continue;
-
-    // not full -> add to registered
-    if (!isFull() && isAllowedToRegister()) {
-      slot.registered.push(voteId);
-      isRegisteredOnce = true;
-    }
-    // full and not registered anywhere -> add to waiting list
-    else if (isAllowedToRegister()) slot.waitingList.push(voteId);
-    // already registered somewhere -> add to reregistered waiting list
-    else slot.waitingListReregistered.push(voteId);
-  }
-
-  // ----- CHECK SI IL RESTE DE LA PLACE DANS LES INSCRITS D'UN CRENEAU -----
-  let voteIdToRegister = "";
-  poll.slots.forEach((slot) => {
-    const isNotFull = slot.registered.length < slot.maxParticipants;
-    const timePassed = timeBeforeAllowedPassed[slot.id];
-    const firstReregistered = slot.waitingListReregistered.find((id) =>
-      voteIds.has(id),
-    );
-
-    if (isNotFull && timePassed && firstReregistered) {
-      voteIdToRegister = firstReregistered;
-    }
-  });
-
-  if (voteIdToRegister) {
-    poll = await updateSlotsArray({
-      tx,
-      voteIds,
-      poll,
-      voteId: voteIdToRegister,
-      timeBeforeAllowedPassed,
-    });
-  }
-  // move wlr to wl if time passed
-  else {
-    poll.slots.forEach((slot) => {
-      if (timeBeforeAllowedPassed[slot.id]) {
-        slot.waitingList = [
-          ...slot.waitingList,
-          ...slot.waitingListReregistered,
-        ];
-        slot.waitingListReregistered = [];
-      }
-    });
-  }
-
-  return poll;
-};
-
-// same as the app (lib/registration.ts getSlotsInVoteOrder): the slots a vote
-// said yes to and marked as priority come first, then the other ones, each
-// group in the slots order
-const getSlotsInVoteOrder = (slots, choices) => {
-  const prioritySlotIds = new Set(
-    (choices || [])
-      .filter((choice) => choice.priority && choice.choice == 1)
-      .map((choice) => choice.slotId),
-  );
-  if (!prioritySlotIds.size) return slots;
-
-  return [
-    ...slots.filter((slot) => prioritySlotIds.has(slot.id)),
-    ...slots.filter((slot) => !prioritySlotIds.has(slot.id)),
-  ];
-};
-
-const checkTimeBeforeAllow = ({
-  timeBeforeAllowedType,
-  msBeforeAllowed,
-  slots,
-}) => {
-  return slots.reduce((obj, curr) => {
-    const now = new Date();
-
-    // date to compare is day before at 5pm
-    if (timeBeforeAllowedType == 1) {
-      const dateToCompareFr = toZonedTime(curr.startDate, "Europe/Paris");
-      dateToCompareFr.setDate(dateToCompareFr.getDate() - 1);
-      dateToCompareFr.setHours(17, 0, 0, 0);
-
-      // need now fr
-      const nowFr = toZonedTime(now, "Europe/Paris");
-
-      obj[curr.id] = nowFr.getTime() > dateToCompareFr.getTime();
-    }
-    // specific hours number before startDate
-    else {
-      obj[curr.id] = now.getTime() > curr.startDate.getTime() - msBeforeAllowed;
-    }
-    return obj;
-  }, {});
-};
-
-const sendNotifications = async ({
-  pollId,
-  poll,
-  voteId,
-  newPoll,
-  initialPoll,
-}) => {
+const sendNotifications = async ({ pollId, poll, newPoll, initialPoll }) => {
   // get new people registered to send notifications
   const votesNewlyRegistered = newPoll.slots.reduce(
     (obj, slot) => {
@@ -467,10 +255,9 @@ const sendNotifications = async ({
 };
 
 // imported by the tests: only the functions, no cron nor VAPID keys (the tests
-// replace webpush.sendNotification)
+// replace webpush.sendNotification); the rules come from lib/registration.ts
 module.exports = {
   doStuff,
-  updateSlotsArray,
   getSlotsInVoteOrder,
   checkTimeBeforeAllow,
   sendNotifications,
