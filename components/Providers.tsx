@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { LazyMotion } from "framer-motion";
+import { LazyMotion, MotionConfig } from "framer-motion";
 import { ThemeProvider } from "next-themes";
 import { PropsWithChildren, useState } from "react";
 
@@ -23,7 +23,10 @@ export const Providers = ({ children }: PropsWithChildren) => {
           the animations use m.* instead of motion.*: their features are
           downloaded after the page, not bundled with it
         */}
-        <LazyMotion features={loadMotionFeatures}>{children}</LazyMotion>
+        <LazyMotion features={loadMotionFeatures}>
+          {/* no movement for the visitors who ask for reduced motion */}
+          <MotionConfig reducedMotion="user">{children}</MotionConfig>
+        </LazyMotion>
       </QueryClientProvider>
     </ThemeProvider>
   );

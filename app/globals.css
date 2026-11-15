@@ -68,8 +68,10 @@
   }
 }
 
-html {
-  scroll-behavior: smooth;
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 input[type="time"]::-webkit-calendar-picker-indicator {
