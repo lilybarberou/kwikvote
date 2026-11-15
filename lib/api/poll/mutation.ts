@@ -1,6 +1,7 @@
 "use server";
 
 import { env } from "@/lib/env";
+import { hashPollPassword } from "@/lib/poll-password.mjs";
 import { getCronSchedulesData } from "@/lib/registration";
 import { action, pollPwAction } from "@/lib/safe-action";
 import {
@@ -14,10 +15,14 @@ import { prisma } from "@/prisma/db";
 export const createPoll = action
   .schema(createPollSchema)
   .action(async ({ parsedInput: data }) => {
+    // never stored in clear (lib/poll-password.mjs)
+    const password = data.password ? await hashPollPassword(data.password) : "";
+
     const poll = await prisma.poll.create({
       include: { slots: true },
       data: {
         ...data,
+        password,
         slots: {
           create: data.slots.map((slot: CreateSlotSchema) => slot),
         },

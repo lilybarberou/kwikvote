@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 
+import { hashPollPassword, verifyPollPassword } from "./poll-password.mjs";
 import { limiters } from "./rate-limits.server";
 import { ActionError, action, adminAction, pollPwAction } from "./safe-action";
 
@@ -23,12 +24,27 @@ vi.mock("next/headers", () => ({
 // the stored password of each poll
 const polls = vi.hoisted(() => new Map<string, string>());
 const findFirst = vi.hoisted(() => vi.fn());
+// the password in clear of a poll created before is hashed at its first sign in
+const updateMany = vi.hoisted(() => vi.fn());
 vi.mock("@/prisma/db", () => ({
   prisma: {
     poll: {
       findFirst: findFirst.mockImplementation(
         async ({ where }: { where: { id: string } }) =>
           polls.has(where.id) ? { password: polls.get(where.id) } : null,
+      ),
+      updateMany: updateMany.mockImplementation(
+        async ({
+          where,
+          data,
+        }: {
+          where: { id: string; password: string };
+          data: { password: string };
+        }) => {
+          if (polls.get(where.id) !== where.password) return { count: 0 };
+          polls.set(where.id, data.password);
+          return { count: 1 };
+        },
       ),
     },
   },
@@ -43,6 +59,7 @@ beforeEach(() => {
   clientIp.value = "203.0.113.1";
   polls.clear();
   findFirst.mockClear();
+  updateMany.mockClear();
 });
 
 describe("action errors", () => {
@@ -165,6 +182,41 @@ describe("pollPwAction", () => {
       const res = await manage({ pollId: "poll-1", password });
       expect(res?.serverError, password).toBe("Mot de passe incorrect");
     }
+  });
+
+  test("a hashed password: checked, never stored again", async () => {
+    polls.set("poll-1", await hashPollPassword("pw-1"));
+    const stored = polls.get("poll-1");
+
+    expect((await manage({ pollId: "poll-1", password: "pw-1" }))?.data).toBe(
+      "managed poll-1",
+    );
+    for (const password of ["pw-2", "", stored!]) {
+      const res = await manage({ pollId: "poll-1", password });
+      expect(res?.serverError, password).toBe("Mot de passe incorrect");
+    }
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+
+  test("a password in clear (poll created before): hashed at the first sign in only", async () => {
+    polls.set("poll-1", "pw-1");
+
+    // a wrong password changes nothing
+    await manage({ pollId: "poll-1", password: "wrong" });
+    expect(polls.get("poll-1")).toBe("pw-1");
+
+    expect((await manage({ pollId: "poll-1", password: "pw-1" }))?.data).toBe(
+      "managed poll-1",
+    );
+    const hashed = polls.get("poll-1")!;
+    expect(hashed).toMatch(/^scrypt\$16384\$8\$1\$[\w-]{22}\$[\w-]{43}$/);
+    expect(await verifyPollPassword(hashed, "pw-1")).toBe(true);
+
+    // still the same password, now hashed
+    expect((await manage({ pollId: "poll-1", password: "pw-1" }))?.data).toBe(
+      "managed poll-1",
+    );
+    expect(updateMany).toHaveBeenCalledTimes(1);
   });
 
   test("the extended schemas keep the password check", async () => {

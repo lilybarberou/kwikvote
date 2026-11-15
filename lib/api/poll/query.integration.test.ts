@@ -1,3 +1,4 @@
+import { verifyPollPassword } from "@/lib/poll-password.mjs";
 import { prisma } from "@/prisma/db";
 import { v4 } from "uuid";
 import {
@@ -240,15 +241,19 @@ describe("updatePoll", () => {
     expect(stored).toMatchObject({
       title: "integration test poll queries renamed",
       description: "New description",
-      password: PASSWORD,
     });
+    // the same password (hashed at this first sign in, lib/poll-password.mjs)
+    expect(await verifyPollPassword(stored.password, PASSWORD)).toBe(true);
 
     // with the admin password: the poll keeps its own
     await updatePoll({ pollId: poll.id, password: ADMIN, title: TITLE });
     expect(
-      (await prisma.poll.findUniqueOrThrow({ where: { id: poll.id } }))
-        .password,
-    ).toBe(PASSWORD);
+      await verifyPollPassword(
+        (await prisma.poll.findUniqueOrThrow({ where: { id: poll.id } }))
+          .password,
+        PASSWORD,
+      ),
+    ).toBe(true);
   });
 
   test("refused with a wrong password, or on a poll without password", async () => {
