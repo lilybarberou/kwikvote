@@ -239,7 +239,11 @@ export default function PollPage() {
                 <Tooltip delayDuration={300}>
                   <TooltipTrigger asChild>
                     <AlertDialogTrigger asChild>
-                      <Button className="h-10 w-10" size="icon">
+                      <Button
+                        className="h-10 w-10"
+                        size="icon"
+                        aria-label="Activer les notifications"
+                      >
                         <Bell className="h-5 w-5" />
                       </Button>
                     </AlertDialogTrigger>

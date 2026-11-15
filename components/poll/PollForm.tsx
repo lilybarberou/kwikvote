@@ -202,6 +202,7 @@ export const PollForm = () => {
                 variant="destructive"
                 size="icon"
                 onClick={() => remove(index)}
+                aria-label="Supprimer le créneau"
               >
                 <X className="h-4 w-4" />
               </Button>

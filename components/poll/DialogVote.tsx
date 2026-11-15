@@ -276,6 +276,7 @@ export const DialogVote = (props: Props) => {
                     >
                       <SelectTrigger
                         autoFocus={currentVoteId ? index == 0 : false}
+                        aria-label={`Choix – ${getDate(slot.startDate)} ${timeTwoDigit(slot.startDate)}`}
                         className="min-w-[180px]"
                       >
                         <SelectValue placeholder="À définir" />
@@ -309,6 +310,7 @@ export const DialogVote = (props: Props) => {
                         <div className="mt-2 flex items-center gap-2">
                           <Checkbox
                             id={`priority-${slot.id}`}
+                            aria-label={`Prioritaire – ${getDate(slot.startDate)} ${timeTwoDigit(slot.startDate)}`}
                             aria-describedby="priority-help"
                             checked={field.value === true}
                             onCheckedChange={(checked) =>
@@ -346,6 +348,7 @@ export const DialogVote = (props: Props) => {
                     type="button"
                     size="icon"
                     variant="destructive"
+                    aria-label="Supprimer le vote"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
