@@ -314,7 +314,7 @@ export const RegistrationPoll = ({ poll }: Props) => {
                                         isAuthorOfVote &&
                                           // light theme: bg-primary/80 gave 3.7:1 under the white text,
                                           // and a hover at /90 4.3:1
-                                          "bg-primary !text-white hover:bg-[color-mix(in_oklab,hsl(var(--primary)),black_10%)] dark:bg-primary/40 dark:hover:bg-primary/30",
+                                          "bg-primary text-white! hover:bg-[color-mix(in_oklab,var(--color-primary),black_10%)] dark:bg-primary/40 dark:hover:bg-primary/30",
                                       )}
                                       variant="ghost"
                                     >

@@ -422,15 +422,21 @@ const ManagePollTab = () => {
       <AccordionTrigger>Gérer le sondage</AccordionTrigger>
       <AccordionContent className="px-1">
         <form className="space-y-4" onSubmit={onSubmit}>
-          <div className="space-y-2">
+          {/* the field margin, not space-y-2: in Tailwind v4 space-y puts it
+              under the label, which is inline and ignores it */}
+          <div>
             <Label htmlFor="title">
               Titre du sondage<span className="text-red-600">*</span>
             </Label>
-            <Input id="title" {...register("title")} />
+            <Input className="mt-2" id="title" {...register("title")} />
           </div>
-          <div className="space-y-2">
+          <div>
             <Label htmlFor="description">Description</Label>
-            <Textarea id="description" {...register("description")} />
+            <Textarea
+              className="mt-2"
+              id="description"
+              {...register("description")}
+            />
           </div>
           <Button
             disabled={!isDirty || updatePollMutation.isPending}

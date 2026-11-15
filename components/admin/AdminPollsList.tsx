@@ -62,7 +62,7 @@ export const AdminPollsList = () => {
               <PopoverTrigger asChild>
                 <Button
                   size="icon"
-                  className="opacity-0 focus:opacity-100 group-hover:opacity-100 aria-[expanded=true]:opacity-100"
+                  className="opacity-0 group-hover:opacity-100 focus:opacity-100 aria-expanded:opacity-100"
                   variant="destructive"
                   aria-label={`Supprimer le sondage ${poll.title}`}
                 >

@@ -87,7 +87,7 @@ export const Navigation = () => {
   return (
     <>
       <nav
-        className={`sticky top-0 z-50 mb-12 w-full border-b-[0.5px] border-b-[#41414121] py-2 backdrop-blur-sm dark:border-b-[#ffffff21] dark:bg-[#00000026] sm:mb-20 ${
+        className={`sticky top-0 z-50 mb-12 w-full border-b-[0.5px] border-b-[#41414121] py-2 backdrop-blur-xs dark:border-b-[#ffffff21] dark:bg-[#00000026] sm:mb-20 ${
           mobileNavOpen ? "bg-[#00000068] backdrop-blur-lg" : ""
         }`}
       >
@@ -200,8 +200,7 @@ export const Navigation = () => {
         id={MOBILE_MENU_ID}
         aria-label="Menu"
         hidden={!mobileNavOpen}
-        // Tailwind 3 doesn't make [hidden] win over flex
-        className="fixed left-0 top-[56px] flex h-screen w-full flex-col bg-[#00000068] backdrop-blur-lg [&[hidden]]:hidden"
+        className="fixed left-0 top-[56px] flex h-screen w-full flex-col bg-[#00000068] backdrop-blur-lg"
       >
         <ActiveLink
           closeMobileNav={closeMobileNav}
