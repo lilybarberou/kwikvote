@@ -19,7 +19,7 @@ import { prisma } from "@/prisma/db";
 import { z } from "zod";
 
 export const getPollsByEmail = action
-  .inputSchema(z.string().email())
+  .inputSchema(z.email())
   .action(async ({ parsedInput: email }) => {
     // anyone can look up the polls of an email: slows the scraping
     const limits: LimitChecks = [
@@ -107,13 +107,11 @@ export const isPollPasswordValid = pollPwAction.action(async () => {
 
 export const getPolls = adminAction
   .inputSchema(async (s) =>
-    s.merge(
-      z.object({
-        limit: z.number().optional(),
-        offset: z.number().optional(),
-        query: z.string().optional(),
-      }),
-    ),
+    s.extend({
+      limit: z.number().optional(),
+      offset: z.number().optional(),
+      query: z.string().optional(),
+    }),
   )
   .action(async ({ parsedInput: { offset, limit, query: _query } }) => {
     const query = _query?.toLowerCase();
