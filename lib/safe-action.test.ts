@@ -6,6 +6,12 @@ import { ActionError, action, adminAction, pollPwAction } from "./safe-action";
 
 vi.mock("@/lib/env", () => ({ env: { ADMIN_PASSWORD: "admin-secret" } }));
 
+// the admin session cookie of the request (lib/admin-session.server.ts)
+const adminSession = vi.hoisted(() => ({ valid: false }));
+vi.mock("@/lib/admin-session.server", () => ({
+  hasAdminSession: async () => adminSession.valid,
+}));
+
 // the stored password of each poll
 const polls = vi.hoisted(() => new Map<string, string>());
 const findFirst = vi.hoisted(() => vi.fn());
@@ -24,6 +30,7 @@ const errors = vi.spyOn(console, "error").mockImplementation(() => {});
 afterAll(() => errors.mockRestore());
 
 beforeEach(() => {
+  adminSession.valid = false;
   polls.clear();
   findFirst.mockClear();
 });
@@ -82,21 +89,15 @@ describe("action errors", () => {
 describe("adminAction", () => {
   const getSecret = adminAction.action(async () => "secret data");
 
-  test("only with the admin password", async () => {
-    expect((await getSecret({ password: "admin-secret" }))?.data).toBe(
-      "secret data",
-    );
-
-    for (const password of ["wrong", "", "ADMIN-SECRET", "admin-secret "]) {
-      const res = await getSecret({ password });
-      expect(res?.data, password).toBeUndefined();
-      expect(res?.serverError, password).toBe("Mot de passe incorrect");
+  test("only with the admin session, never with a password", async () => {
+    for (const input of [{}, { password: "admin-secret" }] as never[]) {
+      const res = await getSecret(input);
+      expect(res?.data).toBeUndefined();
+      expect(res?.serverError).toBe("Session expirée, reconnectez-vous");
     }
-  });
 
-  test("without password: refused", async () => {
-    const res = await getSecret({} as never);
-    expect(res?.data).toBeUndefined();
+    adminSession.valid = true;
+    expect((await getSecret({}))?.data).toBe("secret data");
   });
 });
 
@@ -122,6 +123,15 @@ describe("pollPwAction", () => {
     expect(
       (await manage({ pollId: "poll-1", password: "admin-secret" }))?.data,
     ).toBe("managed poll-1");
+    expect(findFirst).not.toHaveBeenCalled();
+  });
+
+  test("the admin session manages every poll, without reading it", async () => {
+    polls.set("poll-1", "pw-1");
+    adminSession.valid = true;
+    expect((await manage({ pollId: "poll-1", password: "" }))?.data).toBe(
+      "managed poll-1",
+    );
     expect(findFirst).not.toHaveBeenCalled();
   });
 

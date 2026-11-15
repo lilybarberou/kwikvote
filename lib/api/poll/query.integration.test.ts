@@ -1,6 +1,14 @@
 import { prisma } from "@/prisma/db";
 import { v4 } from "uuid";
-import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 
 import { createVote } from "../vote/mutation";
 import { deletePoll, updatePoll } from "./mutation";
@@ -19,6 +27,13 @@ vi.mock("@/lib/notifications.server", () => ({
 const TITLE = "integration test poll queries";
 const PASSWORD = "poll-password";
 const ADMIN = process.env.ADMIN_PASSWORD!;
+
+// the admin session cookie of the request (lib/admin-session.server.ts),
+// signed in for the getPolls tests only
+const adminSession = vi.hoisted(() => ({ valid: false }));
+vi.mock("@/lib/admin-session.server", () => ({
+  hasAdminSession: async () => adminSession.valid,
+}));
 // unique to this run: the database can hold other tests polls
 const run = v4().slice(0, 8);
 const email = `owner-${run}@example.invalid`;
@@ -139,6 +154,13 @@ describe("getPolls (admin)", () => {
   // only in the polls of this describe
   const search = v4().slice(0, 8);
 
+  beforeEach(() => {
+    adminSession.valid = true;
+  });
+  afterAll(() => {
+    adminSession.valid = false;
+  });
+
   beforeAll(async () => {
     await createPoll({
       title: `${TITLE} Tournoi ${search}`,
@@ -150,17 +172,20 @@ describe("getPolls (admin)", () => {
     });
   });
 
-  test("refused without the admin password", async () => {
-    for (const password of ["", PASSWORD, "wrong"]) {
-      const res = await getPolls({ password, query: search });
+  test("refused without the admin session, whatever the password", async () => {
+    adminSession.valid = false;
+    for (const password of ["", PASSWORD, ADMIN]) {
+      const res = await getPolls({ password, query: search } as never);
       expect(res?.data, password).toBeUndefined();
-      expect(res?.serverError, password).toBe("Mot de passe incorrect");
+      expect(res?.serverError, password).toBe(
+        "Session expirée, reconnectez-vous",
+      );
     }
   });
 
   test("searches titles and descriptions whatever the case, and pages", async () => {
     const titles = async (query: string, limit?: number, offset?: number) =>
-      (await getPolls({ password: ADMIN, query, limit, offset }))?.data?.map(
+      (await getPolls({ query, limit, offset }))?.data?.map(
         (poll) => poll.title,
       );
 
