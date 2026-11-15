@@ -2,7 +2,6 @@
 
 import { DialogPollLink } from "@/components/poll/DialogPollLink";
 import { PollComments } from "@/components/poll/PollComments";
-import { PollSettingsDialog } from "@/components/poll/PollSettingsDialog";
 import { PollSkeleton } from "@/components/poll/PollSkeleton";
 import { PollSlots } from "@/components/poll/PollSlots";
 import { RegistrationPoll } from "@/components/poll/RegistrationPoll";
@@ -36,7 +35,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { usePoll } from "@/hooks/use-poll";
 import { useSubscription } from "@/hooks/use-subscription";
 import { useSubscriptionHash } from "@/hooks/use-subscription-hash";
-import { env } from "@/lib/env";
 import { CreateSubscriptionSchema } from "@/lib/schema/subscription-schema";
 import { useCommentsStore } from "@/lib/store/commentsStore";
 import { useNotificationsStore } from "@/lib/store/notificationsStore";
@@ -51,9 +49,20 @@ import {
   Loader2,
   Megaphone,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { parseAsString, useQueryState } from "nuqs";
 import { useEffect, useState } from "react";
+
+// only for the polls with a password: its forms (zod, calendar) load on demand
+const PollSettingsDialog = dynamic(
+  () =>
+    import("@/components/poll/PollSettingsDialog").then(
+      (mod) => mod.PollSettingsDialog,
+    ),
+  // the size of its button: the tab bar does not move when it appears
+  { loading: () => <div className="h-10 w-10" /> },
+);
 
 export default function PollPage() {
   const [tab] = useQueryState("tab", parseAsString.withDefault("votes"));
@@ -133,7 +142,9 @@ export default function PollPage() {
 
     const subscription = await swRegistration.pushManager
       .subscribe({
-        applicationServerKey: env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+        // not from lib/env: it would bring zod into the page; lib/env checks
+        // this variable on the server (it is imported by the root layout)
+        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
         userVisibleOnly: true,
       })
       .then((sub) => sub.toJSON());
