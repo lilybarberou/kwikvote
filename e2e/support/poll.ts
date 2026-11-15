@@ -142,7 +142,7 @@ export type VoteInput = {
   priorities?: number[];
 };
 
-const voteDialog = (page: Page) =>
+export const voteDialog = (page: Page) =>
   page.getByRole("dialog", {
     name: /^(Ajouter|Modifier) (un vote|une inscription)$/,
   });

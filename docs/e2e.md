@@ -85,6 +85,7 @@ vraies clés (webhook Discord, VAPID). La suite ne s'en sert jamais :
 | `mobile.spec.ts`           | les parcours principaux sur un téléphone (Pixel 7)                                              |
 | `securite.spec.ts`         | en-têtes de sécurité (pages, actions serveur, service worker), statistiques sans query string   |
 | `libelles.spec.ts`         | libellés visibles des champs de l'accueil, des commentaires et de l'administration              |
+| `dialogues.spec.ts`        | chaque fenêtre est nommée par son titre, et décrite quand elle a une description                |
 
 Règles suivies :
 
