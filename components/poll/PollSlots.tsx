@@ -46,11 +46,12 @@ export const PollSlots = (props: Props) => {
 
     return (
       <TableCell className="text-center">
-        <div className="flex items-center justify-center gap-1 text-green-400">
+        {/* light theme: -700 shades, the -400 ones gave 1.8:1 on white */}
+        <div className="flex items-center justify-center gap-1 text-green-700 dark:text-green-400">
           {total[0]}
           <VoteIcon choice={1} />
           {total[1] > 0 && (
-            <span className="ml-2 flex items-center gap-1 text-yellow-200">
+            <span className="ml-2 flex items-center gap-1 text-yellow-700 dark:text-yellow-200">
               {total[1]} <VoteIcon choice={3} />
             </span>
           )}
@@ -67,7 +68,7 @@ export const PollSlots = (props: Props) => {
           <CheckCircle
             role="img"
             aria-label="Oui"
-            className="inline-block h-4 w-4 text-green-400"
+            className="inline-block h-4 w-4 text-green-600 dark:text-green-400"
           />
         );
       case 2:
@@ -75,7 +76,7 @@ export const PollSlots = (props: Props) => {
           <XCircle
             role="img"
             aria-label="Non"
-            className="inline-block h-4 w-4 text-red-400"
+            className="inline-block h-4 w-4 text-red-600 dark:text-red-400"
           />
         );
       case 3:
@@ -83,7 +84,7 @@ export const PollSlots = (props: Props) => {
           <HelpCircle
             role="img"
             aria-label="Ne sais pas"
-            className="inline-block h-4 w-4 text-[#eeee00] dark:text-yellow-200"
+            className="inline-block h-4 w-4 text-yellow-700 dark:text-yellow-200"
           />
         );
     }
