@@ -1,4 +1,4 @@
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, Star } from "lucide-react";
 
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
@@ -18,9 +18,23 @@ export const RegistrationPollHelp = () => {
         </p>
         <p>Liste d'attente réinscrits :</p>
         <p className="text-sm text-muted-foreground">
-          Vous êtes déjà inscrit à un jour précédent. Vous passez en inscrit ou
+          Vous êtes déjà inscrit sur un autre créneau (un jour précédent, ou un
+          créneau que vous avez marqué prioritaire). Vous passez en inscrit ou
           en liste d'attente une fois que l'heure limite choisie par l'auteur
           est atteinte.
+        </p>
+        <p className="flex items-center gap-1">
+          <Star
+            aria-hidden
+            className="h-4 w-4 fill-amber-400 stroke-amber-500"
+          />
+          Créneau prioritaire :
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Avant l'heure limite, vous n'êtes inscrit que sur un créneau : par
+          défaut le premier qui a de la place. Vos créneaux prioritaires passent
+          avant les autres. S'ils sont complets, vous gardez votre place
+          ailleurs et attendez à la suite de la liste d'attente.
         </p>
       </DialogContent>
     </Dialog>

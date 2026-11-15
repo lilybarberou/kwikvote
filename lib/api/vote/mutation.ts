@@ -5,6 +5,7 @@ import {
   fillFreeSpots,
   getChoicesByVoteId,
   getSlotArrays,
+  normalizeChoices,
   registerVote,
   repairDeletedVotes,
   slotsOrderBy,
@@ -69,7 +70,9 @@ export const createVote = action
             where: { pollId: poll.id },
             select: {
               id: true,
-              choices: { select: { slotId: true, choice: true } },
+              choices: {
+                select: { slotId: true, choice: true, priority: true },
+              },
             },
           }),
           timeBeforeAllowedPassed,
@@ -85,6 +88,7 @@ export const createVote = action
               id: true,
               slotId: true,
               choice: true,
+              priority: true,
             },
           },
         },
@@ -94,6 +98,12 @@ export const createVote = action
       if (voteInDB && voteInDB.pollId !== data.pollId)
         throw new ActionError("Ce vote n'appartient pas à ce sondage");
 
+      const choices = normalizeChoices({
+        choices: data.choices,
+        storedChoices: voteInDB?.choices,
+        pollType: poll.type,
+      });
+
       // UPDATE VOTE IN DB
       await tx.vote.upsert({
         where: {
@@ -102,25 +112,25 @@ export const createVote = action
         update: {
           name: data.name,
           choices: {
-            upsert: data.choices.map(
-              (choice: { id: string; slotId: string; choice: number }) => ({
-                where: {
-                  id: choice.id,
-                },
-                update: {
-                  choice: choice.choice,
-                },
-                create: {
-                  id: choice.id,
-                  choice: choice.choice,
-                  slot: {
-                    connect: {
-                      id: choice.slotId,
-                    },
+            upsert: choices.map((choice) => ({
+              where: {
+                id: choice.id,
+              },
+              update: {
+                choice: choice.choice,
+                priority: choice.priority,
+              },
+              create: {
+                id: choice.id,
+                choice: choice.choice,
+                priority: choice.priority,
+                slot: {
+                  connect: {
+                    id: choice.slotId,
                   },
                 },
-              }),
-            ),
+              },
+            })),
           },
           subscriptions: data.subscription
             ? {
@@ -142,17 +152,16 @@ export const createVote = action
             },
           },
           choices: {
-            create: data.choices.map(
-              (choice: { id: string; slotId: string; choice: number }) => ({
-                id: choice.id,
-                choice: choice.choice,
-                slot: {
-                  connect: {
-                    id: choice.slotId,
-                  },
+            create: choices.map((choice) => ({
+              id: choice.id,
+              choice: choice.choice,
+              priority: choice.priority,
+              slot: {
+                connect: {
+                  id: choice.slotId,
                 },
-              }),
-            ),
+              },
+            })),
           },
           subscriptions: data.subscription
             ? {
@@ -173,14 +182,14 @@ export const createVote = action
           where: { pollId: poll.id },
           select: {
             id: true,
-            choices: { select: { slotId: true, choice: true } },
+            choices: { select: { slotId: true, choice: true, priority: true } },
           },
         });
 
         registerVote({
           slots: poll.slots,
           voteId: data.id,
-          choices: data.choices,
+          choices,
           oldChoices: voteInDB?.choices,
           choicesByVoteId: getChoicesByVoteId(votes),
           timeBeforeAllowedPassed,
@@ -254,7 +263,7 @@ export const deleteVote = action
           where: { pollId },
           select: {
             id: true,
-            choices: { select: { slotId: true, choice: true } },
+            choices: { select: { slotId: true, choice: true, priority: true } },
           },
         });
 

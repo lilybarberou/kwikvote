@@ -59,12 +59,14 @@ model Vote {
 }
 
 model VoteChoice {
-  id     String @id @default(uuid())
-  voteId String
-  slotId String
-  choice Int
-  vote   Vote   @relation(fields: [voteId], references: [id], onDelete: Cascade)
-  slot   Slot   @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  id       String  @id @default(uuid())
+  voteId   String
+  slotId   String
+  choice   Int
+  // registration polls: this slot comes first when the vote is placed (see lib/registration.ts)
+  priority Boolean @default(false)
+  vote     Vote    @relation(fields: [voteId], references: [id], onDelete: Cascade)
+  slot     Slot    @relation(fields: [slotId], references: [id], onDelete: Cascade)
 }
 
 model Subscription {
