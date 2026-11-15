@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import Image, { ImageProps } from "next/image";
 
 type Props = Omit<ImageProps, "src"> & { lightSrc: string; darkSrc: string };
