@@ -13,7 +13,8 @@
     "prisma": "npx prisma generate && npx prisma db push",
     "studio": "npx prisma studio",
     "doppler": "doppler secrets download --format env --no-file > .env",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -58,9 +59,11 @@
     "zustand": "^4.5.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@eslint/eslintrc": "^3.3.6",
     "@eslint/js": "^9.39.5",
     "@next/eslint-plugin-next": "15.5.29",
+    "@playwright/test": "1.64.1",
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/luxon": "^3.7.2",
     "@types/node": "^20.19.43",

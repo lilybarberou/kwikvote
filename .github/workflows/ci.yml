@@ -16,7 +16,8 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # test doubles only, never real secrets: lib/env.ts needs every variable, the
-# push service and the Discord webhook point to nowhere
+# push service and the Discord webhook point to nowhere (same values as the
+# local checks of docs/e2e.md and e2e/support/env.ts)
 env:
   NEXT_TELEMETRY_DISABLED: 1
   ADMIN_PASSWORD: dummy-admin
@@ -104,3 +105,46 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: npx prisma generate
       - run: npx next build
+
+  e2e:
+    name: End-to-end tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # e2e/support/env.ts refuses any other host; the suite pushes the schema itself
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      E2E_WORKERS: 2
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: npx prisma generate
+      - run: pnpm exec playwright install --with-deps chromium
+      # builds the app (next build), pushes the schema, then runs the journeys
+      - run: pnpm test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
