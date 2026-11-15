@@ -81,12 +81,16 @@ export const PollForm = () => {
             {...field}
             onValueChange={field.onChange}
           >
+            {/*
+              the chosen card: a primary border doubled by an outline (2px
+              without moving the layout, contrast above 3:1 in both themes)
+            */}
             <div>
               {/* sr-only, not hidden: the radios stay reachable with the keyboard */}
               <RadioGroupItem value="1" id="type-1" className="peer sr-only" />
               <Label
                 htmlFor="type-1"
-                className="!ml-0 flex h-44 min-w-[150px] cursor-pointer flex-col items-center justify-center rounded border border-[#41414121] p-3 ring-offset-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-data-[state=checked]:bg-[#d9d9d91a] dark:border-[#ffffff33] dark:peer-data-[state=checked]:bg-[#ffffff1a]"
+                className="!ml-0 flex h-44 min-w-[150px] cursor-pointer flex-col items-center justify-center rounded border border-[#41414121] p-3 ring-offset-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-[#d9d9d91a] peer-data-[state=checked]:outline peer-data-[state=checked]:outline-1 peer-data-[state=checked]:outline-primary dark:border-[#ffffff33] dark:peer-data-[state=checked]:border-primary dark:peer-data-[state=checked]:bg-[#ffffff1a]"
               >
                 <p className="mb-2">Sondage libre</p>
                 <Image
@@ -103,7 +107,7 @@ export const PollForm = () => {
               <RadioGroupItem value="2" id="type-2" className="peer sr-only" />
               <Label
                 htmlFor="type-2"
-                className="!ml-0 flex h-44 cursor-pointer flex-col items-center justify-center rounded border border-[#41414121] p-3 text-center ring-offset-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-data-[state=checked]:bg-[#d9d9d91a] dark:border-[#ffffff33] dark:peer-data-[state=checked]:bg-[#ffffff1a]"
+                className="!ml-0 flex h-44 cursor-pointer flex-col items-center justify-center rounded border border-[#41414121] p-3 text-center ring-offset-background peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-[#d9d9d91a] peer-data-[state=checked]:outline peer-data-[state=checked]:outline-1 peer-data-[state=checked]:outline-primary dark:border-[#ffffff33] dark:peer-data-[state=checked]:border-primary dark:peer-data-[state=checked]:bg-[#ffffff1a]"
               >
                 <p className="mb-2">Sondage avec liste d'attente</p>
                 <Image
