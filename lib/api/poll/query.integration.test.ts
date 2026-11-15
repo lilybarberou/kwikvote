@@ -1,4 +1,5 @@
 import { verifyPollPassword } from "@/lib/poll-password.mjs";
+import { hashSubscriptionEndpoint } from "@/lib/subscription-hash";
 import { prisma } from "@/prisma/db";
 import { v4 } from "uuid";
 import {
@@ -38,6 +39,7 @@ vi.mock("@/lib/admin-session.server", () => ({
 // unique to this run: the database can hold other tests polls
 const run = v4().slice(0, 8);
 const email = `owner-${run}@example.invalid`;
+const ENDPOINT = `https://push.invalid/query-test-${run}`;
 
 const errors = vi.spyOn(console, "error").mockImplementation(() => {});
 
@@ -67,6 +69,9 @@ afterAll(async () => {
   errors.mockRestore();
   await prisma.poll.deleteMany({
     where: { OR: [{ title: { startsWith: TITLE } }, { email }] },
+  });
+  await prisma.subscription.deleteMany({
+    where: { endpoint: { startsWith: ENDPOINT } },
   });
   await prisma.$disconnect();
 });
@@ -114,6 +119,55 @@ describe("getPollById", () => {
     expect(data.votes[0].choices.map((choice) => choice.slotId)).toEqual(
       sorted.map((slot) => slot.id),
     );
+  });
+
+  test("never sends the push endpoints: a hash of each, another one in each poll", async () => {
+    const endpoint = `${ENDPOINT}-browser`;
+    const subscription = { endpoint, auth: "auth-key", p256dh: "p256dh-key" };
+    const polls = [await createPoll(), await createPoll()];
+    for (const poll of polls)
+      await createVote({
+        id: v4(),
+        name: "Same browser",
+        pollId: poll.id,
+        choices: poll.slots.map((slot) => ({
+          id: v4(),
+          slotId: slot.id,
+          choice: 1,
+        })),
+        subscription,
+      });
+    // and a vote without subscription
+    await createVote({
+      id: v4(),
+      name: "No notifications",
+      pollId: polls[0].id,
+      choices: polls[0].slots.map((slot) => ({
+        id: v4(),
+        slotId: slot.id,
+        choice: 2,
+      })),
+    });
+
+    const hashes = [];
+    for (const poll of polls) {
+      const res = await getPollById({ pollId: poll.id });
+      const json = JSON.stringify(res);
+      expect(json).not.toContain("push.invalid");
+      expect(json).not.toContain("auth-key");
+      expect(json).not.toContain("p256dh-key");
+      expect(res?.data?.votes[0]).not.toHaveProperty("subscriptions");
+
+      const hash = await hashSubscriptionEndpoint(poll.id, endpoint);
+      expect(res?.data?.votes[0].subscriptionHashes).toEqual([hash]);
+      hashes.push(hash);
+    }
+    expect(
+      (await getPollById({ pollId: polls[0].id }))?.data?.votes[1]
+        .subscriptionHashes,
+    ).toEqual([]);
+    // the same browser can't be followed from a poll to another
+    expect(hashes[0]).not.toBe(hashes[1]);
   });
 
   test("an unknown poll is null, not an error", async () => {
