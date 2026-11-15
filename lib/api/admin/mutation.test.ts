@@ -1,4 +1,5 @@
 import { isAdminSessionValid } from "@/lib/admin-session";
+import { limiters } from "@/lib/rate-limits.server";
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { adminSignIn, adminSignOut } from "./mutation";
@@ -9,11 +10,13 @@ vi.mock("@/lib/env", () => ({
 }));
 vi.mock("@/prisma/db", () => ({ prisma: {} }));
 
-// the cookies of the request (next/headers)
+// the cookies and the address of the request (next/headers)
 const jar = vi.hoisted(
   () => new Map<string, { value: string; [option: string]: unknown }>(),
 );
+const clientIp = vi.hoisted(() => ({ value: "203.0.113.1" }));
 vi.mock("next/headers", () => ({
+  headers: async () => new Headers({ "x-real-ip": clientIp.value }),
   cookies: async () => ({
     get: (name: string) => jar.get(name),
     set: (name: string, value: string, options: object) =>
@@ -24,7 +27,11 @@ vi.mock("next/headers", () => ({
 
 const errors = vi.spyOn(console, "error").mockImplementation(() => {});
 afterAll(() => errors.mockRestore());
-beforeEach(() => jar.clear());
+beforeEach(() => {
+  jar.clear();
+  Object.values(limiters).forEach((limiter) => limiter.reset());
+  clientIp.value = "203.0.113.1";
+});
 
 describe("admin sign in (cookies of the request)", () => {
   test("the right password: an httpOnly session cookie, never the password", async () => {
@@ -58,5 +65,37 @@ describe("admin sign in (cookies of the request)", () => {
     expect(jar.has("kwikvote_admin")).toBe(true);
     await adminSignOut();
     expect(jar.has("kwikvote_admin")).toBe(false);
+  });
+});
+
+describe("rate limits of the admin password", () => {
+  const TOO_MANY = /^Trop d'essais, réessayez dans 15 minutes$/;
+
+  test("5 failures per address, then even the right password is refused", async () => {
+    for (let i = 0; i < 5; i++)
+      expect((await adminSignIn({ password: "wrong" }))?.serverError).toBe(
+        "Mot de passe incorrect",
+      );
+    expect(
+      (await adminSignIn({ password: "admin-secret" }))?.serverError,
+    ).toMatch(TOO_MANY);
+    expect(jar.size).toBe(0);
+
+    // another address
+    clientIp.value = "203.0.113.2";
+    expect((await adminSignIn({ password: "admin-secret" }))?.data).toEqual({
+      success: true,
+    });
+  });
+
+  test("30 failures from any addresses block everyone", async () => {
+    for (let i = 0; i < 30; i++) {
+      clientIp.value = `198.51.100.${i}`;
+      await adminSignIn({ password: "wrong" });
+    }
+    clientIp.value = "203.0.113.9";
+    expect(
+      (await adminSignIn({ password: "admin-secret" }))?.serverError,
+    ).toMatch(TOO_MANY);
   });
 });
