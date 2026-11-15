@@ -19,6 +19,7 @@ import {
 import { checkTimeBeforeAllow } from "@/lib/utils";
 import { prisma, withPollLock } from "@/prisma/db";
 import { Prisma } from "@prisma/client";
+import { randomUUID } from "node:crypto";
 
 export const createVote = action
   .schema(createVoteSchema)
@@ -102,7 +103,14 @@ export const createVote = action
         choices: data.choices,
         storedChoices: voteInDB?.choices,
         pollType: poll.type,
-      });
+      }).map((choice) => ({
+        ...choice,
+        // the choice ids sent by the client are ignored: an edit updates the
+        // stored choice of each slot instead of adding another one
+        id:
+          voteInDB?.choices.find((stored) => stored.slotId === choice.slotId)
+            ?.id ?? randomUUID(),
+      }));
 
       // UPDATE VOTE IN DB
       await tx.vote.upsert({
