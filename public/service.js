@@ -5,15 +5,19 @@ self.addEventListener("install", () => {
   self.skipWaiting();
 });
 
-self.addEventListener("push", async (event) => {
+self.addEventListener("push", (event) => {
   if (event.data) {
-    const data = await event.data.json();
+    const data = event.data.json();
 
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: "/icons/icon-192x192.png",
-      tag: data.link,
-    });
+    // keeps the service worker alive until the notification is shown, or the
+    // browser can drop it (or show its own "updated in the background" one)
+    event.waitUntil(
+      self.registration.showNotification(data.title, {
+        body: data.body,
+        icon: "/icons/icon-192x192.png",
+        tag: data.link,
+      }),
+    );
   }
 });
 
