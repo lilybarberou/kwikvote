@@ -71,6 +71,7 @@ vraies clés (webhook Discord, VAPID). La suite ne s'en sert jamais :
 
 | Fichier                    | Parcours                                                                                        |
 | -------------------------- | ----------------------------------------------------------------------------------------------- |
+| `accueil.spec.ts`          | image de l'accueil affichée sans JavaScript (LCP), animée au changement d'onglet                |
 | `securite.spec.ts`         | en-têtes de sécurité (pages, actions serveur, service worker), statistiques sans query string   |
 
 Règles suivies :

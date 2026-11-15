@@ -86,7 +86,10 @@ export const Home = () => {
             init: { opacity: 0, y: -20 },
             show: { opacity: 1, y: 0 },
           }}
-          initial="init"
+          // shown at once on the first render: the free poll image is the
+          // largest element of the page (LCP), which would wait for the
+          // JavaScript of the animation; the tabs still animate it
+          initial={animationKey === 0 ? false : "init"}
           animate="show"
           transition={{ duration: 0.5 }}
         >
