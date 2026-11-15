@@ -15,6 +15,7 @@ import { useForm } from "react-hook-form";
 
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 
 type CommentForm = {
@@ -65,16 +66,18 @@ export const PollComments = () => {
         onSubmit={onCommentSubmit}
         className="mt-5 flex max-w-[350px] flex-col gap-2 rounded bg-muted p-2"
       >
+        <Label htmlFor="comment-author">Auteur</Label>
         <Input
+          id="comment-author"
           className="w-[230px]"
-          placeholder="Auteur"
-          aria-label="Auteur"
           maxLength={COMMENT_AUTHOR_MAX_LENGTH}
           {...register("author", { required: true })}
         />
+        <Label htmlFor="comment-text" className="mt-1">
+          Message
+        </Label>
         <Textarea
-          placeholder="Message"
-          aria-label="Message"
+          id="comment-text"
           maxLength={COMMENT_TEXT_MAX_LENGTH}
           {...register("text", { required: true })}
         />
