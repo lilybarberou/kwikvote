@@ -20,7 +20,19 @@ const eslintConfig = [
     },
   }),
   {
-    ignores: [".next/**", "out/**", "build/**", "next-env.d.ts"],
+    // Playwright fixtures call use(), which is not React's use()
+    files: ["e2e/**"],
+    rules: { "react-hooks/rules-of-hooks": "off" },
+  },
+  {
+    ignores: [
+      ".next/**",
+      "out/**",
+      "build/**",
+      "next-env.d.ts",
+      "playwright-report/**",
+      "test-results/**",
+    ],
   },
 ];
 
