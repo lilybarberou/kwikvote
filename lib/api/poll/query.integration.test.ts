@@ -178,12 +178,9 @@ describe("getPollById", () => {
 
   test("a failure (database unreachable) is an error, never null", async () => {
     const poll = await createPoll();
-    // then the real method: Prisma 5 model methods are not own properties,
-    // a spy on them can't be restored
-    const realFindUnique = prisma.poll.findUnique.bind(prisma.poll);
-    vi.spyOn(prisma.poll, "findUnique")
-      .mockRejectedValueOnce(new Error("Can't reach database server"))
-      .mockImplementation(realFindUnique as never);
+    const findUnique = vi
+      .spyOn(prisma.poll, "findUnique")
+      .mockRejectedValueOnce(new Error("Can't reach database server"));
 
     const res = await getPollById({ pollId: poll.id });
     expect(res?.data).toBeUndefined();
@@ -192,6 +189,7 @@ describe("getPollById", () => {
     );
 
     // the poll is there once the database is back
+    findUnique.mockRestore();
     expect((await getPollById({ pollId: poll.id }))?.data?.id).toBe(poll.id);
   });
 });
