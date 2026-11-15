@@ -8,6 +8,7 @@
     "build": "pnpm prisma && next build",
     "start": "next start",
     "lint": "eslint .",
+    "test": "vitest run",
     "prisma": "npx prisma generate && npx prisma db push",
     "studio": "npx prisma studio",
     "doppler": "doppler secrets download --format env --no-file > .env",
@@ -76,7 +77,8 @@
     "prettier-plugin-tailwindcss": "^0.6.14",
     "prisma": "^5.22.0",
     "tailwindcss": "^3.4.19",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "3.2.4"
   },
   "pnpm": {
     "overrides": {
@@ -100,8 +102,10 @@
       "picomatch": "2.3.2",
       "postcss": "8.5.28",
       "postcss-selector-parser": "6.1.5",
+      "rollup": "4.67.2",
       "sharp": "0.35.5",
       "source-map-js": "1.2.2",
+      "vite": "7.3.7",
       "yaml": "2.8.3"
     }
   },
