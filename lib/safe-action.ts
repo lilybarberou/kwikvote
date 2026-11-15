@@ -42,7 +42,7 @@ export const action = createSafeActionClient({
 // ADMIN ACTION: only with the admin session cookie (lib/admin-session.ts),
 // the password never travels with the requests (nor in the URL)
 export const adminAction = action
-  .schema(z.object({}))
+  .inputSchema(z.object({}))
   .use(async ({ next }) => {
     if (!(await hasAdminSession()))
       throw new ActionError("Session expirée, reconnectez-vous");
@@ -56,7 +56,7 @@ const pollPwActionSchema = z.object({
   password: z.string(),
 });
 export const pollPwAction = action
-  .schema(pollPwActionSchema)
+  .inputSchema(pollPwActionSchema)
   .use(async ({ next, clientInput }) => {
     const { password, pollId } = pollPwActionSchema.parse(clientInput);
 

@@ -5,7 +5,7 @@ import { createSubscriptionSchema } from "@/lib/schema/subscription-schema";
 import { prisma } from "@/prisma/db";
 
 export const createSubscription = action
-  .schema(createSubscriptionSchema)
+  .inputSchema(createSubscriptionSchema)
   .action(async ({ parsedInput: data }) => {
     // a browser subscribing again can get the same endpoint, with new keys:
     // they replace the old ones. Only the browser knows its endpoint (the
