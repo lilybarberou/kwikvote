@@ -80,6 +80,7 @@ vraies clés (webhook Discord, VAPID). La suite ne s'en sert jamais :
 | `administration.spec.ts`   | mot de passe du sondage, titre, créneaux, suppression ; page d'administration                   |
 | `commentaires.spec.ts`     | commentaires et notifications des abonnés                                                       |
 | `notifications.spec.ts`    | abonnement (invite, cloche, « Non merci »), annonce d'un créneau déplacé                        |
+| `navigation.spec.ts`       | historique, FAQ, 404, thème sombre, contraste au survol                                         |
 | `chargement.spec.ts`       | sondage supprimé (sort de l'historique), erreur de chargement et « Réessayer »                  |
 | `securite.spec.ts`         | en-têtes de sécurité (pages, actions serveur, service worker), statistiques sans query string   |
 
