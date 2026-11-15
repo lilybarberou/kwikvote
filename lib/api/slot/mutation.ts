@@ -57,7 +57,7 @@ export const deleteSlotById = pollPwAction
         where: { pollId },
         select: {
           id: true,
-          choices: { select: { slotId: true, choice: true } },
+          choices: { select: { slotId: true, choice: true, priority: true } },
         },
       });
 
@@ -153,7 +153,9 @@ export const updateSlotById = pollPwAction
             where: { pollId },
             select: {
               id: true,
-              choices: { select: { slotId: true, choice: true } },
+              choices: {
+                select: { slotId: true, choice: true, priority: true },
+              },
             },
           });
           removeDeletedVotes({

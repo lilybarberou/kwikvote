@@ -64,8 +64,64 @@ export const removeDeletedVotes = <T extends SlotArrays>({
   return isRemoved;
 };
 
-export type RegistrationChoice = { slotId: string; choice: number };
+// priority: only for a yes in a registration poll (see normalizeChoices)
+export type RegistrationChoice = {
+  slotId: string;
+  choice: number;
+  priority?: boolean;
+};
 export type ChoicesByVoteId = Record<string, RegistrationChoice[]>;
+
+/**
+ * Order in which the slots of a vote are considered: the slots it said yes to
+ * and marked as priority come first, then the other ones, each group in the
+ * slots order. Without priority, it is the slots order.
+ * `slots` must be sorted like `slotsOrderBy`.
+ */
+export const getSlotsInVoteOrder = <T extends { id: string }>(
+  slots: T[],
+  choices: RegistrationChoice[] | undefined,
+) => {
+  const prioritySlotIds = new Set(
+    (choices ?? [])
+      .filter((choice) => choice.priority && choice.choice === 1)
+      .map((choice) => choice.slotId),
+  );
+  if (!prioritySlotIds.size) return slots;
+
+  return [
+    ...slots.filter((slot) => prioritySlotIds.has(slot.id)),
+    ...slots.filter((slot) => !prioritySlotIds.has(slot.id)),
+  ];
+};
+
+/**
+ * Choices as they must be stored: a priority only makes sense on a yes of a
+ * registration poll. A choice sent without priority (client of a previous
+ * version) keeps the stored one.
+ */
+export const normalizeChoices = <
+  T extends { slotId: string; choice: number; priority?: boolean },
+>({
+  choices,
+  storedChoices,
+  pollType,
+}: {
+  choices: T[];
+  storedChoices?: RegistrationChoice[];
+  pollType: number;
+}) =>
+  choices.map((choice) => {
+    const priority =
+      choice.priority ??
+      storedChoices?.find((stored) => stored.slotId === choice.slotId)
+        ?.priority ??
+      false;
+    return {
+      ...choice,
+      priority: pollType === 2 && choice.choice === 1 && priority,
+    };
+  });
 
 export const getChoicesByVoteId = (
   votes: { id: string; choices: RegistrationChoice[] }[],
@@ -84,7 +140,8 @@ const isChoiceYesOn = (
  * Re-applies the registration rules on all the slots of a poll, after their
  * order or their reregistration time changed (slot dates update).
  *
- * Same rules as the votes recursion:
+ * Same rules as the votes cascade (placeVote), each vote going through its
+ * slots in its own order (getSlotsInVoteOrder: priority slots first):
  * - a vote is registered on the first slot it said yes to and that has room
  * - on the following slots, it waits in the reregistered waiting list until
  *   the reregistration time of the slot has passed
@@ -115,15 +172,37 @@ export const reconcileSlotsArrays = <T extends SlotArrays>({
     ]),
   );
 
-  // put everyone in the right array according to the slots order
+  // put everyone in the right array according to its slots order
   const moveToRightArrays = () => {
-    const isRegisteredOnce: Record<string, boolean> = {};
+    // registered on a slot coming before in the vote's order, once the
+    // registrations not allowed are removed (they only depend on the vote)
+    const isRegisteredBefore: Record<string, Record<string, boolean>> = {};
+    const voteIds = slots.flatMap((slot) => [
+      ...slot.registered,
+      ...slot.waitingList,
+      ...slot.waitingListReregistered,
+    ]);
+    for (const voteId of voteIds) {
+      if (isRegisteredBefore[voteId]) continue;
+      let isRegisteredOnce = false;
+      isRegisteredBefore[voteId] = {};
+
+      for (const slot of getSlotsInVoteOrder(slots, choicesByVoteId[voteId])) {
+        isRegisteredBefore[voteId][slot.id] = isRegisteredOnce;
+        if (
+          slot.registered.includes(voteId) &&
+          isChoiceYes(voteId, slot.id) &&
+          (!isRegisteredOnce || timeBeforeAllowedPassed[slot.id])
+        )
+          isRegisteredOnce = true;
+      }
+    }
 
     for (const slot of slots) {
       const timePassed = timeBeforeAllowedPassed[slot.id];
       const isConcerned = (voteId: string) => isChoiceYes(voteId, slot.id);
       const isAllowedToRegister = (voteId: string) =>
-        !isRegisteredOnce[voteId] || timePassed;
+        !isRegisteredBefore[voteId]?.[slot.id] || timePassed;
 
       // already registered on a previous slot -> will be in reregistered waiting list
       const unregistered = slot.registered.filter(
@@ -153,10 +232,6 @@ export const reconcileSlotsArrays = <T extends SlotArrays>({
         ...unregistered,
         ...toWaitingListReregistered,
       ];
-
-      slot.registered.forEach((id) => {
-        if (isConcerned(id)) isRegisteredOnce[id] = true;
-      });
     }
   };
 
@@ -175,8 +250,8 @@ export const reconcileSlotsArrays = <T extends SlotArrays>({
     return false;
   };
 
-  // each registration moves someone to an earlier slot so it always ends,
-  // the limit is only a safety net
+  // each registration moves someone to an earlier slot (in its order) so it
+  // always ends, the limit is only a safety net
   const maxIterations =
     slots.length *
       slots.reduce((sum, slot) => sum + Math.max(slot.maxParticipants, 0), 0) +
@@ -237,7 +312,9 @@ const removeVoteFromSlot = (slot: SlotArrays, voteId: string) => {
 
 /**
  * Puts one vote in the right arrays of every slot, same rules as
- * `reconcileSlotsArrays`. `slots` are updated in place.
+ * `reconcileSlotsArrays`: its slots are gone through in its own order
+ * (priority slots first), it is registered on the first one which has room.
+ * `slots` are updated in place.
  *
  * - `oldChoices`: the stored choices when the author edits the vote, the slots
  *   whose choice changed are emptied of the vote and handled like a new vote
@@ -262,7 +339,7 @@ export const placeVote = <T extends SlotArrays>({
 }) => {
   let isRegisteredOnce = false;
 
-  for (const slot of slots) {
+  for (const slot of getSlotsInVoteOrder(slots, choices)) {
     const timePassed = timeBeforeAllowedPassed[slot.id];
     const currentVoteChoice = choices.find(
       (choice) => choice.slotId === slot.id,
@@ -504,7 +581,8 @@ export const registerAfterSlotDeletion = <T extends SlotArrays>({
 };
 
 // reregistered people can be registered from this date
-// (can't be reregistered on first slot, so no cron schedule for it)
+// every slot gets one: with priorities, someone can be reregistered on the
+// first slot too (registered on a later priority slot)
 export const getCronSchedulesData = ({
   pollId,
   timeBeforeAllowedType,
@@ -517,10 +595,7 @@ export const getCronSchedulesData = ({
   slots: { id: string; startDate: Date | string }[];
 }) => {
   return [...slots].sort(compareSlots).reduce(
-    (arr, curr, index) => {
-      // can't be reregistered on first slot
-      if (index === 0) return arr;
-
+    (arr, curr) => {
       // if slot's startDate is before now, don't create cron schedule
       if (new Date(curr.startDate).getTime() < Date.now()) return arr;
 
