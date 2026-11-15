@@ -98,7 +98,8 @@ reproductibles.
 ## Ce qui n'est pas couvert
 
 - `cron.js` (ouverture des réinscriptions à l'heure dite) : il faudrait attendre
-  l'heure réelle.
+  l'heure réelle ; il est couvert par `cron.tick.test.ts` et
+  `cron.integration.test.ts`.
 - La réception réelle des notifications par un navigateur (service worker,
   affichage) : le service push est simulé.
 - Firefox et WebKit : seul Chromium est lancé.

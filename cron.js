@@ -466,8 +466,15 @@ const sendNotifications = async ({
   );
 };
 
-// imported by the tests: only the functions, no cron nor notifications
-module.exports = { updateSlotsArray, getSlotsInVoteOrder };
+// imported by the tests: only the functions, no cron nor VAPID keys (the tests
+// replace webpush.sendNotification)
+module.exports = {
+  doStuff,
+  updateSlotsArray,
+  getSlotsInVoteOrder,
+  checkTimeBeforeAllow,
+  sendNotifications,
+};
 
 if (require.main === module) {
   webpush.setVapidDetails(
