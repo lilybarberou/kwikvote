@@ -62,6 +62,11 @@ export const DatePicker = (props: any) => {
                 setOpen(false);
               }}
               mode="single"
+              // the buttons of the months are named in English by default
+              labels={{
+                labelPrevious: () => "Aller au mois précédent",
+                labelNext: () => "Aller au mois suivant",
+              }}
               // clicking the selected day keeps it instead of clearing it
               required
               initialFocus
