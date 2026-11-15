@@ -292,7 +292,7 @@ export const DialogVote = (props: Props) => {
                   )}
                 />
                 {errors[`choice-${slot.id}`] && (
-                  <p className="ml-auto text-sm text-destructive">
+                  <p className="ml-auto text-sm text-destructive dark:text-red-400">
                     Champ requis
                   </p>
                 )}
