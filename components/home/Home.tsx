@@ -6,44 +6,33 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { motion, useAnimationControls } from "framer-motion";
+import { isEmail } from "@/lib/email";
+import { m } from "framer-motion";
 import { HelpCircle, List, ListTodo } from "lucide-react";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useIsClient } from "usehooks-ts";
-import { z } from "zod";
 
 // main column (max-w-6xl less its padding) or the screen width less the margins
 const IMAGE_SIZES = "(min-width: 1152px) 1100px, calc(100vw - 2rem)";
 
-const SearchSchema = z.object({
-  email: z.string().email(),
-});
-
 export const Home = () => {
-  const controls = useAnimationControls();
+  // the animation features of framer-motion load after the page
+  // (LazyMotion, components/Providers.tsx): animation controls started on
+  // mount would do nothing, a new key replays the declarative animation
+  const [animationKey, setAnimationKey] = useState(0);
   // resolvedTheme: theme is "system" by default, which is neither light nor dark
   const { resolvedTheme: theme } = useTheme();
   const isClient = useIsClient();
 
-  useEffect(() => {
-    controls.start({ opacity: 1, y: 0 });
-  }, [controls]);
-
-  const handleTabAnimSequence = async () => {
-    await controls.start("exit");
-    controls.start("show");
-  };
+  const handleTabAnimSequence = () => setAnimationKey((key) => key + 1);
 
   const router = useRouter();
-  const { register, handleSubmit } = useForm<z.infer<typeof SearchSchema>>({
-    resolver: zodResolver(SearchSchema),
-  });
+  const { register, handleSubmit } = useForm<{ email: string }>();
 
   const onSubmit = handleSubmit(({ email }) => {
     router.push(`/mes-sondages?email=${encodeURIComponent(email)}`);
@@ -109,15 +98,15 @@ export const Home = () => {
             Liste d'attente
           </TabsTrigger>
         </TabsList>
-        <motion.div
+        <m.div
+          key={animationKey}
           className="aspect-auto w-full rounded-lg border border-b-0 border-[#27272721] p-2 dark:border-[#ffffff38] sm:p-[10px]"
           variants={{
             init: { opacity: 0, y: -20 },
             show: { opacity: 1, y: 0 },
-            exit: { opacity: 0, y: -20, transition: { duration: 0 } },
           }}
           initial="init"
-          animate={controls}
+          animate="show"
           transition={{ duration: 0.5 }}
         >
           <div className="rounded-sm border border-b-0 border-[#27272721] dark:border-[#ffffff38]">
@@ -158,7 +147,7 @@ export const Home = () => {
               )}
             </TabsContent>
           </div>
-        </motion.div>
+        </m.div>
       </Tabs>
       <ProcessSteps />
       <h3 className="mb-2 text-center text-2xl font-semibold sm:text-3xl">
@@ -179,7 +168,7 @@ export const Home = () => {
             placeholder="vous@example.com"
             inputMode="email"
             autoComplete="email"
-            {...register("email")}
+            {...register("email", { validate: isEmail })}
           />
         </div>
         <Button>Rechercher</Button>
