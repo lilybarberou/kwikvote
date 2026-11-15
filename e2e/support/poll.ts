@@ -212,12 +212,25 @@ export const LISTS = {
 } as const;
 export type ListKey = keyof typeof LISTS;
 
+// the (visually hidden) row headers of the rows of names
+export const NAMES_ROWS: Record<ListKey, string> = {
+  registered: "Personnes inscrites",
+  waitingList: "Personnes en liste d'attente",
+  reregistered: "Personnes en liste d'attente réinscrits",
+  notComing: "Personnes qui ne viennent pas",
+};
+
 export type SlotLists = Record<ListKey, string[]> & { count: string };
 
-// the table puts, under each list header row, an empty row then one row per
-// slot holding the name buttons of that list for that slot. Read in one go:
-// several reads could each see another render of the table. null while it
-// isn't the table of the lists yet (loading skeleton after a reload).
+// Each list is a row of counts, headed by the name of the list ("Inscrits"),
+// then a row of names, headed by NAMES_ROWS ("Personnes inscrites"), with one
+// cell per slot holding a list of name buttons: the row and column headers
+// situate each name for screen readers (e2e/liste-attente.spec.ts checks this
+// accessibility tree). The rows are found by their row header, the slots are
+// the columns after the column of the row headers.
+// Read in one go: several reads could each see another render of the table.
+// null while it isn't the table of the lists yet (loading skeleton after a
+// reload).
 export const readRegistrationTable = async (
   page: Page,
   slotCount: number,
@@ -225,29 +238,36 @@ export const readRegistrationTable = async (
   page
     .getByRole("table")
     .evaluate(
-      (table, { slotCount, labels }) => {
-        const rows = [...table.querySelectorAll("tbody > tr")];
-        let ready = true;
-        const result = Array.from({ length: slotCount }, () => ({
-          count: "",
+      (table, { slotCount, countsRow, namesRows }) => {
+        // the data cells of the row whose header reads `header`
+        const cellsOf = (header: string) => {
+          const row = [...table.querySelectorAll("tbody > tr")].find(
+            (row) =>
+              row.querySelector(":scope > th[scope=row]")?.textContent ===
+              header,
+          );
+          return row && [...row.querySelectorAll(":scope > td")];
+        };
+        const counts = cellsOf(countsRow);
+        if (counts?.length !== slotCount) return null;
+        const result = counts.map((cell) => ({
+          count: cell.textContent!.trim(),
         })) as Record<string, string | string[]>[];
-        Object.entries(labels).forEach(([key, label], listIndex) => {
-          const headerIndex = listIndex * (slotCount + 2);
-          const cells = [...(rows[headerIndex]?.querySelectorAll("td") ?? [])];
-          if (!cells[0]?.textContent?.startsWith(label)) return (ready = false);
-          for (let slot = 0; slot < slotCount; slot++) {
-            if (key === "registered")
-              result[slot].count = cells[slot + 1].textContent!.trim();
-            result[slot][key] = [
-              ...rows[headerIndex + 2 + slot].querySelectorAll("button"),
-            ].map((button) => button.textContent!.trim());
+        for (const [key, header] of Object.entries(namesRows)) {
+          const cells = cellsOf(header);
+          if (cells?.length !== slotCount) return null;
+          cells.forEach((cell, slot) => {
+            const names = [...cell.querySelectorAll("li")].map((item) =>
+              item.textContent!.trim(),
+            );
             // the names come with the votes, a moment after the lists
-            if (result[slot][key].includes("")) ready = false;
-          }
-        });
-        return ready ? (result as SlotLists[]) : null;
+            if (names.includes("")) throw new Error("names not loaded yet");
+            result[slot][key] = names;
+          });
+        }
+        return result as SlotLists[];
       },
-      { slotCount, labels: LISTS },
+      { slotCount, countsRow: LISTS.registered, namesRows: NAMES_ROWS },
       // short: expect.poll reads it again until it matches
       { timeout: 2_000 },
     )

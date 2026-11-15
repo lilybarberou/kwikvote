@@ -66,15 +66,30 @@ export const RegistrationPoll = ({ poll }: Props) => {
     key: SlotArrayKey;
     label: string;
     detail?: string;
+    // the hidden header of the row of the names, read with each name
+    namesLabel: string;
   }[] = [
-    { key: "registered", label: "Inscrits" },
-    { key: "waitingList", label: "Liste d'attente" },
+    {
+      key: "registered",
+      label: "Inscrits",
+      namesLabel: "Personnes inscrites",
+    },
+    {
+      key: "waitingList",
+      label: "Liste d'attente",
+      namesLabel: "Personnes en liste d'attente",
+    },
     {
       key: "waitingListReregistered",
       label: `Liste d'attente réinscrits`,
       detail: `(inscrit à partir de ${TBA})`,
+      namesLabel: "Personnes en liste d'attente réinscrits",
     },
-    { key: "notComing", label: "Ne viennent pas" },
+    {
+      key: "notComing",
+      label: "Ne viennent pas",
+      namesLabel: "Personnes qui ne viennent pas",
+    },
   ];
 
   const closeDialog = () => setDialogOpen(false);
@@ -113,7 +128,7 @@ export const RegistrationPoll = ({ poll }: Props) => {
       {/* INFO */}
       {!alerts.pollLegend && (
         <div className="mt-2 flex w-fit gap-3 rounded-md bg-gray-100 p-2 dark:bg-gray-600/20">
-          <div className="my-2 grid grid-cols-[30px,1fr] items-center gap-2 gap-x-2">
+          <div className="my-2 grid grid-cols-[30px_1fr] items-center gap-2 gap-x-2">
             {!!subscription && (
               <>
                 <div className="h-[15px] w-[30px] rounded-sm bg-primary dark:bg-primary/40" />
@@ -145,12 +160,16 @@ export const RegistrationPoll = ({ poll }: Props) => {
       {/* TABLE */}
       <Table>
         <TableHeader>
-          <TableRow className="!border-0 hover:bg-transparent">
+          <TableRow className="border-0! hover:bg-transparent">
             <TableHead className="w-[330px] min-w-[140px] pl-2">
               <RegistrationPollHelp />
             </TableHead>
             {slots.map((slot) => (
-              <TableHead key={slot.id} className="min-w-[140px] py-4">
+              <TableHead
+                key={slot.id}
+                scope="col"
+                className="min-w-[140px] py-4"
+              >
                 <div className="whitespace-nowrap text-center">
                   {sameDay(new Date(slot.startDate), new Date(slot.endDate)) ? (
                     <>
@@ -182,7 +201,10 @@ export const RegistrationPoll = ({ poll }: Props) => {
                 <TableRow
                   className={`mt-4 border-0 border-transparent bg-[#f4f4f4] dark:bg-[#101929] ${index !== 0 ? "border-t-8" : ""}`}
                 >
-                  <TableCell className="whitespace-pre-wrap rounded-bl-lg rounded-tl-lg py-2 font-bold">
+                  <TableHead
+                    scope="row"
+                    className="h-auto rounded-tl-lg rounded-bl-lg p-4 py-2 font-bold whitespace-pre-wrap text-foreground"
+                  >
                     <p>{array.label}</p>
                     <span className="text-xs text-gray-600 dark:text-gray-400">
                       {array.detail}
@@ -203,7 +225,7 @@ export const RegistrationPoll = ({ poll }: Props) => {
                         </label>
                       </div>
                     )}
-                  </TableCell>
+                  </TableHead>
                   {slots.map((slot, index) => (
                     <TableCell
                       className={`text-center ${
@@ -220,14 +242,16 @@ export const RegistrationPoll = ({ poll }: Props) => {
                     </TableCell>
                   ))}
                 </TableRow>
-                <TableRow className="table-cell border-0 hover:bg-transparent" />
-                {slots.map((slot) => (
-                  <TableRow
-                    className="table-cell border-0 text-center align-top hover:bg-transparent"
-                    key={slot.id}
-                  >
-                    {/* a copy: sorting in place would change the query cache */}
-                    {[...slot[array.key]]
+                {/* the names of the list, one cell per slot: the (hidden) row
+                    header and the column header situate each name for
+                    screen readers */}
+                <TableRow className="border-0 hover:bg-transparent">
+                  <TableHead scope="row" className="h-auto p-0">
+                    <span className="sr-only">{array.namesLabel}</span>
+                  </TableHead>
+                  {slots.map((slot) => {
+                    // a copy: sorting in place would change the query cache
+                    const names = [...slot[array.key]]
                       // put author's votes first (only for notComing column),
                       // the queue order is kept otherwise
                       .sort((a, b) => {
@@ -238,63 +262,90 @@ export const RegistrationPoll = ({ poll }: Props) => {
                       })
                       .map((voteId) => {
                         const vote = votes[voteId];
-                        const isPriority = vote?.choices.some(
-                          (choice) =>
-                            choice.slotId === slot.id && choice.priority,
-                        );
                         const isAuthorOfVote =
                           isSubscribedVote(vote) ||
                           localVotes[poll.id]?.some(
                             (localVoteId) => localVoteId === voteId,
                           );
-
-                        if (
-                          isNotComingColumn &&
-                          !isAuthorOfVote &&
-                          !showAllNotComing
-                        )
-                          return null;
-                        return (
-                          <DialogTrigger key={voteId} asChild>
-                            <TableCell
-                              className="block bg-background px-1 py-1"
-                              onClick={() => setCurrentVoteId(voteId)}
-                            >
-                              <Button
-                                title={
-                                  isPriority ? "Créneau prioritaire" : undefined
-                                }
-                                className={cn(
-                                  "w-full gap-1 p-2",
-                                  isAuthorOfVote &&
-                                    // light theme: bg-primary/80 gave 3.7:1 under the white text,
-                                    // and a hover at /90 4.3:1
-                                    "bg-primary !text-white hover:bg-[color-mix(in_oklab,hsl(var(--primary)),black_10%)] dark:bg-primary/40 dark:hover:bg-primary/30",
-                                )}
-                                variant="ghost"
-                              >
-                                {isPriority && (
-                                  <Star
-                                    aria-hidden
-                                    className="h-3.5 w-3.5 shrink-0 fill-amber-400 stroke-amber-500"
-                                  />
-                                )}
-                                <p className="max-w-[200px] truncate">
-                                  {vote?.name}
-                                  {isPriority && (
-                                    <span className="sr-only">
-                                      {" "}
-                                      (créneau prioritaire)
-                                    </span>
-                                  )}
-                                </p>
-                              </Button>
-                            </TableCell>
-                          </DialogTrigger>
+                        const isPriority = vote?.choices.some(
+                          (choice) =>
+                            choice.slotId === slot.id && choice.priority,
                         );
-                      })}
-                  </TableRow>
-                ))}
+                        return { voteId, vote, isAuthorOfVote, isPriority };
+                      })
+                      .filter(
+                        ({ isAuthorOfVote }) =>
+                          !isNotComingColumn ||
+                          isAuthorOfVote ||
+                          showAllNotComing,
+                      );
+
+                    return (
+                      <TableCell
+                        key={slot.id}
+                        className="p-0 text-center align-top"
+                      >
+                        {names.length > 0 && (
+                          // role: the list style is removed, and Safari then
+                          // drops the list semantics
+                          <ul role="list">
+                            {names.map(
+                              ({
+                                voteId,
+                                vote,
+                                isAuthorOfVote,
+                                isPriority,
+                              }) => (
+                                <li
+                                  key={voteId}
+                                  className="bg-background px-1 py-1"
+                                >
+                                  {/* the button is the only interactive
+                                      element of the name */}
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      onClick={() => setCurrentVoteId(voteId)}
+                                      title={
+                                        isPriority
+                                          ? "Créneau prioritaire"
+                                          : undefined
+                                      }
+                                      className={cn(
+                                        "w-full gap-1 p-2",
+                                        isAuthorOfVote &&
+                                          // light theme: bg-primary/80 gave 3.7:1 under the white text,
+                                          // and a hover at /90 4.3:1
+                                          "bg-primary !text-white hover:bg-[color-mix(in_oklab,hsl(var(--primary)),black_10%)] dark:bg-primary/40 dark:hover:bg-primary/30",
+                                      )}
+                                      variant="ghost"
+                                    >
+                                      {isPriority && (
+                                        <Star
+                                          aria-hidden
+                                          className="h-3.5 w-3.5 shrink-0 fill-amber-400 stroke-amber-500"
+                                        />
+                                      )}
+                                      {/* a span: a p is not allowed in a button */}
+                                      <span className="block max-w-[200px] truncate">
+                                        {vote?.name}
+                                        {isPriority && (
+                                          <span className="sr-only">
+                                            {" "}
+                                            (créneau prioritaire)
+                                          </span>
+                                        )}
+                                      </span>
+                                    </Button>
+                                  </DialogTrigger>
+                                </li>
+                              ),
+                            )}
+                          </ul>
+                        )}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
               </Fragment>
             );
           })}
