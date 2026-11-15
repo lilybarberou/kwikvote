@@ -3,7 +3,8 @@ import { Prisma } from "@prisma/client";
 import { createSafeActionClient } from "next-safe-action";
 import { z } from "zod";
 
-import { env } from "./env";
+import { isAdminPassword } from "./admin-session";
+import { hasAdminSession } from "./admin-session.server";
 
 // error whose message is meant for the user, other errors are hidden
 export class ActionError extends Error {}
@@ -26,15 +27,13 @@ export const action = createSafeActionClient({
   },
 });
 
-// ADMIN ACTION
-const adminActionSchema = z.object({ password: z.string() });
+// ADMIN ACTION: only with the admin session cookie (lib/admin-session.ts),
+// the password never travels with the requests (nor in the URL)
 export const adminAction = action
-  .schema(adminActionSchema)
-  .use(async ({ next, clientInput }) => {
-    const data = adminActionSchema.parse(clientInput);
-
-    if (data.password !== env.ADMIN_PASSWORD)
-      throw new ActionError("Mot de passe incorrect");
+  .schema(z.object({}))
+  .use(async ({ next }) => {
+    if (!(await hasAdminSession()))
+      throw new ActionError("Session expirée, reconnectez-vous");
 
     return next();
   });
@@ -49,7 +48,8 @@ export const pollPwAction = action
   .use(async ({ next, clientInput }) => {
     const { password, pollId } = pollPwActionSchema.parse(clientInput);
 
-    if (password === env.ADMIN_PASSWORD) return next();
+    // the admin manages every poll, signed in or with the admin password
+    if (isAdminPassword(password) || (await hasAdminSession())) return next();
 
     const poll = await prisma.poll.findFirst({
       where: { id: pollId },

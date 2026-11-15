@@ -33,8 +33,7 @@ const LIMIT = 12;
 export const usePoll = (
   props: Props = { enabled: { getPollById: false, getPolls: false } },
 ) => {
-  const [{ password, q: query, email }] = useQueryStates({
-    password: parseAsString.withDefault(""),
+  const [{ q: query, email }] = useQueryStates({
     q: parseAsString.withDefault(""),
     email: parseAsString.withDefault(""),
   });
@@ -84,8 +83,8 @@ export const usePoll = (
   const getPollsQuery = useInfiniteQuery({
     queryKey: getPollsKey,
     queryFn: async ({ pageParam }) => {
+      // the admin session cookie authorizes it
       const data = await getPolls({
-        password,
         query,
         limit: LIMIT,
         offset: pageParam * LIMIT,
@@ -97,7 +96,7 @@ export const usePoll = (
       if (!lastPage || (lastPage && lastPage?.length < LIMIT)) return undefined;
       return pages.length;
     },
-    enabled: enabled?.getPolls && !!password,
+    enabled: !!enabled?.getPolls,
   });
 
   // # MUTATIONS
