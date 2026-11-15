@@ -84,6 +84,7 @@ vraies clés (webhook Discord, VAPID). La suite ne s'en sert jamais :
 | `chargement.spec.ts`       | sondage supprimé (sort de l'historique), erreur de chargement et « Réessayer »                  |
 | `mobile.spec.ts`           | les parcours principaux sur un téléphone (Pixel 7)                                              |
 | `securite.spec.ts`         | en-têtes de sécurité (pages, actions serveur, service worker), statistiques sans query string   |
+| `libelles.spec.ts`         | libellés visibles des champs de l'accueil, des commentaires et de l'administration              |
 
 Règles suivies :
 
