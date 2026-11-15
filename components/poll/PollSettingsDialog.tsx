@@ -108,7 +108,13 @@ const FirstStep = () => {
   return (
     <form onSubmit={submitPassword} className="flex flex-col gap-2">
       <p className={cn(error && "text-red-800")}>Mot de passe</p>
-      <Input ref={inputPassword} className={cn(error && "border-red-800")} />
+      <Input
+        ref={inputPassword}
+        type="password"
+        autoComplete="current-password"
+        aria-label="Mot de passe"
+        className={cn(error && "border-red-800")}
+      />
       <Button type="submit" className="mt-3">
         Valider
       </Button>
