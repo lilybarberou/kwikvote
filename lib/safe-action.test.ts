@@ -64,7 +64,7 @@ beforeEach(() => {
 
 describe("action errors", () => {
   const failing = (error: unknown) =>
-    action.schema(z.object({})).action(async () => {
+    action.inputSchema(z.object({})).action(async () => {
       throw error;
     });
 
@@ -106,7 +106,7 @@ describe("action errors", () => {
   test("invalid input is a validation error, the action doesn't run", async () => {
     const run = vi.fn();
     const res = await action
-      .schema(z.object({ name: z.string().max(3) }))
+      .inputSchema(z.object({ name: z.string().max(3) }))
       .action(async () => run())({ name: "too long" });
     expect(res?.validationErrors).toBeDefined();
     expect(run).not.toHaveBeenCalled();
@@ -221,7 +221,7 @@ describe("pollPwAction", () => {
 
   test("the extended schemas keep the password check", async () => {
     const deleteSlot = pollPwAction
-      .schema(async (s) => s.extend({ slotId: z.string() }))
+      .inputSchema(async (s) => s.extend({ slotId: z.string() }))
       .action(async ({ parsedInput: { slotId } }) => `deleted ${slotId}`);
     polls.set("poll-1", "pw-1");
 

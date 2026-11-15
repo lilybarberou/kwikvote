@@ -14,7 +14,7 @@ import { z } from "zod";
 
 // a POST with the password, answered by an httpOnly session cookie
 export const adminSignIn = action
-  .schema(z.object({ password: z.string().max(200) }))
+  .inputSchema(z.object({ password: z.string().max(200) }))
   .action(async ({ parsedInput: { password } }) => {
     // the failures are limited: per address, and for everyone
     const limits: LimitChecks = [
