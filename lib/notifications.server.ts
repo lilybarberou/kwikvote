@@ -1,22 +1,16 @@
 import { env } from "@/lib/env";
+import { sendPush } from "@/lib/push.server";
 import { sameDay } from "@/lib/utils";
 import { prisma } from "@/prisma/db";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { fr } from "date-fns/locale/fr";
 import "server-only";
-import webpush from "web-push";
 
 import type { PollWithSlots } from "./api/vote/mutation";
 
 // push notifications sent by the server actions: they must not live in a
 // "use server" file, where every export becomes a public server action
-
-webpush.setVapidDetails(
-  "mailto:" + env.NEXT_PUBLIC_VAPID_EMAIL,
-  env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-  env.VAPID_PRIVATE_KEY,
-);
 
 export const sendNotifications = async ({
   pollId,
@@ -97,21 +91,7 @@ export const sendNotifications = async ({
         )?.subscriptions;
         if (!voteSubs) return;
 
-        voteSubs.forEach((sub) => {
-          webpush
-            .sendNotification(
-              {
-                endpoint: sub.endpoint,
-                keys: {
-                  auth: sub.auth,
-                  p256dh: sub.p256dh,
-                },
-              },
-              payload,
-            )
-            .then((res) => console.log("notif envoyée: ", res.statusCode))
-            .catch((err) => console.log(err));
-        });
+        voteSubs.forEach((sub) => sendPush(sub, payload));
       });
     },
   );
@@ -163,19 +143,5 @@ export const sendSlotUpdateNotifications = async ({
     link: `${env.DOMAIN}/poll/${pollId}?tab=votes&slot=${slotId}`,
   });
 
-  subscriptions.forEach((sub) => {
-    webpush
-      .sendNotification(
-        {
-          endpoint: sub.endpoint,
-          keys: {
-            auth: sub.auth,
-            p256dh: sub.p256dh,
-          },
-        },
-        payload,
-      )
-      .then((res) => console.log("notif envoyée: ", res.statusCode))
-      .catch((err) => console.log(err));
-  });
+  subscriptions.forEach((sub) => sendPush(sub, payload));
 };
