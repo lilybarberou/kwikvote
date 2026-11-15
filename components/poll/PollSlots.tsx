@@ -96,7 +96,6 @@ export const PollSlots = (props: Props) => {
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogVote
         pollType={1}
-        setCurrentVoteId={setCurrentVoteId}
         currentVoteId={currentVoteId}
         slots={props.slots}
         closeDialog={closeDialog}
