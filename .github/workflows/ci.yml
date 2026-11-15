@@ -49,6 +49,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: npx prisma generate
+      # `next build` doesn't run the lint anymore (Next.js 16)
       - run: pnpm lint
       - run: npx tsc --noEmit
       - run: pnpm test
