@@ -138,13 +138,12 @@ describe("createSubscription (local database)", () => {
       keys: { auth: "a2", p256dh: "p2" },
     });
 
-    expect(res?.data).toMatchObject({
-      endpoint: url,
-      auth: "a2",
-      p256dh: "p2",
-    });
-    expect(await prisma.subscription.count({ where: { endpoint: url } })).toBe(
-      1,
-    );
+    expect(res?.data).toEqual({ success: true });
+    expect(
+      await prisma.subscription.findMany({
+        where: { endpoint: url },
+        select: { auth: true, p256dh: true },
+      }),
+    ).toEqual([{ auth: "a2", p256dh: "p2" }]);
   });
 });
