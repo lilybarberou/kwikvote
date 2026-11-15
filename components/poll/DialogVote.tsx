@@ -14,6 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { usePoll } from "@/hooks/use-poll";
+import { useSubscriptionHash } from "@/hooks/use-subscription-hash";
 import { useVote } from "@/hooks/use-vote";
 import { VOTE_NAME_MAX_LENGTH } from "@/lib/schema/vote-schema";
 import { useLocalVotesStore } from "@/lib/store/localVotesStore";
@@ -60,6 +61,7 @@ export const DialogVote = (props: Props) => {
     props;
   const { removeVote: deleteVote, addVote, votes } = useVotesStore();
   const { subscription } = useNotificationsStore();
+  const subscriptionHash = useSubscriptionHash(pollId);
   const { addLocalVote, removeLocalVote } = useLocalVotesStore();
   const {
     register,
@@ -105,7 +107,7 @@ export const DialogVote = (props: Props) => {
             addVote({
               ...votes[currentVoteId],
               name: data.name,
-              subscriptions: subscription ? [subscription] : [],
+              subscriptionHashes: subscriptionHash ? [subscriptionHash] : [],
             });
             addLocalVote(pollId, currentVoteId);
             closeDialog();
@@ -146,7 +148,7 @@ export const DialogVote = (props: Props) => {
         }
         addVote({
           ...mutationData,
-          subscriptions: subscription ? [subscription] : [],
+          subscriptionHashes: subscriptionHash ? [subscriptionHash] : [],
         });
         addLocalVote(pollId, mutationData.id);
         closeDialog();
