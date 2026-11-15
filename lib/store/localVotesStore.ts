@@ -14,6 +14,8 @@ export const useLocalVotesStore = create<Store>()(
       addLocalVote: (pollId, voteId) => {
         set((state) => {
           const votes = state.localVotes[pollId] || [];
+          // an edit adds the vote again
+          if (votes.includes(voteId)) return state;
           return {
             localVotes: {
               ...state.localVotes,
