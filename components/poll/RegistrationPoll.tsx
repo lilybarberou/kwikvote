@@ -113,7 +113,6 @@ export const RegistrationPoll = ({ poll }: Props) => {
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogVote
-        setCurrentVoteId={setCurrentVoteId}
         pollType={2}
         currentVoteId={currentVoteId}
         slots={slots}
