@@ -65,6 +65,9 @@ export const usePoll = (
 
   let enabled = {} as NonNullable<Props>["enabled"];
   if (props) enabled = props.enabled;
+  // booleans: react-query runs a query whose enabled is undefined, so
+  // usePoll({}) or usePoll() fetched the polls by email and the admin list
+  // (with an empty password) on each poll page, and retried them 3 times
 
   const params = useParams() as { id: string };
   const pollId = params.id;
@@ -96,7 +99,7 @@ export const usePoll = (
       addPollToHistory(pollId, data.title || "");
       return data;
     },
-    enabled: enabled?.getPollById,
+    enabled: !!enabled?.getPollById,
   });
 
   const getPollsByEmailKey = ["getPollsByEmail", email.toLowerCase()];
