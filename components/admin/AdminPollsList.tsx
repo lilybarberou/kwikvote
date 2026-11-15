@@ -3,7 +3,7 @@
 import { usePoll } from "@/hooks/use-poll";
 import { PopoverClose } from "@radix-ui/react-popover";
 import { useQueryClient } from "@tanstack/react-query";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { useIntersectionObserver } from "usehooks-ts";
@@ -30,8 +30,10 @@ export const AdminPollsList = () => {
   });
 
   return (
-    <motion.div
-      className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+    // no top margin: the space-y-8 of app/admin/page.tsx spaces it (with
+    // Tailwind v3 it also overrode the mt-12 that was here)
+    <m.div
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
       variants={{ init: { opacity: 0 }, anim: { opacity: 1 } }}
       transition={{ staggerChildren: 0.1 }}
       initial="init"
@@ -39,8 +41,8 @@ export const AdminPollsList = () => {
     >
       {polls?.pages.map((page, pIndex) =>
         page.map((poll, index) => (
-          <motion.div
-            className="group grid grid-cols-[1fr,auto] items-center rounded border pr-2 transition-all hover:bg-accent"
+          <m.div
+            className="group grid grid-cols-[1fr_auto] items-center rounded border pr-2 transition-all hover:bg-accent"
             variants={{ init: { opacity: 0 }, anim: { opacity: 1 } }}
             key={poll.id}
             ref={
@@ -101,9 +103,9 @@ export const AdminPollsList = () => {
                 </Button>
               </PopoverContent>
             </Popover>
-          </motion.div>
+          </m.div>
         )),
       )}
-    </motion.div>
+    </m.div>
   );
 };

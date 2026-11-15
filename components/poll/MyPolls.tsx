@@ -3,18 +3,14 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { usePoll } from "@/hooks/use-poll";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
+import { isEmail } from "@/lib/email";
+import { m } from "framer-motion";
 import { Bird, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { parseAsString, useQueryState } from "nuqs";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 
-const SearchSchema = z.object({
-  email: z.string().email(),
-});
-type SearchSchema = z.infer<typeof SearchSchema>;
+type SearchSchema = { email: string };
 
 export const MyPolls = () => {
   const [email, setEmail] = useQueryState("email", parseAsString);
@@ -24,7 +20,6 @@ export const MyPolls = () => {
   } = usePoll({ enabled: { getPollsByEmail: !!email } });
 
   const { register, handleSubmit, getValues } = useForm<SearchSchema>({
-    resolver: zodResolver(SearchSchema),
     defaultValues: { email: email ?? "" },
   });
 
@@ -41,7 +36,7 @@ export const MyPolls = () => {
           aria-label="Votre email"
           inputMode="email"
           autoComplete="email"
-          {...register("email")}
+          {...register("email", { validate: isEmail })}
         />
         <Button disabled={!!(email && isLoading)}>
           Rechercher
@@ -89,11 +84,12 @@ const NoPolls = () => {
   );
 };
 
-const Polls = ({ polls }: { polls: { id: string; title: string }[] }) => {
-  const LinkMotion = motion(Link);
+// outside of Polls: a component created during render is remounted on each render
+const LinkMotion = m(Link);
 
+const Polls = ({ polls }: { polls: { id: string; title: string }[] }) => {
   return (
-    <motion.div
+    <m.div
       className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
       variants={{ init: { opacity: 0 }, anim: { opacity: 1 } }}
       transition={{ staggerChildren: 0.1 }}
@@ -110,6 +106,6 @@ const Polls = ({ polls }: { polls: { id: string; title: string }[] }) => {
           {poll.title}
         </LinkMotion>
       ))}
-    </motion.div>
+    </m.div>
   );
 };

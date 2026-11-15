@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { useTheme } from "next-themes";
 import Image from "next/image";
 import { Fragment } from "react";
@@ -35,7 +35,7 @@ export const ProcessSteps = () => {
   ];
 
   return (
-    <motion.div
+    <m.div
       className="mb-32 flex flex-wrap items-center justify-center gap-3 lg:gap-7"
       variants={{ init: { opacity: 0 }, anim: { opacity: 1 } }}
       transition={{ staggerChildren: 0.3 }}
@@ -45,7 +45,7 @@ export const ProcessSteps = () => {
       {steps.map((step, index) => {
         return (
           <Fragment key={index}>
-            <motion.div
+            <m.div
               variants={{
                 init: { opacity: 0, scale: 0.8 },
                 anim: { opacity: 1, scale: 1 },
@@ -66,7 +66,7 @@ export const ProcessSteps = () => {
                 )}
                 <p className="text-xs md:text-base">{step.text}</p>
               </Card>
-            </motion.div>
+            </m.div>
             {index !== steps.length - 1 && (
               <Image
                 className="hidden w-6 sm:block lg:w-8"
@@ -92,6 +92,6 @@ export const ProcessSteps = () => {
           </Fragment>
         );
       })}
-    </motion.div>
+    </m.div>
   );
 };

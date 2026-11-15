@@ -42,7 +42,7 @@ import { useCommentsStore } from "@/lib/store/commentsStore";
 import { useNotificationsStore } from "@/lib/store/notificationsStore";
 import { useVotesStore } from "@/lib/store/votesStore";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import {
   BarChart3,
   Bell,
@@ -191,7 +191,7 @@ export default function PollPage() {
         {dialogWarnNotifOpen &&
           notificationsSupported &&
           notificationsPermission === "default" && (
-            <motion.div
+            <m.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
@@ -218,7 +218,7 @@ export default function PollPage() {
                   </div>
                 </div>
               </Card>
-            </motion.div>
+            </m.div>
           )}
       </AnimatePresence>
       <DialogPollLink />
