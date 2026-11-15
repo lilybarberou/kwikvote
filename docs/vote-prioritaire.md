@@ -386,6 +386,23 @@ alors la priorité déjà enregistrée au lieu de l'effacer.
   autre hôte) : `createVote` et `deleteVote` réels, notifications simulées, dont
   deux priorités simultanées pour la dernière place du samedi et 12 votes
   simultanés.
+- Campagne de tests (couverture des lignes de `lib/`,
+  `prisma/db.ts` et `cron.js` : 52 % → 98 %) :
+  - unitaires : dates en heure de Paris (heures d'été et d'hiver, vérifiées
+    avec `TZ=UTC`, `Europe/Paris`, `America/New_York` et `Asia/Tokyo`),
+    mots de passe des actions (`lib/safe-action.test.ts`), notifications,
+    message Discord, stores et schémas ; `cron.tick.test.ts` fait tourner
+    `doStuff` sur une base en mémoire, compare ses heures d'ouverture à
+    celles de l'application, et vérifie les règles d'inscription sur 400
+    sondages aléatoires où l'application et le cron alternent ;
+  - intégration : toutes les actions serveur (droits par sondage, mot de
+    passe jamais renvoyé, validation des choix, déplacement d'un créneau,
+    commentaires) et `cron.js` sur la base locale (`cron.integration.test.ts`).
+  - `pnpm test:coverage` lance les deux suites avec la couverture ; comme
+    `pnpm test:integration`, il faut un `DATABASE_URL` **local** et des
+    variables factices pour `lib/env.ts` (`ADMIN_PASSWORD`, `DOMAIN`,
+    `VAPID_PRIVATE_KEY`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`,
+    `NEXT_PUBLIC_VAPID_EMAIL`, `DISCORD_WEBHOOK_URL`, `UMAMI_WEBSITE_ID`).
 - Parcours de bout en bout dans un navigateur (Playwright, script hors dépôt)
   sur un serveur `next start` local branché sur une base Docker, et exécution
   réelle de `cron.js` sur cette base. Ce parcours a révélé un bug corrigé : à la
