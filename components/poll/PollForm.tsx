@@ -97,6 +97,9 @@ export const PollForm = () => {
                   className="w-32 object-cover"
                   width={400}
                   height={400}
+                  // above the fold, the largest image of the page (LCP)
+                  loading="eager"
+                  sizes="128px"
                   src="/images/poll-11.png"
                   // the label text names the choice
                   alt=""
@@ -114,6 +117,9 @@ export const PollForm = () => {
                   className="w-32 object-cover"
                   width={400}
                   height={400}
+                  // above the fold, the largest image of the page (LCP)
+                  loading="eager"
+                  sizes="128px"
                   src="/images/poll-22.png"
                   alt=""
                 />

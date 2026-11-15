@@ -18,6 +18,9 @@ import { useForm } from "react-hook-form";
 import { useIsClient } from "usehooks-ts";
 import { z } from "zod";
 
+// main column (max-w-6xl less its padding) or the screen width less the margins
+const IMAGE_SIZES = "(min-width: 1152px) 1100px, calc(100vw - 2rem)";
+
 const SearchSchema = z.object({
   email: z.string().email(),
 });
@@ -124,6 +127,11 @@ export const Home = () => {
                   className="h-full w-full rounded-sm object-cover"
                   width={1000}
                   height={500}
+                  // the largest image of the page (LCP): not lazy, and only
+                  // as wide as its container
+                  loading="eager"
+                  fetchPriority="high"
+                  sizes={IMAGE_SIZES}
                   src={
                     theme === "light"
                       ? "/images/poll-light-1.jpg"
@@ -139,6 +147,7 @@ export const Home = () => {
                   className="h-full w-full rounded-sm object-cover"
                   width={1000}
                   height={500}
+                  sizes={IMAGE_SIZES}
                   src={
                     theme === "light"
                       ? "/images/poll-light-2.jpg"
