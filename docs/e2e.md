@@ -87,7 +87,10 @@ vraies clés (webhook Discord, VAPID). La suite ne s'en sert jamais :
 
 Règles suivies :
 
-- sélecteurs accessibles uniquement (rôle et nom, libellés) ;
+- sélecteurs accessibles uniquement (rôle et nom, libellés) ; les listes d'un
+  sondage avec liste d'attente sont lues par les en-têtes du tableau : la ligne
+  par son en-tête de ligne (« Inscrits », « Personnes inscrites »…), le créneau
+  par sa colonne (`readRegistrationTable`) ;
 - pas d'attente fixe : assertions qui réessaient (`expect`, `expect.poll`) ;
 - données isolées : chaque test crée ses propres sondages (titres uniques), les
   tests tournent en parallèle sur la même base ;
