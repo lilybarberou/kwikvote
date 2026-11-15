@@ -86,6 +86,7 @@ vraies clés (webhook Discord, VAPID). La suite ne s'en sert jamais :
 | `securite.spec.ts`         | en-têtes de sécurité (pages, actions serveur, service worker), statistiques sans query string   |
 | `libelles.spec.ts`         | libellés visibles des champs de l'accueil, des commentaires et de l'administration              |
 | `dialogues.spec.ts`        | chaque fenêtre est nommée par son titre, et décrite quand elle a une description                |
+| `type-sondage.spec.ts`     | la carte du type choisi se distingue (bordure, contraste 3:1, clair et sombre)                  |
 
 Règles suivies :
 
