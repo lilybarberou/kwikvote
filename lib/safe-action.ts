@@ -5,6 +5,13 @@ import { z } from "zod";
 
 import { isAdminPassword } from "./admin-session";
 import { hasAdminSession } from "./admin-session.server";
+import {
+  LimitChecks,
+  getClientIp,
+  getLimitMessage,
+  hitAll,
+  limiters,
+} from "./rate-limits.server";
 
 // error whose message is meant for the user, other errors are hidden
 export class ActionError extends Error {}
@@ -48,6 +55,15 @@ export const pollPwAction = action
   .use(async ({ next, clientInput }) => {
     const { password, pollId } = pollPwActionSchema.parse(clientInput);
 
+    // the failures are limited: per address and poll, and per poll
+    const ip = await getClientIp();
+    const limits: LimitChecks = [
+      [limiters.pollPasswordFailuresByIp, `${ip} ${pollId}`],
+      [limiters.pollPasswordFailures, pollId],
+    ];
+    const limited = getLimitMessage(limits);
+    if (limited) throw new ActionError(limited);
+
     // the admin manages every poll, signed in or with the admin password
     if (isAdminPassword(password) || (await hasAdminSession())) return next();
 
@@ -58,8 +74,10 @@ export const pollPwAction = action
     if (!poll) throw new ActionError("Ce sondage n'existe plus");
 
     // a poll created without password can't be managed
-    if (!poll.password || poll.password !== password)
+    if (!poll.password || poll.password !== password) {
+      hitAll(limits);
       throw new ActionError("Mot de passe incorrect");
+    }
 
     return next();
   });
