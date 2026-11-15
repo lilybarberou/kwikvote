@@ -67,6 +67,10 @@ model VoteChoice {
   priority Boolean @default(false)
   vote     Vote    @relation(fields: [voteId], references: [id], onDelete: Cascade)
   slot     Slot    @relation(fields: [slotId], references: [id], onDelete: Cascade)
+
+  // one choice per vote and slot: an edit updates it, never adds another one
+  // (docs/sql/vote-choice-unique.sql, run once before the deployment)
+  @@unique([voteId, slotId])
 }
 
 model Subscription {

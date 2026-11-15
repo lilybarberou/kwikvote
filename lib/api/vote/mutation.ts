@@ -19,7 +19,6 @@ import {
 import { checkTimeBeforeAllow } from "@/lib/utils";
 import { prisma, withPollLock } from "@/prisma/db";
 import { Prisma } from "@prisma/client";
-import { randomUUID } from "node:crypto";
 
 export const createVote = action
   .schema(createVoteSchema)
@@ -86,7 +85,6 @@ export const createVote = action
           pollId: true,
           choices: {
             select: {
-              id: true,
               slotId: true,
               choice: true,
               priority: true,
@@ -99,18 +97,13 @@ export const createVote = action
       if (voteInDB && voteInDB.pollId !== data.pollId)
         throw new ActionError("Ce vote n'appartient pas à ce sondage");
 
+      // the choice ids sent by the client are ignored: an edit updates the
+      // stored choice of each slot (one per vote and slot, @@unique)
       const choices = normalizeChoices({
         choices: data.choices,
         storedChoices: voteInDB?.choices,
         pollType: poll.type,
-      }).map((choice) => ({
-        ...choice,
-        // the choice ids sent by the client are ignored: an edit updates the
-        // stored choice of each slot instead of adding another one
-        id:
-          voteInDB?.choices.find((stored) => stored.slotId === choice.slotId)
-            ?.id ?? randomUUID(),
-      }));
+      });
 
       // UPDATE VOTE IN DB
       await tx.vote.upsert({
@@ -122,14 +115,13 @@ export const createVote = action
           choices: {
             upsert: choices.map((choice) => ({
               where: {
-                id: choice.id,
+                voteId_slotId: { voteId: data.id, slotId: choice.slotId },
               },
               update: {
                 choice: choice.choice,
                 priority: choice.priority,
               },
               create: {
-                id: choice.id,
                 choice: choice.choice,
                 priority: choice.priority,
                 slot: {
@@ -161,7 +153,6 @@ export const createVote = action
           },
           choices: {
             create: choices.map((choice) => ({
-              id: choice.id,
               choice: choice.choice,
               priority: choice.priority,
               slot: {
