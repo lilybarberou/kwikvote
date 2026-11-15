@@ -3,7 +3,6 @@ import { Footer } from "@/components/layout/Footer";
 import { Navigation } from "@/components/layout/navigation/Navigation";
 import { Toaster } from "@/components/ui/toaster";
 import { env } from "@/lib/env";
-import { fontSans } from "@/lib/fonts";
 import type { Metadata } from "next";
 import Script from "next/script";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
@@ -53,7 +52,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`flex min-h-screen flex-col items-center bg-background font-sans antialiased ${fontSans.variable}`}
+        className="flex min-h-screen flex-col items-center bg-background font-sans antialiased"
       >
         <NuqsAdapter>
           <Providers>
