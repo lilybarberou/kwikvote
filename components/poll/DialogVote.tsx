@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/tooltip";
 import { usePoll } from "@/hooks/use-poll";
 import { useVote } from "@/hooks/use-vote";
+import { VOTE_NAME_MAX_LENGTH } from "@/lib/schema/vote-schema";
 import { useLocalVotesStore } from "@/lib/store/localVotesStore";
 import { useNotificationsStore } from "@/lib/store/notificationsStore";
 import { useVotesStore } from "@/lib/store/votesStore";
@@ -207,6 +208,7 @@ export const DialogVote = (props: Props) => {
           id="name"
           defaultValue={votes[currentVoteId]?.name ?? ""}
           placeholder="John Doe"
+          maxLength={VOTE_NAME_MAX_LENGTH}
           {...register("name", { required: true })}
         />
         <div>
