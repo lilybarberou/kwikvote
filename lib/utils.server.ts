@@ -9,7 +9,7 @@ export const sendDiscordMessage = async ({
   description?: string;
   fields?: { name: string; value: string; inline?: boolean }[];
 }) => {
-  await fetch(env.DISCORD_WEBHOOK_URL!, {
+  const res = await fetch(env.DISCORD_WEBHOOK_URL!, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -24,4 +24,5 @@ export const sendDiscordMessage = async ({
       ],
     }),
   });
+  if (!res.ok) throw new Error(`Discord webhook failed: ${res.status}`);
 };
