@@ -84,11 +84,13 @@ const client = () => ({
             ? v.pollId === where.pollId
             : where.id!.in.includes(v.id),
         )
-        .map((v) => clone({ id: v.id, subscriptions: v.subscriptions })),
-    findUnique: async ({ where }: { where: { id: string } }) => {
-      const vote = db.votes.find((v) => v.id === where.id);
-      return vote ? { choices: clone(vote.choices) } : null;
-    },
+        .map((v) =>
+          clone({
+            id: v.id,
+            choices: v.choices,
+            subscriptions: v.subscriptions,
+          }),
+        ),
   },
   slot: {
     update: async ({
@@ -123,11 +125,11 @@ const globalForPrisma = globalThis as unknown as { prisma: unknown };
 const previousPrisma = globalForPrisma.prisma;
 globalForPrisma.prisma = fakePrisma;
 const require = createRequire(import.meta.url);
+// no push notification: record them
+const webpush = require("web-push");
 delete require.cache[require.resolve("./cron.js")];
 const cron = require("./cron.js");
 
-// no push notification: record them
-const webpush = require("web-push");
 const sent: {
   endpoint: string;
   payload: { title: string; body: string; link: string };
@@ -363,6 +365,29 @@ describe("cron.js doStuff", () => {
     // saturday is not opened yet
     expect(arrays("sat").waitingListReregistered).toEqual(["C"]);
     expect(db.schedules).toEqual([]);
+  });
+
+  test("an error on a poll keeps its schedules and doesn't block the other polls", async () => {
+    addPoll("broken", [{ id: "b-fri", max: 1, day: 4 }]);
+    addPoll("ok", [
+      { id: "o-fri", max: 1, day: 4 },
+      { id: "o-sat", max: 1, day: 5 },
+    ]);
+    addSchedule("broken", "b-fri");
+    addSchedule("ok", "o-fri");
+    // inconsistent data: reregistered on a slot it said no to, the cascade never ends
+    setArrays("b-fri", { waitingListReregistered: ["X"] });
+    addVote("broken", "X", [no("b-fri")]);
+    setArrays("o-fri", { waitingListReregistered: ["A"] });
+    setArrays("o-sat", { registered: ["A"] });
+    addVote("ok", "A", [yes("o-fri"), yes("o-sat", true)]);
+
+    vi.setSystemTime(opening("o-fri") + 1);
+    await cron.doStuff();
+
+    expect(db.schedules.map((s) => s.id)).toEqual(["cron-b-fri"]);
+    expect(arrays("b-fri").waitingListReregistered).toEqual(["X"]);
+    expect(arrays("o-fri").registered).toEqual(["A"]);
   });
 
   test("a deleted poll: its schedules are removed", async () => {

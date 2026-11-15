@@ -356,13 +356,17 @@ alors la priorité déjà enregistrée au lieu de l'effacer.
   aléatoires de 25 opérations **sans priorité** (créations, modifications,
   suppressions de votes, suppressions de créneaux, changements d'ordre des
   créneaux) : résultats strictement identiques.
-- `cron.js` reste autonome (son image Docker ne copie que `cron.js` et
-  `prisma/`) : il reçoit sa propre copie de `getSlotsInVoteOrder` et lit
-  `priority`. Il n'est plus lancé quand il est importé (pour les tests) ; lancé
-  avec `node cron.js`, il fonctionne comme avant.
+- `cron.js` charge `lib/registration.ts` (son image Docker copie ce fichier ;
+  Node 22.18 ou plus en retire lui-même les types) : l'ouverture des
+  réinscriptions (`openReregistrations`) suit le même ordre personnel et les
+  mêmes règles que l'application, sans copie de l'algorithme. Il n'est plus
+  lancé quand il est importé (pour les tests) ; lancé avec `node cron.js`, il
+  fonctionne comme avant.
 - Une boucle de cascade qui ne se termine pas (données incohérentes) lève une
   erreur et annule la transaction, au lieu de tourner jusqu'au délai de la
-  transaction.
+  transaction. Le cron passe par les mêmes fonctions : sans cette limite, le
+  sondage restait verrouillé jusqu'au délai, chaque minute, et ses échéances
+  n'étaient jamais traitées.
 
 ### 3.6 Tests
 
