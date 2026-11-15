@@ -1,6 +1,7 @@
 [phases.setup]
 # no '...': the provider would add its own Node, picked from engines.node
 nixPkgs = ['openssl', 'curl', 'xz']
+# Same version in Dockerfile.cron, Dockerfile.prisma and .node-version.
 # Node 22.23.4: security release of October 21 2026 (CVE-2026-111497, Brotli RCE).
 # Installed from the official nodejs.org build: nixpkgs only has it on master, not
 # in the binary cache, so Nix compiled Node from source on every build.
