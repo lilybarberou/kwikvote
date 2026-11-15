@@ -349,8 +349,13 @@ export const DialogVote = (props: Props) => {
                     size="icon"
                     variant="destructive"
                     aria-label="Supprimer le vote"
+                    disabled={deleteVoteMutation.isPending}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    {deleteVoteMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
