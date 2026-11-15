@@ -44,24 +44,26 @@ export const DialogPollLink = () => {
         onEscapeKeyDown={() => setCreated(null)}
       >
         <AlertDialogTitle>Sondage créé !</AlertDialogTitle>
-        <AlertDialogDescription>
-          <p className="mb-2">Conservez bien votre lien :</p>
-          <div
-            className="flex w-fit cursor-pointer items-center gap-2"
-            onClick={copyPollLink}
-          >
-            <p className="max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap rounded border border-[#ffffff4d] px-2 py-1 md:max-w-[200px]">
-              {window.location.href.split("?")[0]}
-            </p>
-            <Button
-              className="hidden h-fit px-2 py-2 md:block"
-              tabIndex={1}
+        {/* a div: the description holds paragraphs, not allowed in its <p> */}
+        <AlertDialogDescription asChild>
+          <div>
+            <p className="mb-2">Conservez bien votre lien :</p>
+            <div
+              className="flex w-fit cursor-pointer items-center gap-2"
               onClick={copyPollLink}
-              variant="ghost"
-              aria-label="Copier le lien"
             >
-              <Copy className="h-5 w-5" />
-            </Button>
+              <p className="max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap rounded border border-[#ffffff4d] px-2 py-1 md:max-w-[200px]">
+                {window.location.href.split("?")[0]}
+              </p>
+              <Button
+                className="hidden h-fit px-2 py-2 md:block"
+                onClick={copyPollLink}
+                variant="ghost"
+                aria-label="Copier le lien"
+              >
+                <Copy className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </AlertDialogDescription>
         <AlertDialogFooter>
