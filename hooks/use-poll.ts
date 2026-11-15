@@ -30,6 +30,31 @@ type Props = {
 
 const LIMIT = 12;
 
+// apart from usePoll: it reads no search params, so the creation form is
+// rendered on the server instead of waiting for the client (useSearchParams)
+export const useCreatePoll = () => {
+  const router = useRouter();
+  const { toast } = useToast();
+
+  const createPollMutation = useMutation({
+    mutationFn: async (input: CreatePollSchema) => {
+      const data = await createPoll(input);
+      return handleServerResponse(data);
+    },
+    onSuccess: async (pollId) => {
+      router.push(`/poll/${pollId}?created=true`);
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur lors de la création du sondage",
+        description: getErrorMessage(error),
+      });
+    },
+  });
+
+  return { createPollMutation };
+};
+
 export const usePoll = (
   props: Props = { enabled: { getPollById: false, getPolls: false } },
 ) => {
@@ -43,7 +68,6 @@ export const usePoll = (
 
   const params = useParams() as { id: string };
   const pollId = params.id;
-  const router = useRouter();
   const queryClient = useQueryClient();
   const { removePollFromHistory, addPollToHistory } = useHistoryStore();
   const { toast } = useToast();
@@ -108,21 +132,7 @@ export const usePoll = (
   });
 
   // # MUTATIONS
-  const createPollMutation = useMutation({
-    mutationFn: async (input: CreatePollSchema) => {
-      const data = await createPoll(input);
-      return handleServerResponse(data);
-    },
-    onSuccess: async (pollId) => {
-      router.push(`/poll/${pollId}?created=true`);
-    },
-    onError: (error) => {
-      toast({
-        title: "Erreur lors de la création du sondage",
-        description: getErrorMessage(error),
-      });
-    },
-  });
+  const { createPollMutation } = useCreatePoll();
 
   const deletePollMutation = useMutation({
     mutationFn: async (input: { pollId: string; password: string }) => {
