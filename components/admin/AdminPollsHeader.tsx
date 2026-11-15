@@ -7,6 +7,7 @@ import { useDebounceCallback } from "usehooks-ts";
 
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 
 export const AdminPollsHeader = () => {
   const [query, setQuery] = useQueryState("q", parseAsString.withDefault(""));
@@ -24,15 +25,17 @@ export const AdminPollsHeader = () => {
 
   return (
     <div className="flex flex-wrap gap-4 border-b pb-4 dark:border-b-[#ffffff21]">
-      <Input
-        placeholder="Rechercher..."
-        aria-label="Rechercher un sondage"
-        type="search"
-        defaultValue={query}
-        onChange={(e) => handleChange(e.target.value)}
-        className="max-w-xs"
-      />
-      <Button variant="outline" className="ml-auto" onClick={signOut}>
+      <div className="flex w-full max-w-xs flex-col gap-2">
+        <Label htmlFor="admin-search">Rechercher un sondage</Label>
+        <Input
+          id="admin-search"
+          placeholder="Titre ou description..."
+          type="search"
+          defaultValue={query}
+          onChange={(e) => handleChange(e.target.value)}
+        />
+      </div>
+      <Button variant="outline" className="ml-auto self-end" onClick={signOut}>
         Se déconnecter
       </Button>
     </div>

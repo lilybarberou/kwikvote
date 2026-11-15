@@ -4,6 +4,7 @@ import { FAQContent } from "@/components/faq/FAQContent";
 import { ProcessSteps } from "@/components/home/ProcessSteps";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, useAnimationControls } from "framer-motion";
@@ -162,14 +163,16 @@ export const Home = () => {
         onSubmit={onSubmit}
         className="mb-32 flex w-full items-end justify-center gap-2"
       >
-        <Input
-          className="flex-1 sm:w-64 sm:flex-initial"
-          placeholder="Votre email..."
-          aria-label="Votre email"
-          inputMode="email"
-          autoComplete="email"
-          {...register("email")}
-        />
+        <div className="flex flex-1 flex-col gap-2 sm:w-64 sm:flex-initial">
+          <Label htmlFor="home-email">Votre email</Label>
+          <Input
+            id="home-email"
+            placeholder="vous@example.com"
+            inputMode="email"
+            autoComplete="email"
+            {...register("email")}
+          />
+        </div>
         <Button>Rechercher</Button>
       </form>
       <FAQContent />
