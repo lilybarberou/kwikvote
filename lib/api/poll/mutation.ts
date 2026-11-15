@@ -65,7 +65,7 @@ export const deletePoll = pollPwAction.action(
 );
 
 export const updatePoll = pollPwAction
-  .inputSchema(async (s) => s.merge(updatePollSchema))
+  .inputSchema(async (s) => s.extend(updatePollSchema.shape))
   .action(async ({ parsedInput: { pollId, title, description } }) => {
     // not the password: it's only used to authenticate (and can be the admin one)
     await prisma.poll.update({

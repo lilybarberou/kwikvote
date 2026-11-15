@@ -110,10 +110,12 @@ export const deleteSlotById = pollPwAction
 
 export const updateSlotById = pollPwAction
   .inputSchema(async (s) =>
-    s.merge(updateSlotSchema).refine((data) => data.endDate > data.startDate, {
-      message: "End date must be after start date",
-      path: ["endDate"],
-    }),
+    s
+      .extend(updateSlotSchema.shape)
+      .refine((data) => data.endDate > data.startDate, {
+        error: "End date must be after start date",
+        path: ["endDate"],
+      }),
   )
   .action(
     async ({

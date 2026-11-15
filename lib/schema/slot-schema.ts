@@ -18,7 +18,7 @@ export const slotFormSchema = z
       parisDateTimeToUtc(slot.endDate, slot.endTime) >
         parisDateTimeToUtc(slot.startDate, slot.startTime),
     {
-      message: "La fin du créneau doit être après son début",
+      error: "La fin du créneau doit être après son début",
       path: ["endTime"],
     },
   );
