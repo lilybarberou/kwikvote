@@ -23,7 +23,8 @@ const SearchSchema = z.object({
 
 export const Home = () => {
   const controls = useAnimationControls();
-  const { theme } = useTheme();
+  // resolvedTheme: theme is "system" by default, which is neither light nor dark
+  const { resolvedTheme: theme } = useTheme();
   const isClient = useIsClient();
 
   useEffect(() => {
