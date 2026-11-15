@@ -26,6 +26,8 @@ export const AdminPollsHeader = () => {
     <div className="flex flex-wrap gap-4 border-b pb-4 dark:border-b-[#ffffff21]">
       <Input
         placeholder="Rechercher..."
+        aria-label="Rechercher un sondage"
+        type="search"
         defaultValue={query}
         onChange={(e) => handleChange(e.target.value)}
         className="max-w-xs"

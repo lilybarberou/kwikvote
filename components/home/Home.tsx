@@ -80,7 +80,7 @@ export const Home = () => {
           size="icon"
         >
           <Link href="#faq" aria-label="FAQ">
-            <HelpCircle className="h-5 w-5" />
+            <HelpCircle aria-hidden className="h-5 w-5" />
           </Link>
         </Button>
       </div>
@@ -165,7 +165,9 @@ export const Home = () => {
         <Input
           className="flex-1 sm:w-64 sm:flex-initial"
           placeholder="Votre email..."
+          aria-label="Votre email"
           inputMode="email"
+          autoComplete="email"
           {...register("email")}
         />
         <Button>Rechercher</Button>

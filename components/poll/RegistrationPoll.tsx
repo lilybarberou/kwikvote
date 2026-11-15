@@ -135,6 +135,7 @@ export const RegistrationPoll = ({ poll }: Props) => {
             onClick={() => updateAlert("pollLegend", true)}
             variant="ghost"
             className="h-fit p-1"
+            aria-label="Masquer la légende"
           >
             <XIcon className="mx-auto h-3 w-3 stroke-gray-700 dark:stroke-gray-400" />
           </Button>

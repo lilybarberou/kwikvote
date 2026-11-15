@@ -19,7 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardTitle } from "@/components/ui/card";
+import { Card, CardTitle } from "@/components/ui/card";
 import {
   Popover,
   PopoverContent,
@@ -171,11 +171,14 @@ export default function PollPage() {
   if (!poll)
     return (
       <div className="mx-auto mt-32 flex flex-col items-center justify-center">
-        <BarChart3 className="mb-10 h-24 w-24" />
-        <p className="text-2xl font-bold">Ce sondage n'existe pas</p>
+        <BarChart3 aria-hidden className="mb-10 h-24 w-24" />
+        <h1 className="text-2xl font-bold">Ce sondage n'existe pas</h1>
         <p className="text-center text-muted-foreground">
           Vous pouvez créer un sondage via la{" "}
-          <Link className="text-primary" href="/poll/creer">
+          <Link
+            className="text-primary underline underline-offset-4"
+            href="/poll/creer"
+          >
             page de création
           </Link>
           .
@@ -198,7 +201,8 @@ export default function PollPage() {
                 <CardTitle className="text-lg">
                   Activer les notifications
                 </CardTitle>
-                <CardDescription>
+                {/* not CardDescription: a <p> can't hold the <p> and the buttons */}
+                <div className="text-sm text-muted-foreground">
                   <p>
                     Vous recevrez une notification lorsqu'un nouveau commentaire
                     sera posté
@@ -212,7 +216,7 @@ export default function PollPage() {
                     </Button>
                     <Button onClick={enableNotifications}>Activer</Button>
                   </div>
-                </CardDescription>
+                </div>
               </Card>
             </motion.div>
           )}
@@ -275,7 +279,7 @@ export default function PollPage() {
           )}
           {notificationsPermission === "granted" && (
             <Popover>
-              <PopoverTrigger>
+              <PopoverTrigger aria-label="Notifications">
                 <div
                   className={cn(
                     "flex h-10 w-10 items-center justify-center rounded-sm border text-black",

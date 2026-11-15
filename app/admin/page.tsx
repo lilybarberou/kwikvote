@@ -22,6 +22,7 @@ export default async function Page({
 
   return (
     <div className="space-y-8">
+      <h1 className="sr-only">Administration</h1>
       <AdminPollsHeader />
       <AdminPollsList />
     </div>

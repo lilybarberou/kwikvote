@@ -55,6 +55,7 @@ export const Navigation = () => {
             <Link href="/">
               <div className="text-md mr-4 flex items-center gap-2 font-semibold">
                 <svg
+                  aria-hidden
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
                   height="22.66"
@@ -77,8 +78,9 @@ export const Navigation = () => {
               href="https://kwikvote.featurebase.app/fr/roadmap"
               target="_blank"
               rel="noreferrer"
+              aria-label="Roadmap (nouvel onglet)"
             >
-              <SparklesIcon className="h-4 w-4" />
+              <SparklesIcon aria-hidden className="h-4 w-4" />
             </a>
           </div>
           <div className="flex gap-2">
@@ -103,6 +105,7 @@ export const Navigation = () => {
                 </Tooltip>
               </TooltipProvider>
               <PopoverContent
+                aria-label="Sondages consultés"
                 className="max-w-[200px] rounded border border-[#ffffff29] bg-[#00000026] p-0 backdrop-blur-lg"
                 align="end"
               >
@@ -137,7 +140,10 @@ export const Navigation = () => {
         </div>
       </nav>
       {mobileNavOpen && (
-        <div className="fixed left-0 top-[56px] flex h-screen w-full flex-col bg-[#00000068] backdrop-blur-lg">
+        <nav
+          aria-label="Menu"
+          className="fixed left-0 top-[56px] flex h-screen w-full flex-col bg-[#00000068] backdrop-blur-lg"
+        >
           <ActiveLink mobileItem hasBorder label="Accueil" href="/" />
           <ActiveLink
             mobileItem
@@ -155,7 +161,7 @@ export const Navigation = () => {
             Roadmap
             <SparklesIcon className="h-4 w-4" />
           </a>
-        </div>
+        </nav>
       )}
     </>
   );

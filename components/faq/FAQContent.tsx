@@ -15,7 +15,7 @@ export const FAQContent = (props: Props) => {
     <Accordion className="w-full max-w-3xl" id="faq" type="single" collapsible>
       {props.faqPage && (
         <AccordionItem value="item-1">
-          <AccordionTrigger>
+          <AccordionTrigger headingLevel={props.faqPage ? 2 : 3}>
             Comment recevoir les notifications ?
           </AccordionTrigger>
           <AccordionContent>
@@ -25,7 +25,7 @@ export const FAQContent = (props: Props) => {
               notifications ! Ensuite, inscrivez-vous sur un créneau, quelques
               soient vos choix.
             </p>
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-300">
+            <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
               (note: si vous avez désactivé les notifications de votre
               navigateur, vous ne pourrez pas les recevoir)
             </p>
@@ -41,7 +41,7 @@ export const FAQContent = (props: Props) => {
         </AccordionItem>
       )}
       <AccordionItem value="item-2">
-        <AccordionTrigger>
+        <AccordionTrigger headingLevel={props.faqPage ? 2 : 3}>
           Ai-je besoin d'un compte pour pouvoir utiliser KwikVote ?
         </AccordionTrigger>
         <AccordionContent>
@@ -52,7 +52,7 @@ export const FAQContent = (props: Props) => {
       </AccordionItem>
       {props.faqPage && (
         <AccordionItem value="item-3">
-          <AccordionTrigger>
+          <AccordionTrigger headingLevel={props.faqPage ? 2 : 3}>
             À quoi sert l'email dans la création du sondage ?
           </AccordionTrigger>
           <AccordionContent>
@@ -77,7 +77,7 @@ export const FAQContent = (props: Props) => {
         </AccordionItem>
       )}
       <AccordionItem value="item-4">
-        <AccordionTrigger>
+        <AccordionTrigger headingLevel={props.faqPage ? 2 : 3}>
           D'autres questions, des bugs, ou de nouvelles idées ?
         </AccordionTrigger>
         <AccordionContent>

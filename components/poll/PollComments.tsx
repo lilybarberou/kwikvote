@@ -68,11 +68,13 @@ export const PollComments = () => {
         <Input
           className="w-[230px]"
           placeholder="Auteur"
+          aria-label="Auteur"
           maxLength={COMMENT_AUTHOR_MAX_LENGTH}
           {...register("author", { required: true })}
         />
         <Textarea
           placeholder="Message"
+          aria-label="Message"
           maxLength={COMMENT_TEXT_MAX_LENGTH}
           {...register("text", { required: true })}
         />
