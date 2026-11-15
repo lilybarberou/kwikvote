@@ -58,6 +58,7 @@ export const DialogPollLink = () => {
               tabIndex={1}
               onClick={copyPollLink}
               variant="ghost"
+              aria-label="Copier le lien"
             >
               <Copy className="h-5 w-5" />
             </Button>

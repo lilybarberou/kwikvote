@@ -91,6 +91,7 @@ export const Navigation = () => {
                         variant="outline"
                         size="icon"
                         className="border-[#41414121] bg-transparent hover:bg-transparent dark:border-[#ffffff36]"
+                        aria-label="Sondages consultés"
                       >
                         <History className="h-5 w-5" />
                       </Button>
@@ -113,7 +114,7 @@ export const Navigation = () => {
               className="h-10 w-10 p-0 sm:h-auto sm:w-auto sm:px-4 sm:py-2"
               asChild
             >
-              <Link href="/poll/creer">
+              <Link href="/poll/creer" aria-label="Créer un sondage">
                 <PlusCircle className="h-5 w-5 sm:hidden" />
                 <span className="hidden sm:block">Créer un sondage</span>
               </Link>
@@ -123,6 +124,8 @@ export const Navigation = () => {
               className="sm:hidden"
               variant="secondary"
               size="icon"
+              aria-label={mobileNavOpen ? "Fermer le menu" : "Ouvrir le menu"}
+              aria-expanded={mobileNavOpen}
             >
               {mobileNavOpen ? (
                 <X className="h-5 w-5" />
