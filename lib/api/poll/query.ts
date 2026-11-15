@@ -76,7 +76,9 @@ export const getPollById = action
         },
       },
     });
-    if (!poll) throw new Error("Poll not found");
+    // not an error: the client tells "this poll doesn't exist" from a failure
+    // (network, database) only by this null
+    if (!poll) return null;
 
     const { password, ...rest } = poll;
 
