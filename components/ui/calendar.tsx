@@ -44,8 +44,10 @@ function Calendar({
         day_selected:
           "bg-primary-solid text-primary-foreground hover:bg-primary-solid hover:text-primary-foreground focus:bg-primary-solid focus:text-primary-foreground",
         day_today: "bg-accent text-accent-foreground",
+        // no opacity-50: the days of the other months stay clickable, they
+        // need the 4.5:1 contrast of text-muted-foreground
         day_outside:
-          "day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
+          "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30",
         day_disabled: "text-muted-foreground opacity-50",
         day_range_middle:
           "aria-selected:bg-accent aria-selected:text-accent-foreground",
