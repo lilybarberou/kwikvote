@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale/fr";
 import { Calendar as CalendarIcon } from "lucide-react";
 import * as React from "react";
+import { fr as calendarFr } from "react-day-picker/locale";
 import { Controller } from "react-hook-form";
 import { useIsClient } from "usehooks-ts";
 
@@ -54,7 +55,7 @@ export const DatePicker = (props: any) => {
           >
             <Calendar
               lang="fr"
-              locale={fr}
+              locale={calendarFr}
               selected={field.value}
               defaultMonth={field.value}
               onSelect={(e) => {
@@ -62,14 +63,9 @@ export const DatePicker = (props: any) => {
                 setOpen(false);
               }}
               mode="single"
-              // the buttons of the months are named in English by default
-              labels={{
-                labelPrevious: () => "Aller au mois précédent",
-                labelNext: () => "Aller au mois suivant",
-              }}
               // clicking the selected day keeps it instead of clearing it
               required
-              initialFocus
+              autoFocus
             />
           </PopoverContent>
         </Popover>
