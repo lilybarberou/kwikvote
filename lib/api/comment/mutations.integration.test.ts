@@ -9,13 +9,12 @@ import { createComment } from "./mutations";
 const sent = vi.hoisted(
   () => [] as { endpoint: string; payload: Record<string, string> }[],
 );
+// web-push 4 has named exports only
 vi.mock("web-push", () => ({
-  default: {
-    setVapidDetails: () => {},
-    sendNotification: async (sub: { endpoint: string }, payload: string) => {
-      sent.push({ endpoint: sub.endpoint, payload: JSON.parse(payload) });
-      return { statusCode: 201 };
-    },
+  setVapidDetails: () => {},
+  sendNotification: async (sub: { endpoint: string }, payload: string) => {
+    sent.push({ endpoint: sub.endpoint, payload: JSON.parse(payload) });
+    return { statusCode: 201 };
   },
 }));
 

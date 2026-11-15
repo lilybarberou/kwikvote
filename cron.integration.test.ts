@@ -1,6 +1,7 @@
 import { createPoll } from "@/lib/api/poll/mutation";
 import { createVote } from "@/lib/api/vote/mutation";
 import { prisma } from "@/prisma/db";
+import { installWebPushCopy } from "@/test/web-push-copy";
 import { createRequire } from "node:module";
 import { v4 } from "uuid";
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest";
@@ -14,10 +15,11 @@ vi.mock("@/lib/utils.server", () => ({ sendDiscordMessage: async () => {} }));
 
 // cron.js reuses the prisma client of prisma/db.ts (globalThis.prisma)
 const require = createRequire(import.meta.url);
+// no push notification from the cron: record them
+const webpush = installWebPushCopy(require);
+delete require.cache[require.resolve("./cron.js")];
 const cron = require("./cron.js");
 
-// no push notification from the cron: record them
-const webpush = require("web-push");
 const sent: { endpoint: string; body: string }[] = [];
 const sendNotification = vi
   .spyOn(webpush, "sendNotification")

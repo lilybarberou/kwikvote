@@ -20,14 +20,13 @@ const push = vi.hoisted(() => ({
   sent: [] as { endpoint: string; payload: Record<string, string> }[],
   fail: new Set<string>(),
 }));
+// web-push 4 has named exports only
 vi.mock("web-push", () => ({
-  default: {
-    setVapidDetails: vi.fn(),
-    sendNotification: async (sub: { endpoint: string }, payload: string) => {
-      if (push.fail.has(sub.endpoint)) throw new Error("410 Gone");
-      push.sent.push({ endpoint: sub.endpoint, payload: JSON.parse(payload) });
-      return { statusCode: 201 };
-    },
+  setVapidDetails: vi.fn(),
+  sendNotification: async (sub: { endpoint: string }, payload: string) => {
+    if (push.fail.has(sub.endpoint)) throw new Error("410 Gone");
+    push.sent.push({ endpoint: sub.endpoint, payload: JSON.parse(payload) });
+    return { statusCode: 201 };
   },
 }));
 

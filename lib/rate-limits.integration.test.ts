@@ -18,10 +18,8 @@ import {
 // (the password ones are in lib/safe-action.test.ts)
 
 vi.mock("web-push", () => ({
-  default: {
-    setVapidDetails: () => {},
-    sendNotification: async () => ({ statusCode: 201 }),
-  },
+  setVapidDetails: () => {},
+  sendNotification: async () => ({ statusCode: 201 }),
 }));
 const errors = vi.spyOn(console, "error").mockImplementation(() => {});
 
