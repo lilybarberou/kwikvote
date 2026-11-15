@@ -48,6 +48,8 @@ export default function RootLayout({
         <Script
           src="https://umami.lilybarberou.fr/script.js"
           data-website-id={env.UMAMI_WEBSITE_ID}
+          // never the query strings (?password= of the admin, ?email=)
+          data-exclude-search="true"
         />
       </head>
       <body
