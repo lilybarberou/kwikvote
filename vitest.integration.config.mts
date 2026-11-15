@@ -14,6 +14,7 @@ export default defineConfig({
     },
   },
   test: {
+    name: "integration",
     include: ["**/*.integration.test.ts"],
     exclude: ["node_modules/**", ".next/**"],
     setupFiles: ["./test/integration-setup.ts"],
