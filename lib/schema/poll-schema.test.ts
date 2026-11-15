@@ -52,6 +52,15 @@ describe("createPollSchema", () => {
         ],
       }),
     ).toBe(false);
+    // a slot ending before (or when) it starts, like updateSlotById
+    for (const endDate of ["2099-06-12T16:00:00Z", "2099-06-12T15:00:00Z"])
+      expect(
+        parse({
+          slots: [
+            { startDate: "2099-06-12T16:00:00Z", endDate, maxParticipants: 1 },
+          ],
+        }),
+      ).toBe(false);
     // null or a number would become a 1970 date
     for (const date of [null, 0, true])
       expect(
