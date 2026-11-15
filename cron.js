@@ -169,6 +169,25 @@ const doStuff = async () => {
   }
 };
 
+// the same as sendPush of lib/push.server.ts (this file is CommonJS): on a
+// 404 or 410, the subscription expired or the browser unsubscribed, it will
+// never work again (RFC 8030): it is deleted; other errors are only logged
+const sendPush = (sub, payload) =>
+  webpush
+    .sendNotification(
+      { endpoint: sub.endpoint, keys: { auth: sub.auth, p256dh: sub.p256dh } },
+      payload,
+    )
+    .then((res) => console.log("notif envoyée: ", res.statusCode))
+    .catch((err) => {
+      if (err?.statusCode !== 404 && err?.statusCode !== 410)
+        return console.log(err);
+      return prisma.subscription
+        .deleteMany({ where: { endpoint: sub.endpoint } })
+        .then(() => console.log("abonnement expiré supprimé"))
+        .catch((err) => console.log(err));
+    });
+
 const sendNotifications = async ({ pollId, poll, newPoll, initialPoll }) => {
   // get new people registered to send notifications
   const votesNewlyRegistered = newPoll.slots.reduce(
@@ -234,21 +253,7 @@ const sendNotifications = async ({ pollId, poll, newPoll, initialPoll }) => {
         )?.subscriptions;
         if (!voteSubs) return;
 
-        voteSubs.forEach((sub) => {
-          webpush
-            .sendNotification(
-              {
-                endpoint: sub.endpoint,
-                keys: {
-                  auth: sub.auth,
-                  p256dh: sub.p256dh,
-                },
-              },
-              payload,
-            )
-            .then((res) => console.log("notif envoyée: ", res.statusCode))
-            .catch((err) => console.log(err));
-        });
+        voteSubs.forEach((sub) => sendPush(sub, payload));
       });
     },
   );
