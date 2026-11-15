@@ -183,6 +183,40 @@ describe("createVote with priorities (local database)", () => {
     expect(after.find((c) => c.slotId === fri)?.priority).toBe(false);
   });
 
+  test("an edit with other choice ids keeps one choice per slot", async () => {
+    const poll = await createRegistrationPoll([2, 2]);
+    const [fri, sat] = poll.slots.map((slot) => slot.id);
+    const id = ids();
+
+    await vote(poll, id("P"), ["yes", "yes"]);
+    const before = await prisma.voteChoice.findMany({
+      where: { voteId: id("P") },
+    });
+
+    // ids the server doesn't know (stale or forged client)
+    const res = await createVote({
+      id: id("P"),
+      name: "P",
+      pollId: poll.id,
+      choices: [
+        { id: v4(), slotId: fri, choice: 2 },
+        { id: v4(), slotId: sat, choice: 1 },
+      ],
+    });
+    expect(res?.serverError).toBeUndefined();
+
+    const after = await prisma.voteChoice.findMany({
+      where: { voteId: id("P") },
+      orderBy: { slotId: "asc" },
+    });
+    expect(after.map((c) => c.id).sort()).toEqual(
+      before.map((c) => c.id).sort(),
+    );
+    expect(after.find((c) => c.slotId === fri)?.choice).toBe(2);
+    expect(after.find((c) => c.slotId === sat)?.choice).toBe(1);
+    expect((await slotsOf(poll))[0].notComing).toEqual([id("P")]);
+  });
+
   test("deleting the vote of the priority holder gives its spot to the waiting list", async () => {
     const poll = await createRegistrationPoll([1, 1]);
     const [, sat] = poll.slots.map((slot) => slot.id);
