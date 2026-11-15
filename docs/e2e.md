@@ -73,6 +73,7 @@ vraies clés (webhook Discord, VAPID). La suite ne s'en sert jamais :
 | -------------------------- | ----------------------------------------------------------------------------------------------- |
 | `vote-prioritaire.spec.ts` | vote prioritaire : l'exemple vendredi / samedi (place libre, puis samedi complet)               |
 | `liste-attente.spec.ts`    | liste d'attente, promotion et notification, délai d'ouverture (passé ou non)                    |
+| `creation.spec.ts`         | création de chaque type, validation, Discord, « Mes sondages », copie du lien                   |
 | `accueil.spec.ts`          | image de l'accueil affichée sans JavaScript (LCP), animée au changement d'onglet                |
 | `securite.spec.ts`         | en-têtes de sécurité (pages, actions serveur, service worker), statistiques sans query string   |
 
