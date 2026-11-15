@@ -85,7 +85,7 @@ const NoPolls = () => {
 };
 
 // outside of Polls: a component created during render is remounted on each render
-const LinkMotion = m(Link);
+const LinkMotion = m.create(Link);
 
 const Polls = ({ polls }: { polls: { id: string; title: string }[] }) => {
   return (
