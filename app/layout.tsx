@@ -42,7 +42,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr" suppressHydrationWarning>
+    // Next 16 no longer resets the smooth scroll of globals.css on navigation
+    // without this attribute
+    <html lang="fr" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <Script
           src="https://umami.lilybarberou.fr/script.js"
