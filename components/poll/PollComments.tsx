@@ -1,6 +1,10 @@
 "use client";
 
 import { useComment } from "@/hooks/use-comment";
+import {
+  COMMENT_AUTHOR_MAX_LENGTH,
+  COMMENT_TEXT_MAX_LENGTH,
+} from "@/lib/schema/comment-schema";
 import { useCommentsStore } from "@/lib/store/commentsStore";
 import { useNotificationsStore } from "@/lib/store/notificationsStore";
 import { format } from "date-fns";
@@ -64,10 +68,12 @@ export const PollComments = () => {
         <Input
           className="w-[230px]"
           placeholder="Auteur"
+          maxLength={COMMENT_AUTHOR_MAX_LENGTH}
           {...register("author", { required: true })}
         />
         <Textarea
           placeholder="Message"
+          maxLength={COMMENT_TEXT_MAX_LENGTH}
           {...register("text", { required: true })}
         />
         <Button disabled={createCommentMutation.isPending}>
