@@ -230,13 +230,23 @@ export const DialogVote = (props: Props) => {
         </Label>
         <Input
           autoFocus={!Boolean(currentVoteId)}
-          className="mb-4 mt-2"
+          className={errors.name ? "mt-2" : "mb-4 mt-2"}
+          aria-invalid={!!errors.name}
+          aria-describedby={errors.name ? "error-name" : undefined}
           id="name"
           defaultValue={votes[currentVoteId]?.name ?? ""}
           placeholder="John Doe"
           maxLength={VOTE_NAME_MAX_LENGTH}
           {...register("name", { required: true })}
         />
+        {errors.name && (
+          <p
+            id="error-name"
+            className="mb-4 mt-1 text-sm text-destructive dark:text-red-400"
+          >
+            Champ requis
+          </p>
+        )}
         {isRegistrationPoll && (
           <p id="priority-help" className="text-sm text-muted-foreground">
             Avant l'ouverture des réinscriptions, vous n'êtes inscrit que sur un
@@ -277,6 +287,12 @@ export const DialogVote = (props: Props) => {
                       <SelectTrigger
                         autoFocus={currentVoteId ? index == 0 : false}
                         aria-label={`Choix – ${getDate(slot.startDate)} ${timeTwoDigit(slot.startDate)}`}
+                        aria-invalid={!!errors[`choice-${slot.id}`]}
+                        aria-describedby={
+                          errors[`choice-${slot.id}`]
+                            ? `error-choice-${slot.id}`
+                            : undefined
+                        }
                         className="min-w-[180px]"
                       >
                         <SelectValue placeholder="À définir" />
@@ -292,7 +308,10 @@ export const DialogVote = (props: Props) => {
                   )}
                 />
                 {errors[`choice-${slot.id}`] && (
-                  <p className="ml-auto text-sm text-destructive dark:text-red-400">
+                  <p
+                    id={`error-choice-${slot.id}`}
+                    className="ml-auto text-sm text-destructive dark:text-red-400"
+                  >
                     Champ requis
                   </p>
                 )}
