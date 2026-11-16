@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useSubscriptionHash } from "@/hooks/use-subscription-hash";
 import { GetPollById } from "@/lib/api/poll/query";
 import { useAlertStore } from "@/lib/store/alertStore";
 import { useLocalVotesStore } from "@/lib/store/localVotesStore";
@@ -45,6 +46,10 @@ export const RegistrationPoll = ({ poll }: Props) => {
   const [showAllNotComing, setShowAllNotComing] = useState(false);
   const { votes } = useVotesStore();
   const { subscription } = useNotificationsStore();
+  const subscriptionHash = useSubscriptionHash(poll.id);
+  // a vote with the push subscription of this browser
+  const isSubscribedVote = (vote?: (typeof votes)[string]) =>
+    !!subscriptionHash && !!vote?.subscriptionHashes.includes(subscriptionHash);
   const { alerts, updateAlert } = useAlertStore();
   const { localVotes } = useLocalVotesStore();
 
@@ -226,17 +231,13 @@ export const RegistrationPoll = ({ poll }: Props) => {
                       .sort((a, b) => {
                         if (!isNotComingColumn) return 0;
                         const isAuthor = (voteId: string) =>
-                          !!votes[voteId]?.subscriptions?.some(
-                            (sub) => sub.endpoint === subscription?.endpoint,
-                          );
+                          isSubscribedVote(votes[voteId]);
                         return Number(isAuthor(b)) - Number(isAuthor(a));
                       })
                       .map((voteId) => {
                         const vote = votes[voteId];
                         const isAuthorOfVote =
-                          vote?.subscriptions?.some(
-                            (sub) => sub.endpoint === subscription?.endpoint,
-                          ) ||
+                          isSubscribedVote(vote) ||
                           localVotes[poll.id]?.some(
                             (localVoteId) => localVoteId === voteId,
                           );

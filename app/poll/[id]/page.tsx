@@ -35,6 +35,7 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { usePoll } from "@/hooks/use-poll";
 import { useSubscription } from "@/hooks/use-subscription";
+import { useSubscriptionHash } from "@/hooks/use-subscription-hash";
 import { env } from "@/lib/env";
 import { CreateSubscriptionSchema } from "@/lib/schema/subscription-schema";
 import { useCommentsStore } from "@/lib/store/commentsStore";
@@ -79,9 +80,12 @@ export default function PollPage() {
     getPollByIdQuery: { data: poll, isLoading, isError, isFetching, refetch },
   } = usePoll({ enabled: { getPollById: true } });
   const isRegistrationPoll = poll?.type == 2;
-  const hasSomeVotes = Object.values(votes).some((v) =>
-    v.subscriptions.some((s) => s.endpoint === subscription?.endpoint),
-  );
+  const subscriptionHash = useSubscriptionHash(poll?.id ?? "");
+  const hasSomeVotes =
+    !!subscriptionHash &&
+    Object.values(votes).some((v) =>
+      v.subscriptionHashes.includes(subscriptionHash),
+    );
 
   // NOTIFICATIONS MANAGEMENT
   useEffect(() => {
