@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",
+    "test:integration": "vitest run -c vitest.integration.config.mts",
     "prisma": "npx prisma generate && npx prisma db push",
     "studio": "npx prisma studio",
     "doppler": "doppler secrets download --format env --no-file > .env",

@@ -6,7 +6,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { TrashIcon } from "lucide-react";
 import Link from "next/link";
-import { parseAsString, useQueryState } from "nuqs";
 import { useIntersectionObserver } from "usehooks-ts";
 
 import { Button } from "../ui/button";
@@ -14,8 +13,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 export const AdminPollsList = () => {
   const queryClient = useQueryClient();
-
-  const [password] = useQueryState("password", parseAsString.withDefault(""));
 
   const {
     getPollsQuery: { data: polls, hasNextPage, fetchNextPage },
@@ -83,7 +80,8 @@ export const AdminPollsList = () => {
                   className="w-full"
                   onClick={() =>
                     deletePollMutation.mutate(
-                      { pollId: poll.id, password },
+                      // the admin session cookie authorizes it
+                      { pollId: poll.id, password: "" },
                       {
                         onSuccess: () => {
                           queryClient.invalidateQueries({

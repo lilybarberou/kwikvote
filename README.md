@@ -23,6 +23,7 @@ This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-opti
 ## Tests
 
 - `pnpm test`: unit tests (Vitest, no database)
+- `pnpm test:integration`: server actions, on a **local** database only
 - CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs all of them, the lint, the types and `next build` on each pull request and each push to `main`, with test values only (no secret)
 
 Never run them, nor `pnpm build` / `pnpm prisma`, with the `DATABASE_URL` of the `.env`: it can be the production one.
