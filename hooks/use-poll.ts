@@ -56,14 +56,20 @@ export const usePoll = (
     queryKey: getPollByIdKey,
     queryFn: async () => {
       const res = await getPollById({ pollId });
-      const data = res?.data!;
 
-      if (data) {
-        initVotes(data.votes);
-        initComments(data.comments);
-        addPollToHistory(pollId, data.title || "");
-      } else removePollFromHistory(pollId);
+      // only a poll that doesn't exist (any more) leaves the history
+      if (res?.data === null) {
+        removePollFromHistory(pollId);
+        return null;
+      }
+      // any other failure (network, server error) throws: the query is in
+      // error and retried, the poll stays in the history. Not null here: null
+      // was handled above, handleServerResponse throws without data
+      const data = handleServerResponse(res)!;
 
+      initVotes(data.votes);
+      initComments(data.comments);
+      addPollToHistory(pollId, data.title || "");
       return data;
     },
     enabled: enabled?.getPollById,

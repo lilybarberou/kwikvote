@@ -1,5 +1,4 @@
 import { getPollById } from "@/lib/api/poll/query";
-import { handleServerResponse } from "@/lib/utils";
 import { Metadata } from "next";
 import { PropsWithChildren } from "react";
 
@@ -10,12 +9,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params;
   const data = await getPollById({ pollId: id });
-  if (data?.serverError) return { title: "Ce sondage n'existe pas" };
-
-  const poll = handleServerResponse(data);
+  if (data?.data === null) return { title: "Ce sondage n'existe pas" };
+  // not loaded: the default title, the page tells the error
+  if (!data?.data) return {};
 
   return {
-    title: poll?.title,
+    title: data.data.title,
   };
 }
 
