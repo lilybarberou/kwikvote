@@ -5,7 +5,8 @@ import { useTheme } from "next-themes";
 import Image from "next/image";
 
 export const Footer = () => {
-  const { theme } = useTheme();
+  // resolvedTheme: theme is "system" by default, which is neither light nor dark
+  const { resolvedTheme: theme } = useTheme();
 
   return (
     <footer className="mt-auto w-full">

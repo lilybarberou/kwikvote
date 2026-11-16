@@ -1,17 +1,24 @@
 import { HelpCircle, Star } from "lucide-react";
 
 import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
 
 export const RegistrationPollHelp = () => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
+        <Button variant="ghost" size="icon" aria-label="Aide">
           <HelpCircle className="h-5 w-5" />
         </Button>
       </DialogTrigger>
       <DialogContent className="w-11/12 max-w-[400px] leading-none">
+        {/* names the dialog; no visible title in this design */}
+        <DialogTitle className="sr-only">Aide</DialogTitle>
         <p>Liste d'attente :</p>
         <p className="text-sm text-muted-foreground">
           Vous passez en inscrit dès qu'une place se libère.

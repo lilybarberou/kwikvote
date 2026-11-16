@@ -38,7 +38,9 @@ export const MyPolls = () => {
         <Input
           className="flex-1 sm:w-64 sm:flex-initial"
           placeholder="Votre email..."
+          aria-label="Votre email"
           inputMode="email"
+          autoComplete="email"
           {...register("email")}
         />
         <Button disabled={!!(email && isLoading)}>
@@ -71,11 +73,14 @@ export const MyPolls = () => {
 const NoPolls = () => {
   return (
     <div className="mt-24 flex flex-col items-center justify-center">
-      <Bird className="mb-10 h-24 w-24" />
-      <p className="text-2xl font-bold">C'est vide !</p>
+      <Bird aria-hidden className="mb-10 h-24 w-24" />
+      <h2 className="text-2xl font-bold">C'est vide !</h2>
       <p className="text-center text-muted-foreground">
         Vous pouvez créer un sondage via la{" "}
-        <Link className="text-primary" href="/poll/creer">
+        <Link
+          className="text-primary underline underline-offset-4"
+          href="/poll/creer"
+        >
           page de création
         </Link>
         .

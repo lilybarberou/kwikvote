@@ -57,8 +57,15 @@ export default function RootLayout({
       >
         <NuqsAdapter>
           <Providers>
+            {/* first stop of the keyboard, only visible when focused */}
+            <a
+              href="#contenu"
+              className="sr-only rounded-md bg-background px-4 py-2 text-sm font-medium focus:not-sr-only focus:fixed focus:left-4 focus:top-2 focus:z-[60] focus:ring-2 focus:ring-ring"
+            >
+              Aller au contenu
+            </a>
             <Navigation />
-            <main className="w-full max-w-6xl px-4">
+            <main id="contenu" className="w-full max-w-6xl px-4">
               {children}
               <Toaster />
             </main>

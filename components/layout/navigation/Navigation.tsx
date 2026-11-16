@@ -55,6 +55,7 @@ export const Navigation = () => {
             <Link href="/">
               <div className="text-md mr-4 flex items-center gap-2 font-semibold">
                 <svg
+                  aria-hidden
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
                   height="22.66"
@@ -77,8 +78,9 @@ export const Navigation = () => {
               href="https://kwikvote.featurebase.app/fr/roadmap"
               target="_blank"
               rel="noreferrer"
+              aria-label="Roadmap (nouvel onglet)"
             >
-              <SparklesIcon className="h-4 w-4" />
+              <SparklesIcon aria-hidden className="h-4 w-4" />
             </a>
           </div>
           <div className="flex gap-2">
@@ -91,6 +93,7 @@ export const Navigation = () => {
                         variant="outline"
                         size="icon"
                         className="border-[#41414121] bg-transparent hover:bg-transparent dark:border-[#ffffff36]"
+                        aria-label="Sondages consultés"
                       >
                         <History className="h-5 w-5" />
                       </Button>
@@ -102,6 +105,7 @@ export const Navigation = () => {
                 </Tooltip>
               </TooltipProvider>
               <PopoverContent
+                aria-label="Sondages consultés"
                 className="max-w-[200px] rounded border border-[#ffffff29] bg-[#00000026] p-0 backdrop-blur-lg"
                 align="end"
               >
@@ -113,7 +117,7 @@ export const Navigation = () => {
               className="h-10 w-10 p-0 sm:h-auto sm:w-auto sm:px-4 sm:py-2"
               asChild
             >
-              <Link href="/poll/creer">
+              <Link href="/poll/creer" aria-label="Créer un sondage">
                 <PlusCircle className="h-5 w-5 sm:hidden" />
                 <span className="hidden sm:block">Créer un sondage</span>
               </Link>
@@ -123,6 +127,8 @@ export const Navigation = () => {
               className="sm:hidden"
               variant="secondary"
               size="icon"
+              aria-label={mobileNavOpen ? "Fermer le menu" : "Ouvrir le menu"}
+              aria-expanded={mobileNavOpen}
             >
               {mobileNavOpen ? (
                 <X className="h-5 w-5" />
@@ -134,7 +140,10 @@ export const Navigation = () => {
         </div>
       </nav>
       {mobileNavOpen && (
-        <div className="fixed left-0 top-[56px] flex h-screen w-full flex-col bg-[#00000068] backdrop-blur-lg">
+        <nav
+          aria-label="Menu"
+          className="fixed left-0 top-[56px] flex h-screen w-full flex-col bg-[#00000068] backdrop-blur-lg"
+        >
           <ActiveLink mobileItem hasBorder label="Accueil" href="/" />
           <ActiveLink
             mobileItem
@@ -152,7 +161,7 @@ export const Navigation = () => {
             Roadmap
             <SparklesIcon className="h-4 w-4" />
           </a>
-        </div>
+        </nav>
       )}
     </>
   );

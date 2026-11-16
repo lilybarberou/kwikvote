@@ -61,13 +61,30 @@ export const PollSlots = (props: Props) => {
 
   const VoteIcon = ({ choice }: { choice: number }) => {
     switch (choice) {
+      // role img + label: the icons are the only content of the cells
       case 1:
-        return <CheckCircle className="inline-block h-4 w-4 text-green-400" />;
+        return (
+          <CheckCircle
+            role="img"
+            aria-label="Oui"
+            className="inline-block h-4 w-4 text-green-400"
+          />
+        );
       case 2:
-        return <XCircle className="inline-block h-4 w-4 text-red-400" />;
+        return (
+          <XCircle
+            role="img"
+            aria-label="Non"
+            className="inline-block h-4 w-4 text-red-400"
+          />
+        );
       case 3:
         return (
-          <HelpCircle className="inline-block h-4 w-4 text-[#eeee00] dark:text-yellow-200" />
+          <HelpCircle
+            role="img"
+            aria-label="Ne sais pas"
+            className="inline-block h-4 w-4 text-[#eeee00] dark:text-yellow-200"
+          />
         );
     }
   };
@@ -113,18 +130,27 @@ export const PollSlots = (props: Props) => {
                 )}
               </TableHead>
             ))}
-            <TableHead />
+            <TableHead>
+              <span className="sr-only">Modifier</span>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow className="bg-muted/50">
-            <TableCell className="flex justify-between font-bold">
+            <TableHead
+              scope="row"
+              className="flex h-auto justify-between p-4 font-bold text-foreground"
+            >
               Total{" "}
               <span className="flex gap-1">
                 {Object.keys(votes).length}{" "}
-                <CircleUserRound className="h-5 w-5" />
+                <CircleUserRound
+                  role="img"
+                  aria-label="votants"
+                  className="h-5 w-5"
+                />
               </span>
-            </TableCell>
+            </TableHead>
             {props.slots.map((slot) => (
               <TotalUpvotes slotId={slot.id} key={slot.id} />
             ))}
@@ -132,9 +158,12 @@ export const PollSlots = (props: Props) => {
           </TableRow>
           {Object.values(votes).map((vote) => (
             <TableRow key={vote.id}>
-              <TableCell className="max-w-[220px] overflow-hidden text-ellipsis whitespace-nowrap py-2">
+              <TableHead
+                scope="row"
+                className="h-auto max-w-[220px] overflow-hidden p-4 py-2 font-normal text-ellipsis whitespace-nowrap text-foreground"
+              >
                 {vote.name}
-              </TableCell>
+              </TableHead>
               {vote.choices.map((choice) => (
                 <TableCell className="py-2 text-center" key={choice.id}>
                   <VoteIcon choice={choice.choice} />
@@ -147,6 +176,7 @@ export const PollSlots = (props: Props) => {
                     className="h-8 w-8"
                     size="icon"
                     variant="outline"
+                    aria-label={`Modifier le vote de ${vote.name}`}
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
