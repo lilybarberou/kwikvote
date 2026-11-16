@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { vi } from "vitest";
 
 // the .env of the project can point to a remote (production) database:
@@ -16,4 +17,15 @@ vi.mock("@/lib/admin-session.server", () => ({
   hasAdminSession: async () => false,
   startAdminSession: async () => {},
   endAdminSession: async () => {},
+}));
+
+// no request in these tests: the address of the visitor, for the rate limits
+// (lib/rate-limits.server.ts), is a new one at each call unless a test sets
+// it (setClientIp of test/client-ip.ts)
+vi.mock("next/headers", () => ({
+  headers: async () =>
+    new Headers({
+      "x-real-ip":
+        (globalThis as { __clientIp?: string }).__clientIp ?? randomUUID(),
+    }),
 }));

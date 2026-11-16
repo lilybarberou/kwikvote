@@ -73,10 +73,12 @@ export const usePoll = (
   const getPollsByEmailQuery = useQuery({
     queryKey: getPollsByEmailKey,
     queryFn: async () => {
+      // an error (too many searches) is shown, not taken for "no poll"
       const res = await getPollsByEmail(email.toLowerCase()!);
-      return res?.data;
+      return handleServerResponse(res);
     },
-    enabled: enabled?.getPollsByEmail,
+    retry: false,
+    enabled: !!enabled?.getPollsByEmail,
   });
 
   const getPollsKey = ["getPolls", query];
@@ -152,10 +154,13 @@ export const usePoll = (
     },
   });
 
-  // an invalid password is a server error: no data, handled as false
+  // an invalid password is a server error: no data, handled as false; the
+  // other errors (too many attempts) are thrown, with their message
   const checkPollPasswordMutation = useMutation({
     mutationFn: async (password: string) => {
       const data = await isPollPasswordValid({ pollId, password });
+      if (data?.serverError && data.serverError !== "Mot de passe incorrect")
+        throw new Error(data.serverError);
       return data?.data;
     },
   });

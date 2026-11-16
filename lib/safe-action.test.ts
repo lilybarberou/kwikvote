@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 
+import { limiters } from "./rate-limits.server";
 import { ActionError, action, adminAction, pollPwAction } from "./safe-action";
 
 vi.mock("@/lib/env", () => ({ env: { ADMIN_PASSWORD: "admin-secret" } }));
@@ -10,6 +11,13 @@ vi.mock("@/lib/env", () => ({ env: { ADMIN_PASSWORD: "admin-secret" } }));
 const adminSession = vi.hoisted(() => ({ valid: false }));
 vi.mock("@/lib/admin-session.server", () => ({
   hasAdminSession: async () => adminSession.valid,
+}));
+
+// the address of the visitor, for the rate limits (lib/rate-limits.server.ts)
+const clientIp = vi.hoisted(() => ({ value: "203.0.113.1" }));
+vi.mock("server-only", () => ({}));
+vi.mock("next/headers", () => ({
+  headers: async () => new Headers({ "x-real-ip": clientIp.value }),
 }));
 
 // the stored password of each poll
@@ -31,6 +39,8 @@ afterAll(() => errors.mockRestore());
 
 beforeEach(() => {
   adminSession.valid = false;
+  Object.values(limiters).forEach((limiter) => limiter.reset());
+  clientIp.value = "203.0.113.1";
   polls.clear();
   findFirst.mockClear();
 });
@@ -171,5 +181,44 @@ describe("pollPwAction", () => {
       (await deleteSlot({ pollId: "poll-1", password: "nope", slotId: "s" }))
         ?.serverError,
     ).toBe("Mot de passe incorrect");
+  });
+});
+
+describe("rate limits of the passwords", () => {
+  const manage = pollPwAction.action(
+    async ({ parsedInput: { pollId } }) => `managed ${pollId}`,
+  );
+  const TOO_MANY = /^Trop d'essais, réessayez dans 15 minutes$/;
+
+  test("a poll: 10 failures per address, 30 for everyone, the other polls unchanged", async () => {
+    polls.set("poll-1", "pw-1");
+    polls.set("poll-2", "pw-2");
+    for (let i = 0; i < 10; i++)
+      await manage({ pollId: "poll-1", password: "wrong" });
+    expect(
+      (await manage({ pollId: "poll-1", password: "pw-1" }))?.serverError,
+    ).toMatch(TOO_MANY);
+    expect((await manage({ pollId: "poll-2", password: "pw-2" }))?.data).toBe(
+      "managed poll-2",
+    );
+
+    // two more addresses: 30 failures on poll-1
+    for (const ip of ["203.0.113.2", "203.0.113.3"]) {
+      clientIp.value = ip;
+      for (let i = 0; i < 10; i++)
+        await manage({ pollId: "poll-1", password: "wrong" });
+    }
+    clientIp.value = "203.0.113.4";
+    expect(
+      (await manage({ pollId: "poll-1", password: "pw-1" }))?.serverError,
+    ).toMatch(TOO_MANY);
+  });
+
+  test("the successes are not counted", async () => {
+    polls.set("poll-1", "pw-1");
+    for (let i = 0; i < 20; i++)
+      expect((await manage({ pollId: "poll-1", password: "pw-1" }))?.data).toBe(
+        "managed poll-1",
+      );
   });
 });

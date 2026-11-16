@@ -20,7 +20,7 @@ export const MyPolls = () => {
   const [email, setEmail] = useQueryState("email", parseAsString);
 
   const {
-    getPollsByEmailQuery: { data: polls, isLoading },
+    getPollsByEmailQuery: { data: polls, isLoading, error },
   } = usePoll({ enabled: { getPollsByEmail: !!email } });
 
   const { register, handleSubmit, getValues } = useForm<SearchSchema>({
@@ -48,7 +48,17 @@ export const MyPolls = () => {
           )}
         </Button>
       </form>
+      {/* too many searches: said, not taken for "no poll" */}
+      {error && (
+        <p
+          role="alert"
+          className="mt-4 text-sm text-destructive dark:text-red-400"
+        >
+          {error.message}
+        </p>
+      )}
       {!isLoading &&
+        !error &&
         (getValues("email") && polls?.length === 0 ? (
           <NoPolls />
         ) : (
