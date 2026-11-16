@@ -42,7 +42,14 @@ import { useNotificationsStore } from "@/lib/store/notificationsStore";
 import { useVotesStore } from "@/lib/store/votesStore";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
-import { BarChart3, Bell, BellRing, Megaphone } from "lucide-react";
+import {
+  BarChart3,
+  Bell,
+  BellRing,
+  CloudOff,
+  Loader2,
+  Megaphone,
+} from "lucide-react";
 import Link from "next/link";
 import { parseAsString, useQueryState } from "nuqs";
 import { useEffect, useState } from "react";
@@ -69,7 +76,7 @@ export default function PollPage() {
   const { createSubscriptionMutation } = useSubscription();
 
   const {
-    getPollByIdQuery: { data: poll, isLoading },
+    getPollByIdQuery: { data: poll, isLoading, isError, isFetching, refetch },
   } = usePoll({ enabled: { getPollById: true } });
   const isRegistrationPoll = poll?.type == 2;
   const hasSomeVotes = Object.values(votes).some((v) =>
@@ -136,6 +143,27 @@ export default function PollPage() {
   };
 
   if (isLoading) return <PollSkeleton />;
+  // not loaded (network, server): the poll may well exist, it can be retried
+  if (isError && !poll)
+    return (
+      <div className="mx-auto mt-32 flex flex-col items-center justify-center">
+        <CloudOff aria-hidden className="mb-10 h-24 w-24" />
+        <h1 className="text-2xl font-bold">Impossible de charger ce sondage</h1>
+        <p className="text-center text-muted-foreground">
+          Vérifiez votre connexion, puis réessayez.
+        </p>
+        <Button
+          className="mt-6"
+          disabled={isFetching}
+          onClick={() => refetch()}
+        >
+          {isFetching && (
+            <Loader2 aria-hidden className="mr-2 h-4 w-4 animate-spin" />
+          )}
+          Réessayer
+        </Button>
+      </div>
+    );
   if (!poll)
     return (
       <div className="mx-auto mt-32 flex flex-col items-center justify-center">

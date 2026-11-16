@@ -41,7 +41,7 @@ export const Home = () => {
   });
 
   const onSubmit = handleSubmit(({ email }) => {
-    router.push(`/mes-sondages?email=${email}`);
+    router.push(`/mes-sondages?email=${encodeURIComponent(email)}`);
   });
 
   return (

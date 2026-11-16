@@ -219,15 +219,17 @@ export const RegistrationPoll = ({ poll }: Props) => {
                     className="table-cell border-0 text-center align-top hover:bg-transparent"
                     key={slot.id}
                   >
-                    {slot[array.key]
-                      // put author's votes first (only for notComing column)
-                      .sort((voteId) => {
-                        if (!isNotComingColumn) return 1;
-                        return votes[voteId]?.subscriptions?.some(
-                          (sub) => sub.endpoint === subscription?.endpoint,
-                        )
-                          ? -1
-                          : 1;
+                    {/* a copy: sorting in place would change the query cache */}
+                    {[...slot[array.key]]
+                      // put author's votes first (only for notComing column),
+                      // the queue order is kept otherwise
+                      .sort((a, b) => {
+                        if (!isNotComingColumn) return 0;
+                        const isAuthor = (voteId: string) =>
+                          !!votes[voteId]?.subscriptions?.some(
+                            (sub) => sub.endpoint === subscription?.endpoint,
+                          );
+                        return Number(isAuthor(b)) - Number(isAuthor(a));
                       })
                       .map((voteId) => {
                         const vote = votes[voteId];
