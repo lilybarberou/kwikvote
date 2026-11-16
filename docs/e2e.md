@@ -37,8 +37,8 @@ Variables utiles :
 | `E2E_PORT=n`         | port de l'application (3217 par défaut ; n+1 et n+2 pour les doublures) |
 | `E2E_A11Y_VERBOSE=1` | affiche le détail des avertissements d'accessibilité (axe)              |
 
-Exemples : `pnpm test:e2e e2e/securite.spec.ts`,
-`pnpm test:e2e -g "headers"`, `pnpm test:e2e --headed`.
+Exemples : `pnpm test:e2e e2e/vote-prioritaire.spec.ts`,
+`pnpm test:e2e -g "priority"`, `pnpm test:e2e --headed`.
 
 ## Pourquoi c'est sans risque
 
@@ -71,6 +71,8 @@ vraies clés (webhook Discord, VAPID). La suite ne s'en sert jamais :
 
 | Fichier                    | Parcours                                                                                        |
 | -------------------------- | ----------------------------------------------------------------------------------------------- |
+| `vote-prioritaire.spec.ts` | vote prioritaire : l'exemple vendredi / samedi (place libre, puis samedi complet)               |
+| `liste-attente.spec.ts`    | liste d'attente, promotion et notification, délai d'ouverture (passé ou non)                    |
 | `accueil.spec.ts`          | image de l'accueil affichée sans JavaScript (LCP), animée au changement d'onglet                |
 | `securite.spec.ts`         | en-têtes de sécurité (pages, actions serveur, service worker), statistiques sans query string   |
 
