@@ -24,22 +24,28 @@ export const pollFormSchema = z.object({
 });
 export type PollFormSchema = z.infer<typeof pollFormSchema>;
 
+// a date or its serialization: invalid dates are refused instead of failing in
+// the database (a bare z.coerce.date() would turn null or a number into a date)
+const slotDateSchema = z.union([z.string(), z.date()]).pipe(z.coerce.date());
+
 export const createSlotSchema = z.object({
-  startDate: z.string().or(z.date()),
-  endDate: z.string().or(z.date()),
+  startDate: slotDateSchema,
+  endDate: slotDateSchema,
   maxParticipants: z.number().int().positive(),
 });
 export type CreateSlotSchema = z.infer<typeof createSlotSchema>;
 
+// same rules as the creation form (pollFormSchema)
 export const createPollSchema = z.object({
   type: z.number().int().positive().min(1).max(2),
-  title: z.string(),
+  title: z.string().min(1),
   description: z.string().optional(),
   email: z.string().email().optional().or(z.literal("")),
   password: z.string().optional(),
-  timeBeforeAllowedType: z.number(),
-  msBeforeAllowed: z.number(),
-  slots: z.array(createSlotSchema),
+  timeBeforeAllowedType: z.number().int().min(1).max(2),
+  // stored in an Int column
+  msBeforeAllowed: z.number().int().nonnegative().max(2147483647),
+  slots: z.array(createSlotSchema).min(1),
 });
 export type CreatePollSchema = z.infer<typeof createPollSchema>;
 

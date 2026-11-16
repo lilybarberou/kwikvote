@@ -20,6 +20,13 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
+## Tests
+
+- `pnpm test`: unit tests (Vitest, no database)
+- CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs all of them, the lint, the types and `next build` on each pull request and each push to `main`, with test values only (no secret)
+
+Never run them, nor `pnpm build` / `pnpm prisma`, with the `DATABASE_URL` of the `.env`: it can be the production one.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
