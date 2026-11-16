@@ -84,10 +84,16 @@ vraies clés (webhook Discord, VAPID). La suite ne s'en sert jamais :
 | `chargement.spec.ts`       | sondage supprimé (sort de l'historique), erreur de chargement et « Réessayer »                  |
 | `mobile.spec.ts`           | les parcours principaux sur un téléphone (Pixel 7)                                              |
 | `securite.spec.ts`         | en-têtes de sécurité (pages, actions serveur, service worker), statistiques sans query string   |
+| `libelles.spec.ts`         | libellés visibles des champs de l'accueil, des commentaires et de l'administration              |
+| `dialogues.spec.ts`        | chaque fenêtre est nommée par son titre, et décrite quand elle a une description                |
+| `type-sondage.spec.ts`     | la carte du type choisi se distingue (bordure, contraste 3:1, clair et sombre)                  |
 
 Règles suivies :
 
-- sélecteurs accessibles uniquement (rôle et nom, libellés) ;
+- sélecteurs accessibles uniquement (rôle et nom, libellés) ; les listes d'un
+  sondage avec liste d'attente sont lues par les en-têtes du tableau : la ligne
+  par son en-tête de ligne (« Inscrits », « Personnes inscrites »…), le créneau
+  par sa colonne (`readRegistrationTable`) ;
 - pas d'attente fixe : assertions qui réessaient (`expect`, `expect.poll`) ;
 - données isolées : chaque test crée ses propres sondages (titres uniques), les
   tests tournent en parallèle sur la même base ;

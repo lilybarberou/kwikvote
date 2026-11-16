@@ -44,6 +44,39 @@ test("a freed place goes to the first of the waiting list, in order, and they ar
   await expect(
     page.getByRole("row", { name: /^Inscrits/ }),
   ).toHaveAccessibleName("Inscrits 2/2");
+  // for screen readers, each name is in a list, in the cell of its slot, in
+  // the row of its list: they read it with its row and column headers
+  await expect(page.getByRole("table")).toMatchAriaSnapshot(`
+    - rowgroup:
+      - row:
+        - columnheader "Aide"
+        - columnheader /\\d\\d\\/\\d\\d 19:00 - 21:00$/
+    - rowgroup:
+      - row "Inscrits 2/2":
+        - rowheader "Inscrits"
+        - cell "2/2"
+      - row:
+        - rowheader "Personnes inscrites"
+        - cell:
+          - list:
+            - /children: equal
+            - listitem:
+              - button "Alice"
+            - listitem:
+              - button "Bob"
+      - row "Liste d'attente 2":
+        - rowheader "Liste d'attente"
+        - cell "2"
+      - row:
+        - rowheader "Personnes en liste d'attente"
+        - cell:
+          - list:
+            - /children: equal
+            - listitem:
+              - button "Carol"
+            - listitem:
+              - button "Dave"
+  `);
 
   // changing only the name keeps the place in the queue
   const { page: carol } = people.Carol;
