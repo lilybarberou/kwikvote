@@ -23,7 +23,7 @@ This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-opti
 ## Tests
 
 - `pnpm test`: unit tests (Vitest, no database)
-- `pnpm test:integration`: server actions, on a **local** database only
+- `pnpm test:integration`, `pnpm test:coverage`: server actions and cron, on a **local** database only
 - `pnpm test:e2e`: journeys in a browser (Playwright), on a **local** database only, see [docs/e2e.md](docs/e2e.md)
 - CI ([.github/workflows/ci.yml](.github/workflows/ci.yml)) runs all of them, the lint, the types and `next build` on each pull request and each push to `main`, with test values only (no secret)
 
