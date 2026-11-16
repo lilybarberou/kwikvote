@@ -1,4 +1,3 @@
-import { type ClassValue, clsx } from "clsx";
 import { format } from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { fr } from "date-fns/locale";
@@ -7,14 +6,11 @@ import {
   SafeActionResult,
   ValidationErrors,
 } from "next-safe-action";
-import { twMerge } from "tailwind-merge";
 import { Schema } from "zod";
 
 import { PollWithSlots } from "./api/vote/mutation";
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+export { cn } from "./cn";
 
 export const sameDay = (d1: Date, d2: Date) => {
   return (

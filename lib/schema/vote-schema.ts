@@ -1,7 +1,8 @@
 import { z } from "zod";
 
-// shared with the vote form (components/poll/DialogVote.tsx)
-export const VOTE_NAME_MAX_LENGTH = 100;
+import { VOTE_NAME_MAX_LENGTH } from "./limits";
+
+export { VOTE_NAME_MAX_LENGTH };
 
 export const createVoteSchema = z.object({
   id: z.string(),

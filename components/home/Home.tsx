@@ -1,46 +1,33 @@
 "use client";
 
+import { ThemedImage } from "@/components/ThemedImage";
 import { FAQContent } from "@/components/faq/FAQContent";
 import { ProcessSteps } from "@/components/home/ProcessSteps";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { motion, useAnimationControls } from "framer-motion";
+import { isEmail } from "@/lib/email";
+import { m } from "framer-motion";
 import { HelpCircle, List, ListTodo } from "lucide-react";
-import { useTheme } from "next-themes";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useIsClient } from "usehooks-ts";
-import { z } from "zod";
 
-const SearchSchema = z.object({
-  email: z.string().email(),
-});
+// main column (max-w-6xl less its padding) or the screen width less the margins
+const IMAGE_SIZES = "(min-width: 1152px) 1100px, calc(100vw - 2rem)";
 
 export const Home = () => {
-  const controls = useAnimationControls();
-  // resolvedTheme: theme is "system" by default, which is neither light nor dark
-  const { resolvedTheme: theme } = useTheme();
-  const isClient = useIsClient();
+  // the animation features of framer-motion load after the page
+  // (LazyMotion, components/Providers.tsx): animation controls started on
+  // mount would do nothing, a new key replays the declarative animation
+  const [animationKey, setAnimationKey] = useState(0);
 
-  useEffect(() => {
-    controls.start({ opacity: 1, y: 0 });
-  }, [controls]);
-
-  const handleTabAnimSequence = async () => {
-    await controls.start("exit");
-    controls.start("show");
-  };
+  const handleTabAnimSequence = () => setAnimationKey((key) => key + 1);
 
   const router = useRouter();
-  const { register, handleSubmit } = useForm<z.infer<typeof SearchSchema>>({
-    resolver: zodResolver(SearchSchema),
-  });
+  const { register, handleSubmit } = useForm<{ email: string }>();
 
   const onSubmit = handleSubmit(({ email }) => {
     router.push(`/mes-sondages?email=${encodeURIComponent(email)}`);
@@ -48,22 +35,8 @@ export const Home = () => {
 
   return (
     <div className="flex w-full flex-col items-center">
-      {isClient && (
-        <div
-          className="absolute top-0 -z-10 h-screen w-full"
-          style={
-            theme === "light"
-              ? {
-                  background:
-                    "radial-gradient(100% 100% at 50% 0%, #86e3ff 0%, #ffffff 100%)",
-                }
-              : {
-                  background:
-                    "radial-gradient(88.74% 100% at 50% 0%, #41A4C3 0%, #020817 100%)",
-                }
-          }
-        />
-      )}
+      {/* the theme by CSS: rendered on the server, no JavaScript to wait for */}
+      <div className="absolute top-0 -z-10 h-screen w-full bg-[radial-gradient(100%_100%_at_50%_0%,#86e3ff_0%,#ffffff_100%)] dark:bg-[radial-gradient(88.74%_100%_at_50%_0%,#41A4C3_0%,#020817_100%)]" />
       <h1 className="mb-6 max-w-xl text-center text-3xl font-semibold sm:text-4xl">
         Créez un sondage en quelques secondes et partagez-le avec vos amis
       </h1>
@@ -106,50 +79,49 @@ export const Home = () => {
             Liste d'attente
           </TabsTrigger>
         </TabsList>
-        <motion.div
+        <m.div
+          key={animationKey}
           className="aspect-auto w-full rounded-lg border border-b-0 border-[#27272721] p-2 dark:border-[#ffffff38] sm:p-[10px]"
           variants={{
             init: { opacity: 0, y: -20 },
             show: { opacity: 1, y: 0 },
-            exit: { opacity: 0, y: -20, transition: { duration: 0 } },
           }}
-          initial="init"
-          animate={controls}
+          // shown at once on the first render: the free poll image is the
+          // largest element of the page (LCP), which would wait for the
+          // JavaScript of the animation; the tabs still animate it
+          initial={animationKey === 0 ? false : "init"}
+          animate="show"
           transition={{ duration: 0.5 }}
         >
           <div className="rounded-sm border border-b-0 border-[#27272721] dark:border-[#ffffff38]">
             <TabsContent value="free" className="mt-0 bg-background pt-3">
-              {isClient && (
-                <Image
-                  className="h-full w-full rounded-sm object-cover"
-                  width={1000}
-                  height={500}
-                  src={
-                    theme === "light"
-                      ? "/images/poll-light-1.jpg"
-                      : "/images/poll-1.png"
-                  }
-                  alt="Sondage libre"
-                />
-              )}
+              <ThemedImage
+                className="h-full w-full rounded-sm object-cover"
+                width={1000}
+                height={500}
+                // the largest image of the page (LCP): high priority, and
+                // only as wide as its container; lazy so that the image of
+                // the other theme (display: none) is not downloaded
+                fetchPriority="high"
+                sizes={IMAGE_SIZES}
+                lightSrc="/images/poll-light-1.jpg"
+                darkSrc="/images/poll-1.png"
+                alt="Sondage libre"
+              />
             </TabsContent>
             <TabsContent value="waitlist" className="mt-0 bg-background pt-3">
-              {isClient && (
-                <Image
-                  className="h-full w-full rounded-sm object-cover"
-                  width={1000}
-                  height={500}
-                  src={
-                    theme === "light"
-                      ? "/images/poll-light-2.jpg"
-                      : "/images/poll-2.png"
-                  }
-                  alt="Sondage avec liste d'attente"
-                />
-              )}
+              <ThemedImage
+                className="h-full w-full rounded-sm object-cover"
+                width={1000}
+                height={500}
+                sizes={IMAGE_SIZES}
+                lightSrc="/images/poll-light-2.jpg"
+                darkSrc="/images/poll-2.png"
+                alt="Sondage avec liste d'attente"
+              />
             </TabsContent>
           </div>
-        </motion.div>
+        </m.div>
       </Tabs>
       <ProcessSteps />
       <h3 className="mb-2 text-center text-2xl font-semibold sm:text-3xl">
@@ -170,7 +142,7 @@ export const Home = () => {
             placeholder="vous@example.com"
             inputMode="email"
             autoComplete="email"
-            {...register("email")}
+            {...register("email", { validate: isEmail })}
           />
         </div>
         <Button>Rechercher</Button>

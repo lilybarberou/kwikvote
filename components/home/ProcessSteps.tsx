@@ -1,41 +1,29 @@
-import { motion } from "framer-motion";
-import { useTheme } from "next-themes";
+import { ThemedImage } from "@/components/ThemedImage";
+import { m } from "framer-motion";
 import Image from "next/image";
 import { Fragment } from "react";
-import { useIsClient } from "usehooks-ts";
 
 import { Card } from "../ui/card";
 
 export const ProcessSteps = () => {
-  // resolvedTheme: theme is "system" by default, which is neither light nor dark
-  const { resolvedTheme: theme } = useTheme();
-  const isClient = useIsClient();
-
   const steps = [
     {
-      icon:
-        theme === "light"
-          ? "/svg/home/create-poll-light.svg"
-          : "/svg/home/create-poll.svg",
+      icon: "create-poll",
       text: "Vous créez votre sondage",
       width: "w-7/12",
     },
     {
-      icon:
-        theme === "light" ? "/svg/home/share-light.svg" : "/svg/home/share.svg",
+      icon: "share",
       text: "Vous partagez le lien",
     },
     {
-      icon:
-        theme === "light"
-          ? "/svg/home/user-choices-light.svg"
-          : "/svg/home/user-choices.svg",
+      icon: "user-choices",
       text: "Vos amis s'inscrivent",
     },
   ];
 
   return (
-    <motion.div
+    <m.div
       className="mb-32 flex flex-wrap items-center justify-center gap-3 lg:gap-7"
       variants={{ init: { opacity: 0 }, anim: { opacity: 1 } }}
       transition={{ staggerChildren: 0.3 }}
@@ -45,7 +33,7 @@ export const ProcessSteps = () => {
       {steps.map((step, index) => {
         return (
           <Fragment key={index}>
-            <motion.div
+            <m.div
               variants={{
                 init: { opacity: 0, scale: 0.8 },
                 anim: { opacity: 1, scale: 1 },
@@ -55,18 +43,18 @@ export const ProcessSteps = () => {
                 key={index}
                 className="flex aspect-square max-w-[150px] flex-col items-center justify-between bg-gray-100/20 p-5 pt-0 text-center dark:bg-[#ffffff05] md:max-w-[220px] md:flex-1 lg:max-w-[250px]"
               >
-                {isClient && (
-                  <Image
-                    className={`m-auto ${step.width ?? "w-9/12"}`}
-                    width={300}
-                    height={300}
-                    src={step.icon}
-                    alt={step.text}
-                  />
-                )}
+                <ThemedImage
+                  className={`m-auto ${step.width ?? "w-9/12"}`}
+                  width={300}
+                  height={300}
+                  lightSrc={`/svg/home/${step.icon}-light.svg`}
+                  darkSrc={`/svg/home/${step.icon}.svg`}
+                  // decorative: the text under it says the step
+                  alt=""
+                />
                 <p className="text-xs md:text-base">{step.text}</p>
               </Card>
-            </motion.div>
+            </m.div>
             {index !== steps.length - 1 && (
               <Image
                 className="hidden w-6 sm:block lg:w-8"
@@ -77,21 +65,18 @@ export const ProcessSteps = () => {
               />
             )}
             {index === steps.length - 1 && (
-              <Image
+              <ThemedImage
                 className="w-6 lg:w-8"
                 width={200}
                 height={200}
-                src={
-                  theme === "light"
-                    ? "/svg/sparkles-light.svg"
-                    : "/svg/sparkles.svg"
-                }
+                lightSrc="/svg/sparkles-light.svg"
+                darkSrc="/svg/sparkles.svg"
                 alt="Fini"
               />
             )}
           </Fragment>
         );
       })}
-    </motion.div>
+    </m.div>
   );
 };
