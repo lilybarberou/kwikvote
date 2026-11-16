@@ -12,6 +12,11 @@ import {
   hitAll,
   limiters,
 } from "./rate-limits.server";
+import {
+  hashPollPassword,
+  isHashedPassword,
+  verifyPollPassword,
+} from "./poll-password.mjs";
 
 // error whose message is meant for the user, other errors are hidden
 export class ActionError extends Error {}
@@ -74,10 +79,18 @@ export const pollPwAction = action
     if (!poll) throw new ActionError("Ce sondage n'existe plus");
 
     // a poll created without password can't be managed
-    if (!poll.password || poll.password !== password) {
+    if (!(await verifyPollPassword(poll.password, password))) {
       hitAll(limits);
       throw new ActionError("Mot de passe incorrect");
     }
+
+    // a password still in clear (poll created before) is hashed now, unless
+    // it changed meanwhile
+    if (!isHashedPassword(poll.password))
+      await prisma.poll.updateMany({
+        where: { id: pollId, password: poll.password },
+        data: { password: await hashPollPassword(password) },
+      });
 
     return next();
   });
