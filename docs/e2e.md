@@ -76,6 +76,7 @@ vraies clés (webhook Discord, VAPID). La suite ne s'en sert jamais :
 | `creation.spec.ts`         | création de chaque type, validation, Discord, « Mes sondages », copie du lien                   |
 | `accueil.spec.ts`          | image de l'accueil affichée sans JavaScript (LCP), animée au changement d'onglet                |
 | `sondage-libre.spec.ts`    | votes d'un sondage libre : création, modification, suppression, erreurs                         |
+| `formulaire-vote.spec.ts`  | le formulaire de vote affiche et garde les choix du vote ouvert (chaque type de sondage)        |
 | `concurrence.spec.ts`      | votes simultanés sur une dernière place, place libérée pendant des votes, priorités simultanées |
 | `administration.spec.ts`   | mot de passe du sondage, titre, créneaux, suppression ; page d'administration                   |
 | `commentaires.spec.ts`     | commentaires et notifications des abonnés                                                       |
