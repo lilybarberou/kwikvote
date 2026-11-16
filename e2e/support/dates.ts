@@ -46,6 +46,15 @@ const format = (day: Day, options: Intl.DateTimeFormatOptions) =>
     toUtcDate(day),
   );
 
+// the name of the day button in the calendar: "vendredi 20 novembre 2026"
+export const calendarDayLabel = (day: Day) =>
+  format(day, {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
 // how the poll pages show a slot day: "vendredi 20/11"
 export const slotDayLabel = (day: Day) =>
   `${format(day, { weekday: "long" })} ${format(day, { day: "2-digit" })}/${format(day, { month: "2-digit" })}`;

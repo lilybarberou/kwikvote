@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import {
   Day,
   FRENCH_MONTHS,
+  calendarDayLabel,
   calendarMonthLabel,
   monthsBetween,
   slotDayLabel,
@@ -45,11 +46,9 @@ const pickDay = async (page: Page, button: Locator, day: Day) => {
 // picks a day in the open calendar of a date field
 export const pickInOpenCalendar = async (page: Page, day: Day) => {
   const calendar = page.getByRole("dialog", { name: /^Date de (début|fin)$/ });
-  // the calendar opens on the month of the current value of the field; its
-  // grid is named after the month shown ("novembre 2026")
-  const grid = calendar.getByRole("grid");
-  const shown = /grid "([^"]+)"/.exec(await grid.ariaSnapshot())![1];
-  const [monthName, year] = shown.trim().split(" ");
+  // the calendar opens on the month of the current value of the field
+  const shown = await calendar.getByRole("status").textContent();
+  const [monthName, year] = shown!.trim().split(" ");
   const offset = monthsBetween(
     { year: Number(year), month: FRENCH_MONTHS.indexOf(monthName) + 1, day: 1 },
     day,
@@ -58,12 +57,11 @@ export const pickInOpenCalendar = async (page: Page, day: Day) => {
     offset > 0 ? "Aller au mois suivant" : "Aller au mois précédent";
   for (let i = 0; i < Math.abs(offset); i++)
     await calendar.getByRole("button", { name: button }).click();
-  await expect(grid).toHaveAccessibleName(calendarMonthLabel(day));
-  // the days are named by their number only: not one of the days of the
-  // other months the grid also shows
-  await grid
-    .getByRole("gridcell", { name: String(day.day), exact: true })
-    .and(page.locator(":not(.day-outside)"))
+  await expect(calendar.getByRole("status")).toHaveText(
+    calendarMonthLabel(day),
+  );
+  await calendar
+    .getByRole("button", { name: new RegExp(calendarDayLabel(day)) })
     .click();
   await expect(calendar).toBeHidden();
 };
