@@ -75,10 +75,14 @@ vraies clés (webhook Discord, VAPID). La suite ne s'en sert jamais :
 | `liste-attente.spec.ts`    | liste d'attente, promotion et notification, délai d'ouverture (passé ou non)                    |
 | `creation.spec.ts`         | création de chaque type, validation, Discord, « Mes sondages », copie du lien                   |
 | `accueil.spec.ts`          | image de l'accueil affichée sans JavaScript (LCP), animée au changement d'onglet                |
+| `sondage-libre.spec.ts`    | votes d'un sondage libre : création, modification, suppression, erreurs                         |
+| `concurrence.spec.ts`      | votes simultanés sur une dernière place, place libérée pendant des votes, priorités simultanées |
 | `administration.spec.ts`   | mot de passe du sondage, titre, créneaux, suppression ; page d'administration                   |
 | `commentaires.spec.ts`     | commentaires et notifications des abonnés                                                       |
 | `notifications.spec.ts`    | abonnement (invite, cloche, « Non merci »), annonce d'un créneau déplacé                        |
+| `navigation.spec.ts`       | historique, FAQ, 404, thème sombre, contraste au survol                                         |
 | `chargement.spec.ts`       | sondage supprimé (sort de l'historique), erreur de chargement et « Réessayer »                  |
+| `mobile.spec.ts`           | les parcours principaux sur un téléphone (Pixel 7)                                              |
 | `securite.spec.ts`         | en-têtes de sécurité (pages, actions serveur, service worker), statistiques sans query string   |
 
 Règles suivies :

@@ -8,10 +8,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // darker on hover, not more transparent: over the white background
+        // of the light theme, /90 gave 4.2:1 under the text (4.5:1 needed)
         default:
-          "bg-primary-solid text-primary-foreground hover:bg-primary-solid/90",
+          "bg-primary-solid text-primary-foreground hover:bg-[color-mix(in_oklab,hsl(var(--primary-solid)),black_10%)]",
         destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground hover:bg-[color-mix(in_oklab,hsl(var(--destructive)),black_10%)]",
         outline:
           "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary:
