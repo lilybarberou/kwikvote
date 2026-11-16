@@ -87,35 +87,54 @@ export const PollSettingsDialog = () => {
 const FirstStep = () => {
   const { goToNextStep, setPassword } = useProvider();
   const inputPassword = useRef<HTMLInputElement>(null);
-  const [error, setError] = useState(false);
+  // the message of the last failure: wrong password, or too many attempts
+  const [error, setError] = useState("");
   const { checkPollPasswordMutation } = usePoll();
 
   const submitPassword = (e: React.FormEvent) => {
     e.preventDefault();
     const password = inputPassword.current?.value;
     if (!password) return;
+    setError("");
 
     checkPollPasswordMutation.mutate(password, {
       onSuccess: (isValid) => {
         if (isValid) {
           goToNextStep();
           setPassword(password);
-        } else setError(true);
+        } else setError("Mot de passe incorrect");
       },
+      onError: (error) => setError(error.message),
     });
   };
 
   return (
     <form onSubmit={submitPassword} className="flex flex-col gap-2">
-      <p className={cn(error && "text-red-800")}>Mot de passe</p>
+      <p className={cn(!!error && "text-red-800")}>Mot de passe</p>
       <Input
         ref={inputPassword}
         type="password"
         autoComplete="current-password"
         aria-label="Mot de passe"
-        className={cn(error && "border-red-800")}
+        aria-invalid={!!error}
+        aria-describedby={error ? "error-poll-password" : undefined}
+        className={cn(!!error && "border-red-800")}
       />
-      <Button type="submit" className="mt-3">
+      {/* not only the red color: the error is read and linked to the field */}
+      {error && (
+        <p
+          id="error-poll-password"
+          role="alert"
+          className="text-sm text-destructive dark:text-red-400"
+        >
+          {error}
+        </p>
+      )}
+      <Button
+        type="submit"
+        className="mt-3"
+        disabled={checkPollPasswordMutation.isPending}
+      >
         Valider
       </Button>
     </form>
@@ -140,7 +159,7 @@ const SlotsTab = () => {
       <AccordionTrigger>Gérer les créneaux</AccordionTrigger>
       <AccordionContent className="grid grid-cols-3 px-1 pt-3">
         {poll?.slots.map((slot) => (
-          <div key={slot.id} className="whitespace-nowrap text-center">
+          <div key={slot.id} className="text-center whitespace-nowrap">
             <div className="mb-2 flex justify-center gap-2">
               <EditSlotDialog slot={slot} />
               <Popover>

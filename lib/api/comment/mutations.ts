@@ -1,7 +1,14 @@
 "use server";
 
 import { env } from "@/lib/env";
-import { action } from "@/lib/safe-action";
+import {
+  LimitChecks,
+  getClientIp,
+  getLimitMessage,
+  hitAll,
+  limiters,
+} from "@/lib/rate-limits.server";
+import { ActionError, action } from "@/lib/safe-action";
 import { createCommentSchema } from "@/lib/schema/comment-schema";
 import { prisma } from "@/prisma/db";
 import webpush from "web-push";
@@ -15,6 +22,18 @@ webpush.setVapidDetails(
 export const createComment = action
   .schema(createCommentSchema)
   .action(async ({ parsedInput: data }) => {
+    // each comment notifies every subscriber of the poll
+    const ip = await getClientIp();
+    const { pollId } = data.comment;
+    const limits: LimitChecks = [
+      [limiters.commentsByIpAndPoll, `${ip} ${pollId}`],
+      [limiters.commentsByIp, ip],
+      [limiters.commentsByPoll, pollId],
+    ];
+    const limited = getLimitMessage(limits);
+    if (limited) throw new ActionError(limited);
+    hitAll(limits);
+
     const comment = await prisma.comment.create({ data: data.comment });
 
     // SEND NOTIFICATION TO ALL POLL SUBS

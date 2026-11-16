@@ -2,6 +2,13 @@
 
 import { isAdminPassword } from "@/lib/admin-session";
 import { endAdminSession, startAdminSession } from "@/lib/admin-session.server";
+import {
+  LimitChecks,
+  getClientIp,
+  getLimitMessage,
+  hitAll,
+  limiters,
+} from "@/lib/rate-limits.server";
 import { ActionError, action } from "@/lib/safe-action";
 import { z } from "zod";
 
@@ -9,8 +16,18 @@ import { z } from "zod";
 export const adminSignIn = action
   .schema(z.object({ password: z.string().max(200) }))
   .action(async ({ parsedInput: { password } }) => {
-    if (!isAdminPassword(password))
+    // the failures are limited: per address, and for everyone
+    const limits: LimitChecks = [
+      [limiters.adminFailuresByIp, await getClientIp()],
+      [limiters.adminFailures, "all"],
+    ];
+    const limited = getLimitMessage(limits);
+    if (limited) throw new ActionError(limited);
+
+    if (!isAdminPassword(password)) {
+      hitAll(limits);
       throw new ActionError("Mot de passe incorrect");
+    }
 
     await startAdminSession();
     return { success: true };

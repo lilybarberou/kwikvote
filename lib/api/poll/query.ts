@@ -1,13 +1,33 @@
 "use server";
 
+import {
+  LimitChecks,
+  getClientIp,
+  getLimitMessage,
+  hitAll,
+  limiters,
+} from "@/lib/rate-limits.server";
 import { slotsOrderBy } from "@/lib/registration";
-import { action, adminAction, pollPwAction } from "@/lib/safe-action";
+import {
+  ActionError,
+  action,
+  adminAction,
+  pollPwAction,
+} from "@/lib/safe-action";
 import { prisma } from "@/prisma/db";
 import { z } from "zod";
 
 export const getPollsByEmail = action
   .schema(z.string().email())
   .action(async ({ parsedInput: email }) => {
+    // anyone can look up the polls of an email: slows the scraping
+    const limits: LimitChecks = [
+      [limiters.emailSearchesByIp, await getClientIp()],
+    ];
+    const limited = getLimitMessage(limits);
+    if (limited) throw new ActionError(limited);
+    hitAll(limits);
+
     const poll = await prisma.poll.findMany({
       where: { email },
       select: {
