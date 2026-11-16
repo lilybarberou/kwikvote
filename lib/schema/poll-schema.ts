@@ -6,7 +6,7 @@ export const pollFormSchema = z.object({
   type: z.enum(["1", "2"]),
   title: z.string().min(1),
   description: z.string().optional(),
-  email: z.string().email().optional().or(z.literal("")),
+  email: z.email().optional().or(z.literal("")),
   password: z.string().optional(),
   timeBeforeAllowedType: z.enum(["1", "2"]),
   hoursBeforeAllowed: z
@@ -16,15 +16,15 @@ export const pollFormSchema = z.object({
     .or(z.string().regex(/^\d+$/)),
   slots: z.array(
     // same rules as the slot edition form: the end must be after the start
-    slotFormSchema.and(
-      z.object({
-        // a number input: its value is a string once edited
-        maxParticipants: z.coerce.number().positive(),
-      }),
-    ),
+    slotFormSchema.safeExtend({
+      // a number input: its value is a string once edited
+      maxParticipants: z.coerce.number<number | string>().positive(),
+    }),
   ),
 });
 export type PollFormSchema = z.infer<typeof pollFormSchema>;
+// before validation: maxParticipants comes from a text input (z.coerce)
+export type PollFormInput = z.input<typeof pollFormSchema>;
 
 // a date or its serialization: invalid dates are refused instead of failing in
 // the database (a bare z.coerce.date() would turn null or a number into a date)
@@ -38,7 +38,7 @@ export const createSlotSchema = z
   })
   // like updateSlotById
   .refine((slot) => slot.endDate > slot.startDate, {
-    message: "End date must be after start date",
+    error: "End date must be after start date",
     path: ["endDate"],
   });
 export type CreateSlotSchema = z.infer<typeof createSlotSchema>;
@@ -48,7 +48,7 @@ export const createPollSchema = z.object({
   type: z.number().int().positive().min(1).max(2),
   title: z.string().min(1),
   description: z.string().optional(),
-  email: z.string().email().optional().or(z.literal("")),
+  email: z.email().optional().or(z.literal("")),
   password: z.string().optional(),
   timeBeforeAllowedType: z.number().int().min(1).max(2),
   // stored in an Int column

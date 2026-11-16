@@ -21,7 +21,7 @@ import { prisma, withPollLock } from "@/prisma/db";
 import { Prisma } from "@prisma/client";
 
 export const createVote = action
-  .schema(createVoteSchema)
+  .inputSchema(createVoteSchema)
   .action(async ({ parsedInput: data }) => {
     const registration = await withPollLock(data.pollId, async (tx) => {
       const poll = await tx.poll.findUnique({
@@ -218,7 +218,7 @@ export const createVote = action
   });
 
 export const deleteVote = action
-  .schema(deleteVoteSchema)
+  .inputSchema(deleteVoteSchema)
   .action(async ({ parsedInput: { voteId, pollId } }) => {
     const registration = await withPollLock(pollId, async (tx) => {
       // only a vote of this poll
@@ -321,7 +321,7 @@ export const deleteVote = action
   });
 
 export const updateVoteName = action
-  .schema(updateVoteNameSchema)
+  .inputSchema(updateVoteNameSchema)
   .action(async ({ parsedInput: { voteId, name, subscription } }) => {
     await prisma.vote.update({
       where: { id: voteId },

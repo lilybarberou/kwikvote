@@ -23,7 +23,7 @@ import { z } from "zod";
 import { PollWithSlots } from "../vote/mutation";
 
 export const deleteSlotById = pollPwAction
-  .schema(async (s) => s.extend({ slotId: z.string() }))
+  .inputSchema(async (s) => s.extend({ slotId: z.string() }))
   .action(async ({ parsedInput: { pollId, slotId } }) => {
     const registration = await withPollLock(pollId, async (tx) => {
       // only a slot of the poll whose password was checked
@@ -109,11 +109,13 @@ export const deleteSlotById = pollPwAction
   });
 
 export const updateSlotById = pollPwAction
-  .schema(async (s) =>
-    s.merge(updateSlotSchema).refine((data) => data.endDate > data.startDate, {
-      message: "End date must be after start date",
-      path: ["endDate"],
-    }),
+  .inputSchema(async (s) =>
+    s
+      .extend(updateSlotSchema.shape)
+      .refine((data) => data.endDate > data.startDate, {
+        error: "End date must be after start date",
+        path: ["endDate"],
+      }),
   )
   .action(
     async ({

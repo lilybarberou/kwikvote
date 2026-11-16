@@ -7,7 +7,11 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { useCreatePoll } from "@/hooks/use-poll";
-import { PollFormSchema, pollFormSchema } from "@/lib/schema/poll-schema";
+import {
+  PollFormInput,
+  PollFormSchema,
+  pollFormSchema,
+} from "@/lib/schema/poll-schema";
 import { parisDateTimeToUtc } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, X } from "lucide-react";
@@ -38,7 +42,7 @@ export const PollForm = () => {
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<PollFormSchema>({
+  } = useForm<PollFormInput, unknown, PollFormSchema>({
     defaultValues: {
       type: "1",
       timeBeforeAllowedType: "1",

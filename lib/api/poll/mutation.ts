@@ -13,7 +13,7 @@ import { sendDiscordMessage } from "@/lib/utils.server";
 import { prisma } from "@/prisma/db";
 
 export const createPoll = action
-  .schema(createPollSchema)
+  .inputSchema(createPollSchema)
   .action(async ({ parsedInput: data }) => {
     // never stored in clear (lib/poll-password.mjs)
     const password = data.password ? await hashPollPassword(data.password) : "";
@@ -65,7 +65,7 @@ export const deletePoll = pollPwAction.action(
 );
 
 export const updatePoll = pollPwAction
-  .schema(async (s) => s.merge(updatePollSchema))
+  .inputSchema(async (s) => s.extend(updatePollSchema.shape))
   .action(async ({ parsedInput: { pollId, title, description } }) => {
     // not the password: it's only used to authenticate (and can be the admin one)
     await prisma.poll.update({

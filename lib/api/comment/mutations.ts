@@ -14,7 +14,7 @@ import { createCommentSchema } from "@/lib/schema/comment-schema";
 import { prisma } from "@/prisma/db";
 
 export const createComment = action
-  .schema(createCommentSchema)
+  .inputSchema(createCommentSchema)
   .action(async ({ parsedInput: data }) => {
     // each comment notifies every subscriber of the poll
     const ip = await getClientIp();
