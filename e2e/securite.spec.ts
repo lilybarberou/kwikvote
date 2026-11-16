@@ -1,4 +1,6 @@
+import { nextWeekday } from "./support/dates";
 import { expect, test } from "./support/fixtures";
+import { createPoll } from "./support/poll";
 
 // The security headers of next.config.js, and the analytics script that must
 // not record the query strings (?password= of the admin, ?email= of "Mes
@@ -23,16 +25,21 @@ test("security headers on the pages, the service worker and the server actions",
   const home = await page.goto("/");
   expectSecurityHeaders(home!.headers());
 
-  // a server action (getPollsByEmail) answers with them too
+  // a server action (createPoll) answers with them too
   const actions: Record<string, string>[] = [];
   page.on("response", (response) => {
     if (response.request().headers()["next-action"])
       actions.push(response.headers());
   });
-  const myPolls = await page.goto("/mes-sondages?email=personne@example.com");
-  expectSecurityHeaders(myPolls!.headers());
-  await expect.poll(() => actions.length).toBeGreaterThan(0);
+  await createPoll(page, {
+    type: "free",
+    slots: [{ day: nextWeekday(3, 2), start: "12:00", end: "13:00" }],
+  });
+  expect(actions.length).toBeGreaterThan(0);
   actions.forEach(expectSecurityHeaders);
+
+  const poll = await page.reload();
+  expectSecurityHeaders(poll!.headers());
 
   const worker = await request.get("/service.js");
   expect(worker.ok()).toBe(true);
