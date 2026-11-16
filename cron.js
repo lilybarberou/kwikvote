@@ -279,17 +279,15 @@ if (require.main === module) {
     `Cron started on '${format(toZonedTime(new Date(), "Europe/Paris"), "eeee d MMMM kk:mm")}'`,
   );
 
-  cron.schedule(
-    "*/1 * * * *",
-    async () => {
-      const formattedDateFr = format(
-        toZonedTime(new Date(), "Europe/Paris"),
-        "eeee d MMMM kk:mm",
-      );
-      console.log(`START -- ${formattedDateFr} -------------------`);
-      await doStuff();
-      console.log("END --------------------------------------------------");
-    },
-    { runOnInit: true },
-  );
+  const task = cron.schedule("*/1 * * * *", async () => {
+    const formattedDateFr = format(
+      toZonedTime(new Date(), "Europe/Paris"),
+      "eeee d MMMM kk:mm",
+    );
+    console.log(`START -- ${formattedDateFr} -------------------`);
+    await doStuff();
+    console.log("END --------------------------------------------------");
+  });
+  // node-cron 4 has no runOnInit option: the first run starts right away
+  task.execute();
 }

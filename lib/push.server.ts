@@ -1,7 +1,7 @@
 import { env } from "@/lib/env";
 import { prisma } from "@/prisma/db";
 import "server-only";
-import webpush from "web-push";
+import * as webpush from "web-push";
 
 // every push notification of the app goes through here
 // (cron.js, CommonJS, has its own copy of sendPush)
