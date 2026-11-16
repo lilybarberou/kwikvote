@@ -14,6 +14,7 @@ import {
   adminAction,
   pollPwAction,
 } from "@/lib/safe-action";
+import { hashSubscriptionEndpoint } from "@/lib/subscription-hash";
 import { prisma } from "@/prisma/db";
 import { z } from "zod";
 
@@ -80,9 +81,24 @@ export const getPollById = action
     // (network, database) only by this null
     if (!poll) return null;
 
-    const { password, ...rest } = poll;
+    const { password, votes, ...rest } = poll;
 
-    return { ...rest, hasPassword: !!password };
+    return {
+      ...rest,
+      hasPassword: !!password,
+      // never the endpoints: a hash of each, different in each poll
+      // (see lib/subscription-hash.ts)
+      votes: await Promise.all(
+        votes.map(async ({ subscriptions, ...vote }) => ({
+          ...vote,
+          subscriptionHashes: await Promise.all(
+            subscriptions.map((sub) =>
+              hashSubscriptionEndpoint(poll.id, sub.endpoint),
+            ),
+          ),
+        })),
+      ),
+    };
   });
 
 export const isPollPasswordValid = pollPwAction.action(async () => {
