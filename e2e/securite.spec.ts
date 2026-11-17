@@ -14,6 +14,8 @@ const expectSecurityHeaders = (headers: Record<string, string>) => {
   expect(headers["permissions-policy"]).toBe(
     "camera=(), microphone=(), geolocation=()",
   );
+  // poweredByHeader: false in next.config.js
+  expect(headers["x-powered-by"]).toBeUndefined();
 };
 
 test("security headers on the pages, the service worker and the server actions", async ({
