@@ -71,7 +71,7 @@ vraies clés (webhook Discord, VAPID). La suite ne s'en sert jamais :
 
 | Fichier                    | Parcours                                                                                        |
 | -------------------------- | ----------------------------------------------------------------------------------------------- |
-| `securite.spec.ts`         | en-têtes de sécurité (pages, actions serveur, service worker), statistiques sans query string   |
+| `securite.spec.ts`         | en-têtes de sécurité (pages, actions serveur, service worker), statistiques sans query string, 50 créneaux au plus (formulaire de création) |
 
 Règles suivies :
 

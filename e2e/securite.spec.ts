@@ -48,3 +48,19 @@ test("the analytics script does not record the query string", async ({
   const script = page.locator('script[src*="umami"]');
   await expect(script).toHaveAttribute("data-exclude-search", "true");
 });
+
+// The number of slots of a poll is limited (lib/schema/poll-schema.ts).
+const SLOTS_MAX_COUNT_MESSAGE = "Un sondage peut avoir 50 créneaux au maximum";
+
+test("the creation form allows 50 slots at most", async ({ page }) => {
+  await page.goto("/poll/creer");
+  const addSlot = page.getByRole("button", { name: "Ajouter un créneau" });
+  await expect(page.getByText("Date de début")).toHaveCount(1);
+  await expect(page.getByText(SLOTS_MAX_COUNT_MESSAGE)).toBeHidden();
+
+  for (let count = 1; count < 50; count++) await addSlot.click();
+
+  await expect(page.getByText("Date de début")).toHaveCount(50);
+  await expect(addSlot).toBeDisabled();
+  await expect(page.getByText(SLOTS_MAX_COUNT_MESSAGE)).toBeVisible();
+});
