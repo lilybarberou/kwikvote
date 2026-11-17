@@ -252,22 +252,9 @@ FROM "CronSchedule";
 - Un organisateur sans e-mail n'est pas reconnu d'un sondage à l'autre ; deux
   organisateurs partageant une adresse comptent pour un.
 
-## Évolution proposée (non implémentée)
+## Ce qui ne sera pas fait
 
-Une table d'événements métier dans la base de KwikVote elle-même, lisible en SQL
-par les agents comme le reste de ce document, sans outil externe :
-
-- Modèle `Event` : `id`, `name` (nom stable), `pollId` (facultatif), `props` (JSON
-  sans donnée personnelle), `createdAt`, avec un index sur (`name`, `createdAt`).
-  L'ajout de cette table est le seul changement de schéma : il n'en modifie aucune autre.
-- Écrits côté serveur dans les server actions et dans `cron.js` : `poll_created`,
-  `poll_updated`, `slot_updated`, `slot_deleted`, `vote_created`, `vote_updated`,
-  `vote_deleted` (avec priorité, place obtenue ou liste d'attente),
-  `comment_created`, `push_subscribed`, `push_sent`, `push_failed`,
-  `push_subscription_expired`, `waitlist_promoted`, `cron_run`, `action_failed`.
-- Quelques étapes de parcours envoyées par le navigateur à une server action
-  dédiée (liste fermée de noms, limitée en débit) : `create_form_opened`,
-  `vote_dialog_opened`, `push_prompt_answered`.
-- Conservation de 24 mois, purgée par le cron.
-
-Chaque section de ce document gagnerait alors une requête sur `Event`.
+Décision du 17/11/2026 (voir `docs/DECISIONS.md`) : pas d'outil d'analytics
+supplémentaire (ni PostHog, ni table d'événements dans la base). KwikVote est en
+maintenance seule ; les requêtes de ce document suffisent. Les limites ci-dessus
+sont donc acceptées.
