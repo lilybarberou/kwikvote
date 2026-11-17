@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+import { lengthCheckedArray } from "./array";
+
+// shared with the creation form (components/poll/PollForm.tsx) and the votes
+// (one choice per slot, lib/schema/vote-schema.ts); 7 at most in production
+export const POLL_SLOTS_MAX_COUNT = 50;
+export const POLL_SLOTS_MAX_COUNT_MESSAGE = `Un sondage peut avoir ${POLL_SLOTS_MAX_COUNT} créneaux au maximum`;
+
 export const pollFormSchema = z.object({
   type: z.enum(["1", "2"]),
   title: z.string().min(1),
@@ -12,14 +19,18 @@ export const pollFormSchema = z.object({
     .positive()
     .optional()
     .or(z.string().regex(/^\d+$/)),
-  slots: z.array(
-    z.object({
-      startDate: z.date(),
-      startTime: z.string(),
-      endDate: z.date(),
-      endTime: z.string(),
-      maxParticipants: z.coerce.number().positive(),
-    }),
+  slots: lengthCheckedArray(
+    z.array(
+      z.object({
+        startDate: z.date(),
+        startTime: z.string(),
+        endDate: z.date(),
+        endTime: z.string(),
+        maxParticipants: z.coerce.number().positive(),
+      }),
+    ),
+    POLL_SLOTS_MAX_COUNT,
+    POLL_SLOTS_MAX_COUNT_MESSAGE,
   ),
 });
 export type PollFormSchema = z.infer<typeof pollFormSchema>;
@@ -45,7 +56,11 @@ export const createPollSchema = z.object({
   timeBeforeAllowedType: z.number().int().min(1).max(2),
   // stored in an Int column
   msBeforeAllowed: z.number().int().nonnegative().max(2147483647),
-  slots: z.array(createSlotSchema).min(1),
+  slots: lengthCheckedArray(
+    z.array(createSlotSchema).min(1),
+    POLL_SLOTS_MAX_COUNT,
+    POLL_SLOTS_MAX_COUNT_MESSAGE,
+  ),
 });
 export type CreatePollSchema = z.infer<typeof createPollSchema>;
 
