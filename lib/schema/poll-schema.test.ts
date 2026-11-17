@@ -1,6 +1,11 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, expectTypeOf, test } from "vitest";
+import { z } from "zod";
 
-import { createPollSchema } from "./poll-schema";
+import {
+  POLL_SLOTS_MAX_COUNT,
+  createPollSchema,
+  pollFormSchema,
+} from "./poll-schema";
 
 const valid = {
   type: 2,
@@ -61,5 +66,75 @@ describe("createPollSchema", () => {
           ],
         }),
       ).toBe(false);
+  });
+});
+
+describe("number of slots", () => {
+  const slots = (count: number) => Array(count).fill(valid.slots[0]);
+
+  test("50 slots at most", () => {
+    expect(POLL_SLOTS_MAX_COUNT).toBe(50);
+    expect(parse({ slots: slots(50) })).toBe(true);
+
+    const res = createPollSchema.safeParse({ ...valid, slots: slots(51) });
+    expect(res.success).toBe(false);
+    expect(res.error?.issues).toEqual([
+      expect.objectContaining({
+        path: ["slots"],
+        message: "Un sondage peut avoir 50 créneaux au maximum",
+      }),
+    ]);
+  });
+
+  test("a huge array is refused before its elements are read", () => {
+    // what fits in the 1 MB body of a server action: [1,1,1,…]
+    const huge = new Array(524_288).fill(1);
+
+    const start = performance.now();
+    const res = createPollSchema.safeParse({ ...valid, slots: huge });
+    const duration = performance.now() - start;
+
+    expect(res.success).toBe(false);
+    // instead of one per element (about 200 MB of memory)
+    expect(res.error!.issues.length).toBeLessThanOrEqual(3);
+    expect(duration).toBeLessThan(100);
+  });
+
+  test("not an array is still refused", () => {
+    for (const value of [undefined, null, "1", 1, {}])
+      expect(parse({ slots: value })).toBe(false);
+  });
+
+  test("the creation form has the same limit", () => {
+    const formSlot = {
+      startDate: new Date("2099-06-12"),
+      startTime: "16:00",
+      endDate: new Date("2099-06-12"),
+      endTime: "18:00",
+      maxParticipants: 10,
+    };
+    const form = (count: number) =>
+      pollFormSchema.safeParse({
+        type: "1",
+        title: "Foot",
+        timeBeforeAllowedType: "1",
+        slots: Array(count).fill(formSlot),
+      }).success;
+    expect(form(50)).toBe(true);
+    expect(form(51)).toBe(false);
+  });
+
+  test("the inferred types are unchanged", () => {
+    type Slots = { startDate: Date; endDate: Date; maxParticipants: number }[];
+    expectTypeOf<
+      z.infer<typeof createPollSchema>["slots"]
+    >().toEqualTypeOf<Slots>();
+    expectTypeOf<z.input<typeof createPollSchema>["slots"]>().toEqualTypeOf<
+      {
+        startDate: string | Date;
+        endDate: string | Date;
+        maxParticipants: number;
+      }[]
+    >();
   });
 });

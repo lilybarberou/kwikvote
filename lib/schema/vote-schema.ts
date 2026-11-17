@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+import { lengthCheckedArray } from "./array";
+import { POLL_SLOTS_MAX_COUNT } from "./poll-schema";
+
 // shared with the vote form (components/poll/DialogVote.tsx)
 export const VOTE_NAME_MAX_LENGTH = 100;
 
@@ -7,12 +10,17 @@ export const createVoteSchema = z.object({
   id: z.string(),
   name: z.string().max(VOTE_NAME_MAX_LENGTH),
   pollId: z.string(),
-  choices: z.array(
-    z.object({
-      id: z.string(),
-      slotId: z.string(),
-      choice: z.number(),
-    }),
+  // one choice per slot of the poll
+  choices: lengthCheckedArray(
+    z.array(
+      z.object({
+        id: z.string(),
+        slotId: z.string(),
+        choice: z.number(),
+      }),
+    ),
+    POLL_SLOTS_MAX_COUNT,
+    `Un vote peut avoir ${POLL_SLOTS_MAX_COUNT} choix au maximum`,
   ),
   subscription: z
     .object({
