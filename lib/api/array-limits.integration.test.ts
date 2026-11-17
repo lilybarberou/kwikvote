@@ -73,16 +73,23 @@ describe("array limits of the server actions (local database)", () => {
   test("a vote with too many choices is refused, nothing is stored", async () => {
     const pollId = (await newPoll({ slots: slots(1) }))!.data!;
     const [slot] = await prisma.slot.findMany({ where: { pollId } });
-    const choices = (count: number) =>
+    const choices = (count: number, priority?: boolean) =>
       Array.from({ length: count }, () => ({
         id: randomUUID(),
         slotId: slot.id,
         choice: 1,
+        priority,
       }));
     const vote = (choices: CreateVoteSchema["choices"]) =>
       createVote({ id: randomUUID(), name: "Lily", pollId, choices });
 
-    for (const tooMany of [choices(POLL_SLOTS_MAX_COUNT + 1), huge()]) {
+    for (const tooMany of [
+      choices(POLL_SLOTS_MAX_COUNT + 1),
+      // with the priority of the registration polls
+      choices(POLL_SLOTS_MAX_COUNT + 1, true),
+      choices(POLL_SLOTS_MAX_COUNT + 1, false),
+      huge(),
+    ]) {
       const res = await vote(tooMany);
       expect(res?.data).toBeUndefined();
       expect(res?.serverError).toBeUndefined();
