@@ -7,7 +7,12 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { usePoll } from "@/hooks/use-poll";
-import { PollFormSchema, pollFormSchema } from "@/lib/schema/poll-schema";
+import {
+  POLL_SLOTS_MAX_COUNT,
+  POLL_SLOTS_MAX_COUNT_MESSAGE,
+  PollFormSchema,
+  pollFormSchema,
+} from "@/lib/schema/poll-schema";
 import { parisDateTimeToUtc } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, X } from "lucide-react";
@@ -39,6 +44,8 @@ export const PollForm = () => {
     control,
     name: "slots",
   });
+  // the server refuses more (lib/schema/poll-schema.ts)
+  const isSlotsMaxCount = fields.length >= POLL_SLOTS_MAX_COUNT;
 
   const submitPoll = handleSubmit(async (data) => {
     // convert hours to ms
@@ -257,10 +264,17 @@ export const PollForm = () => {
         className="mt-2"
         type="button"
         variant="secondary"
+        disabled={isSlotsMaxCount}
+        aria-describedby={isSlotsMaxCount ? "slots-max-count" : undefined}
         onClick={() => append(slotDefaultValues)}
       >
         Ajouter un créneau
       </Button>
+      {isSlotsMaxCount && (
+        <p id="slots-max-count" className="text-sm text-muted-foreground">
+          {POLL_SLOTS_MAX_COUNT_MESSAGE}
+        </p>
+      )}
       <Button disabled={createPollMutation.isPending} className="mt-4">
         Créer
         {createPollMutation.isPending && (
