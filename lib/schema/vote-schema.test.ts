@@ -11,6 +11,9 @@ const choice = (i: number) => ({
 });
 const choices = (count: number) =>
   Array.from({ length: count }, (_, i) => choice(i));
+// what the vote form of a registration poll sends: a priority on each choice
+const priorityChoices = (count: number) =>
+  choices(count).map((choice, i) => ({ ...choice, priority: i % 2 === 0 }));
 const vote = (data: object) => ({
   id: "vote",
   name: "Lily",
@@ -30,6 +33,9 @@ describe("createVoteSchema", () => {
         }),
       ).success,
     ).toBe(true);
+    expect(
+      createVoteSchema.safeParse(vote({ choices: priorityChoices(7) })).success,
+    ).toBe(true);
     // a poll can't have no slot, but the check is the server action's
     expect(createVoteSchema.safeParse(vote({ choices: [] })).success).toBe(
       true,
@@ -38,18 +44,21 @@ describe("createVoteSchema", () => {
 
   test("the choices are limited to one per slot of the biggest poll", () => {
     expect(POLL_SLOTS_MAX_COUNT).toBe(50);
-    expect(
-      createVoteSchema.safeParse(vote({ choices: choices(50) })).success,
-    ).toBe(true);
+    // with or without the priority of the registration polls
+    for (const make of [choices, priorityChoices]) {
+      expect(
+        createVoteSchema.safeParse(vote({ choices: make(50) })).success,
+      ).toBe(true);
 
-    const res = createVoteSchema.safeParse(vote({ choices: choices(51) }));
-    expect(res.success).toBe(false);
-    expect(res.error?.issues).toEqual([
-      expect.objectContaining({
-        path: ["choices"],
-        message: "Un vote peut avoir 50 choix au maximum",
-      }),
-    ]);
+      const res = createVoteSchema.safeParse(vote({ choices: make(51) }));
+      expect(res.success).toBe(false);
+      expect(res.error?.issues).toEqual([
+        expect.objectContaining({
+          path: ["choices"],
+          message: "Un vote peut avoir 50 choix au maximum",
+        }),
+      ]);
+    }
   });
 
   test("a huge array is refused before its elements are read", () => {
@@ -67,7 +76,15 @@ describe("createVoteSchema", () => {
   });
 
   test("invalid choices are still refused", () => {
-    for (const choices of [null, "1", 1, {}, [1], [{ id: "c", slotId: "s" }]])
+    for (const choices of [
+      null,
+      "1",
+      1,
+      {},
+      [1],
+      [{ id: "c", slotId: "s" }],
+      [{ ...choice(0), priority: "true" }],
+    ])
       expect(createVoteSchema.safeParse(vote({ choices })).success).toBe(false);
   });
 
