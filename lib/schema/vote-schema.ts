@@ -17,6 +17,8 @@ export const createVoteSchema = z.object({
         id: z.string(),
         slotId: z.string(),
         choice: z.number(),
+        // registration polls only, missing: the stored priority is kept
+        priority: z.boolean().optional(),
       }),
     ),
     POLL_SLOTS_MAX_COUNT,

@@ -69,7 +69,7 @@ export const getPollById = action
             name: true,
             subscriptions: { select: { endpoint: true } },
             choices: {
-              select: { id: true, choice: true, slotId: true },
+              select: { id: true, choice: true, slotId: true, priority: true },
               orderBy: slotsOrderBy.map((orderBy) => ({ slot: orderBy })),
             },
           },

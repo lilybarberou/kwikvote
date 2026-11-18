@@ -22,7 +22,7 @@ import { useNotificationsStore } from "@/lib/store/notificationsStore";
 import { useVotesStore } from "@/lib/store/votesStore";
 import { getDate, timeTwoDigit } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Star, Trash2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { SetStateAction, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -30,6 +30,7 @@ import { useMediaQuery } from "usehooks-ts";
 import { v4 } from "uuid";
 
 import { Button } from "../ui/button";
+import { Checkbox } from "../ui/checkbox";
 import {
   DialogClose,
   DialogContent,
@@ -63,13 +64,15 @@ export const DialogVote = (props: Props) => {
   const { subscription } = useNotificationsStore();
   const subscriptionHash = useSubscriptionHash(pollId);
   const { addLocalVote, removeLocalVote } = useLocalVotesStore();
+  // choice-{slotId}: "1" | "2" | "3", priority-{slotId}: boolean
   const {
     register,
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors },
-  } = useForm<{ name: string; [key: string]: string }>();
+  } = useForm<{ name: string; [key: string]: string | boolean }>();
 
   const isMobile = useMediaQuery("(max-width: 700px)");
   const isFreePoll = pollType == 1;
@@ -79,9 +82,29 @@ export const DialogVote = (props: Props) => {
     reset();
   }, [currentVoteId, reset]);
 
+  const getStoredChoice = (slotId: string) =>
+    votes[currentVoteId]?.choices.find((choice) => choice.slotId === slotId);
+
   const submitVote = handleSubmit(async (data) => {
+    const getChoice = (slotId: string) =>
+      parseInt(String(data[`choice-${slotId}`]));
+    // a priority only makes sense on a yes of a registration poll,
+    // a checkbox never displayed keeps the stored priority
+    const getPriority = (slotId: string) => {
+      const priority = data[`priority-${slotId}`];
+      return (
+        isRegistrationPoll &&
+        getChoice(slotId) === 1 &&
+        (priority === undefined
+          ? !!getStoredChoice(slotId)?.priority
+          : priority === true)
+      );
+    };
+
     const areSameChoices = votes[currentVoteId]?.choices.every(
-      (choice) => choice.choice === parseInt(data[`choice-${choice.slotId}`]),
+      (choice) =>
+        choice.choice === getChoice(choice.slotId) &&
+        !!choice.priority === getPriority(choice.slotId),
     );
     const isSameName = votes[currentVoteId]?.name === data.name;
 
@@ -132,7 +155,8 @@ export const DialogVote = (props: Props) => {
         return {
           id: choiceId || v4(),
           slotId: slot.id,
-          choice: parseInt(data[`choice-${slot.id}`]),
+          choice: getChoice(slot.id),
+          priority: getPriority(slot.id),
         };
       }),
       subscription: subscription || undefined,
@@ -213,6 +237,14 @@ export const DialogVote = (props: Props) => {
           maxLength={VOTE_NAME_MAX_LENGTH}
           {...register("name", { required: true })}
         />
+        {isRegistrationPoll && (
+          <p id="priority-help" className="text-sm text-muted-foreground">
+            Avant l'ouverture des réinscriptions, vous n'êtes inscrit que sur un
+            créneau : le premier qui a de la place. Cochez{" "}
+            <span className="whitespace-nowrap">« Prioritaire »</span> sur vos
+            créneaux préférés pour qu'ils passent en premier.
+          </p>
+        )}
         <div>
           {slots.map((slot, index) => (
             <div
@@ -233,12 +265,15 @@ export const DialogVote = (props: Props) => {
                   rules={{ required: true }}
                   name={`choice-${slot.id}`}
                   defaultValue={
-                    votes[currentVoteId]?.choices
-                      .find((choice) => choice.slotId === slot.id)
-                      ?.choice.toString() ?? ""
+                    getStoredChoice(slot.id)?.choice.toString() ?? ""
                   }
                   render={({ field }) => (
-                    <Select {...field} onValueChange={field.onChange}>
+                    <Select
+                      {...field}
+                      // choice fields only hold strings
+                      value={field.value as string}
+                      onValueChange={field.onChange}
+                    >
                       <SelectTrigger
                         autoFocus={currentVoteId ? index == 0 : false}
                         className="min-w-[180px]"
@@ -260,6 +295,42 @@ export const DialogVote = (props: Props) => {
                     Champ requis
                   </p>
                 )}
+                {isRegistrationPoll &&
+                  // the stored choice until the field is registered
+                  watch(
+                    `choice-${slot.id}`,
+                    getStoredChoice(slot.id)?.choice.toString(),
+                  ) === "1" && (
+                    <Controller
+                      control={control}
+                      name={`priority-${slot.id}`}
+                      defaultValue={getStoredChoice(slot.id)?.priority ?? false}
+                      render={({ field }) => (
+                        <div className="mt-2 flex items-center gap-2">
+                          <Checkbox
+                            id={`priority-${slot.id}`}
+                            aria-describedby="priority-help"
+                            checked={field.value === true}
+                            onCheckedChange={(checked) =>
+                              field.onChange(checked === true)
+                            }
+                            onBlur={field.onBlur}
+                            ref={field.ref}
+                          />
+                          <Label
+                            htmlFor={`priority-${slot.id}`}
+                            className="flex cursor-pointer items-center gap-1 font-normal"
+                          >
+                            <Star
+                              aria-hidden
+                              className="h-3.5 w-3.5 fill-amber-400 stroke-amber-500"
+                            />
+                            Prioritaire
+                          </Label>
+                        </div>
+                      )}
+                    />
+                  )}
               </div>
             </div>
           ))}
