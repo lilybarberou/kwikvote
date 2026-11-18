@@ -114,35 +114,5 @@ function isSuccessResponse(obj: any): obj is SuccessResponse {
   return obj && typeof obj === "object" && "success" in obj && "message" in obj;
 }
 
-export const checkTimeBeforeAllow = ({
-  timeBeforeAllowedType,
-  msBeforeAllowed,
-  slots,
-}: {
-  timeBeforeAllowedType: number;
-  msBeforeAllowed: number;
-  slots: PollWithSlots["slots"];
-}) => {
-  return slots.reduce(
-    (obj, curr) => {
-      const now = new Date();
-
-      // date to compare is day before at 5pm
-      if (timeBeforeAllowedType == 1) {
-        const dateToCompareFr = toZonedTime(curr.startDate, "Europe/Paris");
-        dateToCompareFr.setDate(dateToCompareFr.getDate() - 1);
-        dateToCompareFr.setHours(17, 0, 0, 0);
-        const dateToCompareUtc = fromZonedTime(dateToCompareFr, "Europe/Paris");
-
-        obj[curr.id] = now.getTime() > dateToCompareUtc.getTime();
-      }
-      // specific hours number before startDate
-      else {
-        obj[curr.id] =
-          now.getTime() > curr.startDate.getTime() - msBeforeAllowed;
-      }
-      return obj;
-    },
-    {} as Record<string, boolean>,
-  );
-};
+// shared with cron.js, which loads lib/registration.ts
+export { checkTimeBeforeAllow } from "./registration";

@@ -490,6 +490,95 @@ export const fillFreeSpots = <T extends SlotArrays>({
 };
 
 /**
+ * What the cron does once the reregistration time of slots has passed:
+ * - while a slot whose time has passed has room, the first of its
+ *   reregistered waiting list (on the last such slot) is placed again, in
+ *   its own order (priority slots first);
+ * - then the reregistered people of these slots join the end of their
+ *   waiting list;
+ * - and the free spots go to the waiting lists (fillFreeSpots): a vote
+ *   placed again can free a spot on a slot whose time hasn't passed.
+ * The votes missing from choicesByVoteId (deleted) are skipped.
+ * `slots` must be sorted like `slotsOrderBy`, they are updated in place.
+ */
+export const openReregistrations = <T extends SlotArrays>({
+  slots,
+  choicesByVoteId,
+  timeBeforeAllowedPassed,
+}: {
+  slots: T[];
+  choicesByVoteId: ChoicesByVoteId;
+  timeBeforeAllowedPassed: Record<string, boolean>;
+}) => {
+  const maxSteps = getMaxCascadeSteps(slots);
+
+  for (let step = 0; ; step++) {
+    let voteIdToRegister = "";
+    slots.forEach((slot) => {
+      const isNotFull = slot.registered.length < slot.maxParticipants;
+      const firstReregistered = slot.waitingListReregistered.find(
+        (id) => id in choicesByVoteId,
+      );
+      if (isNotFull && timeBeforeAllowedPassed[slot.id] && firstReregistered)
+        voteIdToRegister = firstReregistered;
+    });
+    if (!voteIdToRegister) break;
+    if (step >= maxSteps) throw cascadeError();
+
+    placeVote({
+      slots,
+      voteId: voteIdToRegister,
+      choices: choicesByVoteId[voteIdToRegister] ?? [],
+      voteExists: true,
+      timeBeforeAllowedPassed,
+    });
+  }
+
+  slots.forEach((slot) => {
+    if (!timeBeforeAllowedPassed[slot.id]) return;
+    slot.waitingList = [...slot.waitingList, ...slot.waitingListReregistered];
+    slot.waitingListReregistered = [];
+  });
+
+  return fillFreeSpots({ slots, choicesByVoteId, timeBeforeAllowedPassed });
+};
+
+// whether the reregistration time of each slot has passed: the day before at
+// 17:00 Paris time (timeBeforeAllowedType 1), or msBeforeAllowed before its start
+export const checkTimeBeforeAllow = ({
+  timeBeforeAllowedType,
+  msBeforeAllowed,
+  slots,
+}: {
+  timeBeforeAllowedType: number;
+  msBeforeAllowed: number;
+  slots: { id: string; startDate: Date }[];
+}) => {
+  return slots.reduce(
+    (obj, curr) => {
+      const now = new Date();
+
+      // date to compare is day before at 5pm
+      if (timeBeforeAllowedType == 1) {
+        const dateToCompareFr = toZonedTime(curr.startDate, "Europe/Paris");
+        dateToCompareFr.setDate(dateToCompareFr.getDate() - 1);
+        dateToCompareFr.setHours(17, 0, 0, 0);
+        const dateToCompareUtc = fromZonedTime(dateToCompareFr, "Europe/Paris");
+
+        obj[curr.id] = now.getTime() > dateToCompareUtc.getTime();
+      }
+      // specific hours number before startDate
+      else {
+        obj[curr.id] =
+          now.getTime() > curr.startDate.getTime() - msBeforeAllowed;
+      }
+      return obj;
+    },
+    {} as Record<string, boolean>,
+  );
+};
+
+/**
  * Places a vote just created or edited by its author (`oldChoices` are its
  * stored choices when it is an edit), then fills the spots it freed.
  * `choicesByVoteId` must hold the choices of the other votes.
