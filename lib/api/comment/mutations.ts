@@ -8,16 +8,10 @@ import {
   hitAll,
   limiters,
 } from "@/lib/rate-limits.server";
+import { sendPush } from "@/lib/push.server";
 import { ActionError, action } from "@/lib/safe-action";
 import { createCommentSchema } from "@/lib/schema/comment-schema";
 import { prisma } from "@/prisma/db";
-import webpush from "web-push";
-
-webpush.setVapidDetails(
-  "mailto:" + env.NEXT_PUBLIC_VAPID_EMAIL,
-  env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-  env.VAPID_PRIVATE_KEY,
-);
 
 export const createComment = action
   .schema(createCommentSchema)
@@ -69,13 +63,7 @@ export const createComment = action
     const subscriptions: Subscriptions = {};
     votes.forEach((vote) => {
       vote.subscriptions.forEach((sub) => {
-        subscriptions[sub.endpoint] = {
-          endpoint: sub.endpoint,
-          keys: {
-            auth: sub.auth,
-            p256dh: sub.p256dh,
-          },
-        };
+        subscriptions[sub.endpoint] = sub;
       });
     });
 
@@ -83,22 +71,11 @@ export const createComment = action
     if (data.exceptEndpoint) delete subscriptions[data.exceptEndpoint];
 
     // SEND NOTIFICATION TO ALL SUBS
-    Object.values(subscriptions).forEach((sub) => {
-      webpush
-        .sendNotification(sub, payload)
-        .then((res) => console.log(res))
-        .catch((err) => console.log(err));
-    });
+    Object.values(subscriptions).forEach((sub) => sendPush(sub, payload));
 
     return comment;
   });
 
 type Subscriptions = {
-  [endpoint: string]: {
-    endpoint: string;
-    keys: {
-      auth: string;
-      p256dh: string;
-    };
-  };
+  [endpoint: string]: { endpoint: string; auth: string; p256dh: string };
 };
