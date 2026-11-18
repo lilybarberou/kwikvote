@@ -88,12 +88,12 @@ else {
 
 Autrement dit, pour un vote donné et un créneau où il a dit Oui :
 
-| Situation | Tableau |
-|---|---|
-| pas encore inscrit sur un créneau **précédent**, place libre | `registered` |
-| pas encore inscrit sur un créneau précédent, complet | `waitingList` (à la fin) |
-| déjà inscrit sur un créneau précédent, heure d'ouverture **non passée** | `waitingListReregistered`, **même s'il reste de la place** |
-| déjà inscrit sur un créneau précédent, heure d'ouverture passée | comme s'il n'était inscrit nulle part (`registered` ou `waitingList`) |
+| Situation                                                               | Tableau                                                               |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| pas encore inscrit sur un créneau **précédent**, place libre            | `registered`                                                          |
+| pas encore inscrit sur un créneau précédent, complet                    | `waitingList` (à la fin)                                              |
+| déjà inscrit sur un créneau précédent, heure d'ouverture **non passée** | `waitingListReregistered`, **même s'il reste de la place**            |
+| déjà inscrit sur un créneau précédent, heure d'ouverture passée         | comme s'il n'était inscrit nulle part (`registered` ou `waitingList`) |
 
 En modification (`voteExists`), un créneau dont le choix a changé est vidé de ce
 vote puis traité comme une création (le vote perd sa place dans la file de ce
@@ -239,10 +239,11 @@ est inscrite sur le premier d'entre eux (chronologiquement) qui a de la place ;
 s'ils sont tous complets, elle attend sur chacun et peut être inscrite sur un
 créneau non prioritaire en attendant.
 
-*Alternatives écartées :*
-- *un seul créneau prioritaire par vote* : plus simple mais contredit « x votes »
+_Alternatives écartées :_
+
+- _un seul créneau prioritaire par vote_ : plus simple mais contredit « x votes »
   et oblige à choisir entre deux créneaux également préférés ;
-- *un classement complet (1er choix, 2e choix…)* : plus expressif, mais
+- _un classement complet (1er choix, 2e choix…)_ : plus expressif, mais
   interface nettement plus lourde (ordonner des créneaux sur mobile) pour un
   gain faible ; le modèle booléen pourra évoluer vers un rang plus tard sans
   casser les données (`false` = rang par défaut).
@@ -253,12 +254,13 @@ d'attente de ce créneau (si elle était en « réinscrits », elle passe en « 
 d'attente », à la fin). Elle garde entre-temps la place qu'elle a ailleurs.
 Quand une place se libère et que c'est son tour, la bascule est automatique.
 
-*Alternatives écartées :*
-- *refuser de marquer prioritaire un créneau complet* : moins utile, et la
+_Alternatives écartées :_
+
+- _refuser de marquer prioritaire un créneau complet_ : moins utile, et la
   personne devrait revenir surveiller les places ;
-- *libérer tout de suite son autre place pour attendre* : elle perdrait une place
+- _libérer tout de suite son autre place pour attendre_ : elle perdrait une place
   sûre sans rien gagner, et cela créerait des allers-retours de notifications ;
-- *la placer en tête de la liste d'attente* : passerait devant des personnes qui
+- _la placer en tête de la liste d'attente_ : passerait devant des personnes qui
   attendaient déjà (voir d.).
 
 **d. Équité.** Une priorité ne fait jamais passer devant quelqu'un dans une liste
@@ -324,9 +326,10 @@ alors la priorité déjà enregistrée au lieu de l'effacer.
 - **Formulaire de vote** (`DialogVote`, sondages avec liste d'attente) : sous le
   choix d'un créneau, quand la réponse est Oui, une case « Prioritaire » avec une
   étoile. Texte d'aide court au-dessus des créneaux : « Avant l'ouverture des
-  réinscriptions, vous n'êtes inscrit que sur un créneau. Cochez « Prioritaire »
-  pour que vos créneaux préférés passent en premier. » La comparaison « rien n'a
-  changé » tient compte de la priorité.
+  réinscriptions, vous n'êtes inscrit que sur un créneau : le premier qui a de
+  la place. Cochez « Prioritaire » sur vos créneaux préférés pour qu'ils
+  passent en premier. » La case est reliée à ce texte (`aria-describedby`). La
+  comparaison « rien n'a changé » tient compte de la priorité.
 - **Résultats** (`RegistrationPoll`) : une étoile à côté du nom sur les créneaux
   marqués prioritaires (avec un texte pour les lecteurs d'écran et une
   infobulle), une ligne de légende, et l'aide (point d'interrogation) explique
@@ -345,27 +348,64 @@ alors la priorité déjà enregistrée au lieu de l'effacer.
   de les relire un par un dans la transaction. L'ordre personnel est donné par
   `getSlotsInVoteOrder`. Les actions serveur ne font plus que lire, appeler ces
   fonctions et écrire, toujours sous `withPollLock`.
-- Ces fonctions ont été comparées à l'ancien code sur des milliers de scénarios
-  aléatoires **sans priorité** (résultats identiques), puis testées sur les cas
-  avec priorité (`lib/registration.test.ts`).
+- Ces fonctions ont été comparées à l'ancien code de `main` (copié tel quel
+  dans un harnais de test temporaire, non commité) sur 5 000 scénarios
+  aléatoires de 25 opérations **sans priorité** (créations, modifications,
+  suppressions de votes, suppressions de créneaux, changements d'ordre des
+  créneaux) : résultats strictement identiques.
 - `cron.js` reste autonome (son image Docker ne copie que `cron.js` et
   `prisma/`) : il reçoit sa propre copie de `getSlotsInVoteOrder` et lit
-  `priority`. Il n'est plus lancé quand il est importé (pour les tests).
+  `priority`. Il n'est plus lancé quand il est importé (pour les tests) ; lancé
+  avec `node cron.js`, il fonctionne comme avant.
 - Une boucle de cascade qui ne se termine pas (données incohérentes) lève une
   erreur et annule la transaction, au lieu de tourner jusqu'au délai de la
   transaction.
 
+### 3.6 Tests
+
+- `pnpm test` (Vitest, sans base) :
+  - `lib/registration.test.ts` : l'exemple vendredi/samedi (avec et sans place
+    le samedi), le retrait de la priorité, la suppression d'un vote, plusieurs
+    priorités, « tout prioritaire = rien », la conservation des places dans les
+    files, l'heure d'ouverture passée, la modification des dates et la
+    suppression d'un créneau, et des invariants vérifiés sur 1 500 sondages
+    aléatoires avec priorités (une seule place confirmée par personne avant
+    l'ouverture, jamais de place libre avec une liste d'attente, chaque vote
+    dans exactement un tableau par créneau, les créneaux qui précèdent la place
+    d'une personne dans son ordre sont complets et elle y attend) ;
+  - `cron.test.ts` : le cron à l'ouverture du vendredi garde le samedi
+    prioritaire.
+- `pnpm test:integration` (base PostgreSQL **locale** uniquement, refuse tout
+  autre hôte) : `createVote` et `deleteVote` réels, notifications simulées, dont
+  deux priorités simultanées pour la dernière place du samedi et 12 votes
+  simultanés.
+- Parcours de bout en bout dans un navigateur (Playwright, script hors dépôt)
+  sur un serveur `next start` local branché sur une base Docker, et exécution
+  réelle de `cron.js` sur cette base. Ce parcours a révélé un bug corrigé : à la
+  modification d'un vote existant, la case « Prioritaire » n'apparaissait
+  qu'après avoir changé le choix.
+
 ## 4. Points à valider avant déploiement
 
-Voir aussi le rendu de la PR / du travail :
-
-- le déploiement lancera `prisma db push`, qui ajoutera la colonne
-  `VoteChoice.priority` (additive, valeur par défaut `false`) ;
-- **redéployer le cron en même temps que l'application** (nouvelle image
+- Le déploiement lancera `prisma db push`, qui ajoutera la colonne
+  `VoteChoice.priority` (additive, valeur par défaut `false`, vérifié sur une
+  base locale contenant des données : aucune perte, aucune option
+  `--accept-data-loss` nécessaire).
+- **Redéployer le cron en même temps que l'application** (nouvelle image
   `Dockerfile.cron`) : un ancien cron ignorerait les priorités à l'heure
-  d'ouverture ; un nouveau cron lancé avant le `db push` échouerait sur la
-  colonne manquante (ses échéances seraient conservées et retraitées la minute
-  suivante) ;
-- valider les choix produit c. (attendre sans perdre sa place) et d. (doubler
-  les réinscrits mais jamais la liste d'attente) ;
-- valider les textes d'aide.
+  d'ouverture et retirerait la personne de son créneau prioritaire ; un nouveau
+  cron lancé avant le `db push` échouerait sur la colonne manquante (ses
+  échéances seraient conservées et retraitées la minute suivante).
+- **Sondages en cours créés avant ce correctif** : leur premier créneau n'a pas
+  de `CronSchedule` (avant la priorité, on ne pouvait pas y être réinscrit).
+  Une priorité posée après le déploiement sur un créneau suivant peut y créer
+  un réinscrit que seul le cron d'un créneau suivant débloquera, parfois après
+  le début du premier. Décider : insérer une fois les échéances manquantes
+  (insertion seule, créneaux à venir des sondages de type 2), ou l'accepter.
+- Valider les choix produit c. (attendre sur le créneau prioritaire complet sans
+  perdre sa place) et d. (passer devant les réinscrits, jamais devant la liste
+  d'attente).
+- Valider les textes d'aide (formulaire, légende, fenêtre d'aide).
+- Le refactor touche toute la logique d'inscription : il est prouvé équivalent
+  sans priorité par le test différentiel, mais une relecture humaine de
+  `lib/registration.ts` reste souhaitable.
