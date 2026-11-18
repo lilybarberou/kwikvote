@@ -312,8 +312,11 @@ d'attente et la cascade se font dans cette transaction : deux votes simultanés
 sont sérialisés, le second voit ce que le premier a validé, et une erreur annule
 tout. Les notifications partent après la validation.
 
-**i. Modification des dates / suppression d'un créneau.** `reconcileSlotsArrays`
-et la cascade de suppression de créneau utilisent le même ordre personnel.
+**i. Modification des dates / suppression d'un créneau.** Les deux appliquent
+`reconcileSlotsArrays`, qui utilise le même ordre personnel. La suppression
+avait sa propre cascade, qui ne replaçait que les réinscrits inscrits et en
+attente nulle part : quelqu'un en attente sur un créneau complet restait
+réinscrit ailleurs alors qu'il y avait de la place.
 
 **j. Compatibilité.** Nouveau champ `VoteChoice.priority Boolean @default(false)` :
 changement purement additif, les votes existants valent `false` et gardent
@@ -343,8 +346,8 @@ alors la priorité déjà enregistrée au lieu de l'effacer.
   identiques (`updateSlotsArrayAfterCreation`, `updateSlotsArrayAfterDelete`,
   `updateSlotsArray` de `slot/mutation.ts`, plus `reconcileSlotsArrays`). Les
   trois premières sont regroupées en fonctions **pures** dans
-  `lib/registration.ts` (`placeVote`, `registerVote`, `fillFreeSpots`,
-  `registerAfterSlotDeletion`), qui reçoivent les choix de tous les votes au lieu
+  `lib/registration.ts` (`placeVote`, `registerVote`, `fillFreeSpots`), qui
+  reçoivent les choix de tous les votes au lieu
   de les relire un par un dans la transaction. L'ordre personnel est donné par
   `getSlotsInVoteOrder`. Les actions serveur ne font plus que lire, appeler ces
   fonctions et écrire, toujours sous `withPollLock`.

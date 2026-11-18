@@ -138,7 +138,8 @@ const isChoiceYesOn = (
 
 /**
  * Re-applies the registration rules on all the slots of a poll, after their
- * order or their reregistration time changed (slot dates update).
+ * order or their reregistration time changed (slot dates update) or a slot
+ * was deleted.
  *
  * Same rules as the votes cascade (placeVote), each vote going through its
  * slots in its own order (getSlotsInVoteOrder: priority slots first):
@@ -517,67 +518,6 @@ export const registerVote = <T extends SlotArrays>({
     timeBeforeAllowedPassed,
   });
   return fillFreeSpots({ slots, choicesByVoteId, timeBeforeAllowedPassed });
-};
-
-/**
- * After a slot is deleted, people of the reregistered waiting lists who are
- * not registered (nor waiting) anywhere anymore are placed again.
- * Then, the reregistered of the slots whose reregistration time passed join
- * the end of the waiting list.
- */
-export const registerAfterSlotDeletion = <T extends SlotArrays>({
-  slots,
-  choicesByVoteId,
-  timeBeforeAllowedPassed,
-}: {
-  slots: T[];
-  choicesByVoteId: ChoicesByVoteId;
-  timeBeforeAllowedPassed: Record<string, boolean>;
-}) => {
-  // first of the reregistered of the last slot which has some
-  let voteIdToRegister = "";
-  slots.forEach((slot) => {
-    if (slot.waitingListReregistered.length > 0)
-      voteIdToRegister = slot.waitingListReregistered[0];
-  });
-  if (!voteIdToRegister) return slots;
-
-  const maxSteps = getMaxCascadeSteps(slots);
-
-  for (let step = 0; voteIdToRegister; step++) {
-    if (step >= maxSteps) throw cascadeError();
-
-    placeVote({
-      slots,
-      voteId: voteIdToRegister,
-      choices: choicesByVoteId[voteIdToRegister] ?? [],
-      voteExists: true,
-      timeBeforeAllowedPassed,
-    });
-
-    // a reregistered who is not registered nor waiting on any slot anymore
-    // (the last slot which has one)
-    voteIdToRegister = "";
-    slots.forEach((slot) => {
-      const reregisteredNotRegisteredOnce = slot.waitingListReregistered.find(
-        (id) =>
-          !slots.some((s) => s.registered.includes(id)) &&
-          !slots.some((s) => s.waitingList.includes(id)),
-      );
-      if (reregisteredNotRegisteredOnce)
-        voteIdToRegister = reregisteredNotRegisteredOnce;
-    });
-  }
-
-  // move wlr to wl if time passed
-  slots.forEach((slot) => {
-    if (timeBeforeAllowedPassed[slot.id]) {
-      slot.waitingList = [...slot.waitingList, ...slot.waitingListReregistered];
-      slot.waitingListReregistered = [];
-    }
-  });
-
-  return slots;
 };
 
 // reregistered people can be registered from this date

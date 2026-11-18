@@ -8,7 +8,6 @@ import {
   getSlotsInVoteOrder,
   normalizeChoices,
   reconcileSlotsArrays,
-  registerAfterSlotDeletion,
   registerVote,
 } from "./registration";
 
@@ -89,6 +88,19 @@ const createPoll = (slots: TestSlot[]) => {
       });
       fillFreeSpots({ slots, choicesByVoteId, timeBeforeAllowedPassed });
       delete choicesByVoteId[voteId];
+      return poll;
+    },
+    // same steps as deleteSlotById: the slot and its choices are gone
+    deleteSlot: (slotId: string) => {
+      slots.splice(
+        slots.findIndex((slot) => slot.id === slotId),
+        1,
+      );
+      for (const voteId of Object.keys(choicesByVoteId))
+        choicesByVoteId[voteId] = choicesByVoteId[voteId].filter(
+          (choice) => choice.slotId !== slotId,
+        );
+      reconcileSlotsArrays({ slots, choicesByVoteId, timeBeforeAllowedPassed });
       return poll;
     },
     get: (slotId: string) => {
@@ -456,7 +468,7 @@ describe("slots updates with priorities", () => {
     // what deleteSlotById does: the slot and its choices are gone
     const slots = poll.slots.filter((slot) => slot.id !== "sun");
     const choicesByVoteId = { P: [yes("fri"), yes("sat")] };
-    registerAfterSlotDeletion({
+    reconcileSlotsArrays({
       slots,
       choicesByVoteId,
       timeBeforeAllowedPassed: closed(slots),
@@ -464,6 +476,33 @@ describe("slots updates with priorities", () => {
 
     expect(slots[0].registered).toEqual(["P"]);
     expect(slots[1].waitingListReregistered).toEqual(["P"]);
+  });
+
+  test("slot deleted: reregistered people still waiting on a full slot get the free spots", () => {
+    // friday full: A registered, P and Q waiting, both registered saturday
+    const poll = createPoll([slot("fri", 1), slot("sat", 5), slot("sun", 5)]);
+    poll.vote("A", [yes("fri"), no("sat"), no("sun")]);
+    poll.vote("P", [yes("fri"), yes("sat"), yes("sun")]);
+    poll.vote("Q", [yes("fri"), yes("sat"), yes("sun")]);
+    expect(poll.get("fri").waitingList).toEqual(["P", "Q"]);
+    expect(poll.get("sun").waitingListReregistered).toEqual(["P", "Q"]);
+
+    // what deleteSlotById does: saturday and its choices are gone
+    const slots = poll.slots.filter((slot) => slot.id !== "sat");
+    reconcileSlotsArrays({
+      slots,
+      choicesByVoteId: {
+        A: [yes("fri"), no("sun")],
+        P: [yes("fri"), yes("sun")],
+        Q: [yes("fri"), yes("sun")],
+      },
+      timeBeforeAllowedPassed: closed(slots),
+    });
+
+    expect(slots[0].registered).toEqual(["A"]);
+    expect(slots[0].waitingList).toEqual(["P", "Q"]);
+    expect(slots[1].registered).toEqual(["P", "Q"]);
+    expect(slots[1].waitingListReregistered).toEqual([]);
   });
 });
 
@@ -583,10 +622,10 @@ describe("invariants on random polls with priorities", () => {
     }
   };
 
-  test("one spot per person, full slots before it, no spot left to the waiting list", () => {
+  test("one spot per person, full slots before it, no spot left to the waiting list, slots deletions included", () => {
     for (let seed = 1; seed <= 1500; seed++) {
       const r = random(seed);
-      const slotIds = ["a", "b", "c", "d"].slice(0, 1 + Math.floor(r() * 4));
+      let slotIds = ["a", "b", "c", "d"].slice(0, 1 + Math.floor(r() * 4));
       const poll = createPoll(
         slotIds.map((id) => slot(id, 1 + Math.floor(r() * 3))),
       );
@@ -615,7 +654,13 @@ describe("invariants on random polls with priorities", () => {
         } else if (x < 0.8) {
           const voteId = voteIds[Math.floor(r() * voteIds.length)];
           poll.vote(voteId, randomChoices());
-        } else poll.remove(voteIds[Math.floor(r() * voteIds.length)]);
+        } else if (x < 0.95 || slotIds.length === 1)
+          poll.remove(voteIds[Math.floor(r() * voteIds.length)]);
+        else {
+          const slotId = slotIds[Math.floor(r() * slotIds.length)];
+          slotIds = slotIds.filter((id) => id !== slotId);
+          poll.deleteSlot(slotId);
+        }
 
         check(poll, `seed ${seed} step ${step}`);
       }

@@ -10,7 +10,6 @@ import {
   getCronSchedulesData,
   getSlotArrays,
   reconcileSlotsArrays,
-  registerAfterSlotDeletion,
   removeDeletedVotes,
   repairDeletedVotes,
   slotsOrderBy,
@@ -67,8 +66,9 @@ export const deleteSlotById = pollPwAction
         timeBeforeAllowedPassed,
       });
 
-      // reregistered people may not be registered anywhere anymore
-      registerAfterSlotDeletion({
+      // people registered on the deleted slot are reregistered elsewhere and
+      // may now have a spot: same rules as a slot dates update
+      reconcileSlotsArrays({
         slots: poll.slots,
         choicesByVoteId: getChoicesByVoteId(votes),
         timeBeforeAllowedPassed,
@@ -90,7 +90,7 @@ export const deleteSlotById = pollPwAction
         });
       }
 
-      // people registered by the repair or the recursion
+      // people registered by the repair or the reconcile
       return {
         poll: newPoll,
         pollId: poll.id,

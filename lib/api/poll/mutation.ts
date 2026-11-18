@@ -18,35 +18,41 @@ export const createPoll = action
     // never stored in clear (lib/poll-password.mjs)
     const password = data.password ? await hashPollPassword(data.password) : "";
 
-    const poll = await prisma.poll.create({
-      include: { slots: true },
-      data: {
-        ...data,
-        password,
-        slots: {
-          create: data.slots.map((slot: CreateSlotSchema) => slot),
+    // a registration poll without its cron schedules would never move the
+    // reregistered people: both are created or none
+    const poll = await prisma.$transaction(async (tx) => {
+      const poll = await tx.poll.create({
+        include: { slots: true },
+        data: {
+          ...data,
+          password,
+          slots: {
+            create: data.slots.map((slot: CreateSlotSchema) => slot),
+          },
         },
-      },
+      });
+
+      // calculate all cron schedule times
+      if (poll.type === 2) {
+        await tx.cronSchedule.createMany({
+          data: getCronSchedulesData({
+            pollId: poll.id,
+            timeBeforeAllowedType: poll.timeBeforeAllowedType,
+            msBeforeAllowed: poll.msBeforeAllowed,
+            slots: poll.slots,
+          }),
+        });
+      }
+
+      return poll;
     });
 
-    // calculate all cron schedule times
-    if (poll.type === 2) {
-      await prisma.cronSchedule.createMany({
-        data: getCronSchedulesData({
-          pollId: poll.id,
-          timeBeforeAllowedType: poll.timeBeforeAllowedType,
-          msBeforeAllowed: poll.msBeforeAllowed,
-          slots: poll.slots,
-        }),
-      });
-    }
-
-    // send discord notification
+    // send discord notification, its failure doesn't concern the author
     sendDiscordMessage({
       title: `Nouveau sondage "${poll.title}"`,
       description: data.email,
       fields: [{ name: "Lien", value: `${env.DOMAIN}/poll/${poll.id}` }],
-    });
+    }).catch((err) => console.log(err));
 
     return poll.id;
   });
