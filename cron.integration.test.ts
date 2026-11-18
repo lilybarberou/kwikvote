@@ -200,3 +200,84 @@ describe("cron.js on a local database", () => {
     expect(friday.waitingListReregistered).toEqual([]);
   });
 });
+
+describe("cron.js: expired push subscriptions", () => {
+  // a registration poll whose only vote, with a subscription, gets registered
+  const registerOne = async () => {
+    const endpoint = `${ENDPOINT}-${v4()}`;
+    const poll = await prisma.poll.create({
+      data: {
+        title: TITLE,
+        type: 2,
+        slots: {
+          create: {
+            startDate: new Date("2030-06-07T16:00:00Z"),
+            endDate: new Date("2030-06-07T18:00:00Z"),
+            maxParticipants: 1,
+          },
+        },
+        votes: {
+          create: {
+            name: "P",
+            subscriptions: {
+              create: { endpoint, auth: "auth", p256dh: "p256dh" },
+            },
+          },
+        },
+      },
+      include: { slots: true, votes: true },
+    });
+    const voteId = poll.votes[0].id;
+    const slot = poll.slots[0];
+    await cron.sendNotifications({
+      pollId: poll.id,
+      poll,
+      newPoll: { ...poll, slots: [{ ...slot, registered: [voteId] }] },
+      initialPoll: [{ ...slot, registered: [] }],
+    });
+    return { endpoint, voteId };
+  };
+
+  const pushServiceAnswers = (statusCode: number) =>
+    sendNotification.mockImplementationOnce((async () => {
+      throw Object.assign(new Error("Received unexpected response code"), {
+        statusCode,
+      });
+    }) as never);
+
+  test.each([404, 410])(
+    "%i from the push service: the subscription is deleted, the vote kept",
+    async (statusCode) => {
+      pushServiceAnswers(statusCode);
+      const { endpoint, voteId } = await registerOne();
+
+      await vi.waitFor(async () =>
+        expect(await prisma.subscription.count({ where: { endpoint } })).toBe(
+          0,
+        ),
+      );
+      expect(await prisma.vote.count({ where: { id: voteId } })).toBe(1);
+    },
+  );
+
+  test("500 from the push service: the subscription is kept", async () => {
+    pushServiceAnswers(500);
+    const { endpoint, voteId } = await registerOne();
+    // the error is logged, nothing else done
+    await vi.waitFor(() =>
+      expect(logs).toHaveBeenCalledWith(
+        expect.objectContaining({ statusCode: 500 }),
+      ),
+    );
+    await flush();
+
+    expect(
+      (
+        await prisma.vote.findUniqueOrThrow({
+          where: { id: voteId },
+          include: { subscriptions: true },
+        })
+      ).subscriptions.map((sub) => sub.endpoint),
+    ).toEqual([endpoint]);
+  });
+});
