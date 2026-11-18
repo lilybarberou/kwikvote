@@ -5,12 +5,6 @@ const { fr } = require("date-fns/locale/fr");
 const cron = require("node-cron");
 const { toZonedTime } = require("date-fns-tz");
 
-webpush.setVapidDetails(
-  "mailto:" + process.env.NEXT_PUBLIC_VAPID_EMAIL,
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY,
-);
-
 const prismaClientSingleton = () => {
   return new PrismaClient();
 };
@@ -209,12 +203,14 @@ const updateSlotsArray = async ({
           id: true,
           slotId: true,
           choice: true,
+          priority: true,
         },
       },
     },
   });
 
-  for (const slot of poll.slots) {
+  // priority slots first, like the app
+  for (const slot of getSlotsInVoteOrder(poll.slots, currentVoteData.choices)) {
     const timePassed = timeBeforeAllowedPassed[slot.id];
     const currentVoteChoice = currentVoteData.choices.find(
       (choice) => choice.slotId == slot.id,
@@ -335,6 +331,23 @@ const updateSlotsArray = async ({
   return poll;
 };
 
+// same as the app (lib/registration.ts getSlotsInVoteOrder): the slots a vote
+// said yes to and marked as priority come first, then the other ones, each
+// group in the slots order
+const getSlotsInVoteOrder = (slots, choices) => {
+  const prioritySlotIds = new Set(
+    (choices || [])
+      .filter((choice) => choice.priority && choice.choice == 1)
+      .map((choice) => choice.slotId),
+  );
+  if (!prioritySlotIds.size) return slots;
+
+  return [
+    ...slots.filter((slot) => prioritySlotIds.has(slot.id)),
+    ...slots.filter((slot) => !prioritySlotIds.has(slot.id)),
+  ];
+};
+
 const checkTimeBeforeAllow = ({
   timeBeforeAllowedType,
   msBeforeAllowed,
@@ -453,20 +466,31 @@ const sendNotifications = async ({
   );
 };
 
-console.log(
-  `Cron started on '${format(toZonedTime(new Date(), "Europe/Paris"), "eeee d MMMM kk:mm")}'`,
-);
+// imported by the tests: only the functions, no cron nor notifications
+module.exports = { updateSlotsArray, getSlotsInVoteOrder };
 
-cron.schedule(
-  "*/1 * * * *",
-  async () => {
-    const formattedDateFr = format(
-      toZonedTime(new Date(), "Europe/Paris"),
-      "eeee d MMMM kk:mm",
-    );
-    console.log(`START -- ${formattedDateFr} -------------------`);
-    await doStuff();
-    console.log("END --------------------------------------------------");
-  },
-  { runOnInit: true },
-);
+if (require.main === module) {
+  webpush.setVapidDetails(
+    "mailto:" + process.env.NEXT_PUBLIC_VAPID_EMAIL,
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY,
+  );
+
+  console.log(
+    `Cron started on '${format(toZonedTime(new Date(), "Europe/Paris"), "eeee d MMMM kk:mm")}'`,
+  );
+
+  cron.schedule(
+    "*/1 * * * *",
+    async () => {
+      const formattedDateFr = format(
+        toZonedTime(new Date(), "Europe/Paris"),
+        "eeee d MMMM kk:mm",
+      );
+      console.log(`START -- ${formattedDateFr} -------------------`);
+      await doStuff();
+      console.log("END --------------------------------------------------");
+    },
+    { runOnInit: true },
+  );
+}

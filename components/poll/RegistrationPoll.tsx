@@ -21,7 +21,7 @@ import {
   sameDay,
   timeTwoDigit,
 } from "@/lib/utils";
-import { Edit, XIcon } from "lucide-react";
+import { Edit, Star, XIcon } from "lucide-react";
 import { Fragment, useState } from "react";
 
 import { Button } from "../ui/button";
@@ -61,10 +61,7 @@ export const RegistrationPoll = ({ poll }: Props) => {
   });
 
   type SlotArrayKey =
-    | "registered"
-    | "waitingList"
-    | "waitingListReregistered"
-    | "notComing";
+    "registered" | "waitingList" | "waitingListReregistered" | "notComing";
   const slotArraysLabel: {
     key: SlotArrayKey;
     label: string;
@@ -128,6 +125,10 @@ export const RegistrationPoll = ({ poll }: Props) => {
             <Edit className="mx-auto h-3 w-3 stroke-gray-700 dark:stroke-gray-400" />
             <p className="text-xs text-gray-700 dark:text-gray-400">
               Pour modifier un vote, cliquez sur celui-ci
+            </p>
+            <Star className="mx-auto h-3 w-3 fill-amber-400 stroke-amber-500" />
+            <p className="text-xs text-gray-700 dark:text-gray-400">
+              Créneau prioritaire de la personne
             </p>
           </div>
           <Button
@@ -236,6 +237,10 @@ export const RegistrationPoll = ({ poll }: Props) => {
                       })
                       .map((voteId) => {
                         const vote = votes[voteId];
+                        const isPriority = vote?.choices.some(
+                          (choice) =>
+                            choice.slotId === slot.id && choice.priority,
+                        );
                         const isAuthorOfVote =
                           isSubscribedVote(vote) ||
                           localVotes[poll.id]?.some(
@@ -255,15 +260,30 @@ export const RegistrationPoll = ({ poll }: Props) => {
                               onClick={() => setCurrentVoteId(voteId)}
                             >
                               <Button
+                                title={
+                                  isPriority ? "Créneau prioritaire" : undefined
+                                }
                                 className={cn(
-                                  "w-full p-2",
+                                  "w-full gap-1 p-2",
                                   isAuthorOfVote &&
                                     "bg-primary/80 !text-white hover:bg-primary/70 dark:bg-primary/40 dark:hover:bg-primary/30",
                                 )}
                                 variant="ghost"
                               >
+                                {isPriority && (
+                                  <Star
+                                    aria-hidden
+                                    className="h-3.5 w-3.5 shrink-0 fill-amber-400 stroke-amber-500"
+                                  />
+                                )}
                                 <p className="max-w-[200px] truncate">
                                   {vote?.name}
+                                  {isPriority && (
+                                    <span className="sr-only">
+                                      {" "}
+                                      (créneau prioritaire)
+                                    </span>
+                                  )}
                                 </p>
                               </Button>
                             </TableCell>
