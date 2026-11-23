@@ -1,3 +1,4 @@
+import { installWebPushCopy } from "@/test/web-push-copy";
 import { createRequire } from "node:module";
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -126,7 +127,7 @@ const previousPrisma = globalForPrisma.prisma;
 globalForPrisma.prisma = fakePrisma;
 const require = createRequire(import.meta.url);
 // no push notification: record them
-const webpush = require("web-push");
+const webpush = installWebPushCopy(require);
 delete require.cache[require.resolve("./cron.js")];
 const cron = require("./cron.js");
 

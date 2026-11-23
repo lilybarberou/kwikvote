@@ -11,21 +11,19 @@ const push = vi.hoisted(() => ({
   status: {} as Record<string, number>,
   sent: [] as string[],
 }));
-// it rejects with a WebPushError, whose statusCode is the one of the push
-// service
+// web-push 4 has named exports only; it rejects with a WebPushError, whose
+// statusCode is the one of the push service
 vi.mock("web-push", () => ({
-  default: {
-    setVapidDetails: () => {},
-    sendNotification: async (sub: { endpoint: string }) => {
-      const statusCode = push.status[sub.endpoint] ?? 201;
-      if (statusCode === 0) throw new Error("connect ECONNREFUSED");
-      if (statusCode >= 400)
-        throw Object.assign(new Error("Received unexpected response code"), {
-          statusCode,
-        });
-      push.sent.push(sub.endpoint);
-      return { statusCode };
-    },
+  setVapidDetails: () => {},
+  sendNotification: async (sub: { endpoint: string }) => {
+    const statusCode = push.status[sub.endpoint] ?? 201;
+    if (statusCode === 0) throw new Error("connect ECONNREFUSED");
+    if (statusCode >= 400)
+      throw Object.assign(new Error("Received unexpected response code"), {
+        statusCode,
+      });
+    push.sent.push(sub.endpoint);
+    return { statusCode };
   },
 }));
 
