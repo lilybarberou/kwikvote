@@ -1,12 +1,6 @@
 import { format } from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { fr } from "date-fns/locale";
-import {
-  BindArgsValidationErrors,
-  SafeActionResult,
-  ValidationErrors,
-} from "next-safe-action";
-import { Schema } from "zod";
 
 import { PollWithSlots } from "./api/vote/mutation";
 
@@ -52,19 +46,16 @@ export const getFormattedTimeBeforeAllowed = ({
   } else return "la veille à 17h";
 };
 
+// result of a next-safe-action action (SafeActionResult), only the fields read here
+type ActionResult<Data> = {
+  data?: Data;
+  serverError?: string;
+  validationErrors?: unknown;
+};
+
 export function handleServerResponse<
-  ServerError,
-  S extends Schema | undefined,
-  BAS extends readonly Schema[],
-  CVE = ValidationErrors<S>,
-  CBAVE = BindArgsValidationErrors<BAS>,
   Data extends any | { message?: string; success?: boolean } = any,
-  NextCtx = unknown,
->(
-  response:
-    | SafeActionResult<string, S, BAS, CVE, CBAVE, Data, NextCtx>
-    | undefined,
-) {
+>(response: ActionResult<Data> | undefined) {
   if (!response) {
     throw new Error("An error occurred");
   }

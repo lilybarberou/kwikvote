@@ -25,7 +25,7 @@ const samples = [
 ];
 
 describe("isEmail", () => {
-  test.each(samples)("agrees with z.string().email() on %j", (sample) => {
-    expect(isEmail(sample)).toBe(z.string().email().safeParse(sample).success);
+  test.each(samples)("agrees with z.email() on %j", (sample) => {
+    expect(isEmail(sample)).toBe(z.email().safeParse(sample).success);
   });
 });
