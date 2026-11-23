@@ -135,6 +135,7 @@ export const RegistrationPoll = ({ poll }: Props) => {
             onClick={() => updateAlert("pollLegend", true)}
             variant="ghost"
             className="h-fit p-1"
+            aria-label="Masquer la légende"
           >
             <XIcon className="mx-auto h-3 w-3 stroke-gray-700 dark:stroke-gray-400" />
           </Button>
@@ -183,7 +184,7 @@ export const RegistrationPoll = ({ poll }: Props) => {
                 >
                   <TableCell className="whitespace-pre-wrap rounded-bl-lg rounded-tl-lg py-2 font-bold">
                     <p>{array.label}</p>
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs text-gray-600 dark:text-gray-400">
                       {array.detail}
                     </span>
                     {isNotComingColumn && (
@@ -208,7 +209,7 @@ export const RegistrationPoll = ({ poll }: Props) => {
                       className={`text-center ${
                         array.key === "registered" &&
                         slot.registered.length == slot.maxParticipants
-                          ? "text-red-500"
+                          ? "text-red-700 dark:text-red-500"
                           : "text-muted-foreground"
                       } ${index === slots.length - 1 ? "rounded-br-lg rounded-tr-lg" : ""}`}
                       key={slot.id}

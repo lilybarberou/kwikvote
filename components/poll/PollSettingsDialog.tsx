@@ -37,6 +37,7 @@ import { Button } from "../ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -68,13 +69,21 @@ export const PollSettingsDialog = () => {
     >
       <Dialog>
         <DialogTrigger asChild>
-          <Button size="icon" variant="ghost">
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label="Paramètres du sondage"
+          >
             <SettingsIcon />
           </Button>
         </DialogTrigger>
         <DialogContent className={cn(step === 1 && "w-11/12 max-w-[400px]")}>
           <DialogHeader className="text-left">
-            Paramètres du sondage
+            {/* the title names the dialog, in the look of the plain text it
+                replaces */}
+            <DialogTitle className="text-base font-normal tracking-normal">
+              Paramètres du sondage
+            </DialogTitle>
           </DialogHeader>
           {step === 1 && <FirstStep />}
           {step === 2 && <SecondStep />}
@@ -312,6 +321,7 @@ const EditSlotDialog = ({
           <Label>Date de début{parisTimeHint}</Label>
           <div className="flex flex-wrap gap-2">
             <DatePicker
+              label="Date de début"
               control={control}
               name="startDate"
               rules={{ deps: "endTime" }}
@@ -333,6 +343,7 @@ const EditSlotDialog = ({
           <Label>Date de fin{parisTimeHint}</Label>
           <div className="flex flex-wrap gap-2">
             <DatePicker
+              label="Date de fin"
               control={control}
               name="endDate"
               rules={{ deps: "endTime" }}
@@ -353,11 +364,12 @@ const EditSlotDialog = ({
           {errorMessage && (
             <p className="text-sm text-red-600">{errorMessage}</p>
           )}
-          <p className="mt-2 text-sm text-muted-foreground">
+          {/* read when the dialog opens: what saving does */}
+          <DialogDescription className="mt-2">
             {poll.type === 2 &&
               "Les inscrits et listes d'attente seront recalculés selon le nouvel horaire. "}
             Les participants ayant activé les notifications seront prévenus.
-          </p>
+          </DialogDescription>
           <Button
             type="submit"
             className="mt-3"

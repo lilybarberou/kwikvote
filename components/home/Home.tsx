@@ -4,6 +4,7 @@ import { FAQContent } from "@/components/faq/FAQContent";
 import { ProcessSteps } from "@/components/home/ProcessSteps";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, useAnimationControls } from "framer-motion";
@@ -23,7 +24,8 @@ const SearchSchema = z.object({
 
 export const Home = () => {
   const controls = useAnimationControls();
-  const { theme } = useTheme();
+  // resolvedTheme: theme is "system" by default, which is neither light nor dark
+  const { resolvedTheme: theme } = useTheme();
   const isClient = useIsClient();
 
   useEffect(() => {
@@ -79,7 +81,7 @@ export const Home = () => {
           size="icon"
         >
           <Link href="#faq" aria-label="FAQ">
-            <HelpCircle className="h-5 w-5" />
+            <HelpCircle aria-hidden className="h-5 w-5" />
           </Link>
         </Button>
       </div>
@@ -161,12 +163,16 @@ export const Home = () => {
         onSubmit={onSubmit}
         className="mb-32 flex w-full items-end justify-center gap-2"
       >
-        <Input
-          className="flex-1 sm:w-64 sm:flex-initial"
-          placeholder="Votre email..."
-          inputMode="email"
-          {...register("email")}
-        />
+        <div className="flex flex-1 flex-col gap-2 sm:w-64 sm:flex-initial">
+          <Label htmlFor="home-email">Votre email</Label>
+          <Input
+            id="home-email"
+            placeholder="vous@example.com"
+            inputMode="email"
+            autoComplete="email"
+            {...register("email")}
+          />
+        </div>
         <Button>Rechercher</Button>
       </form>
       <FAQContent />
