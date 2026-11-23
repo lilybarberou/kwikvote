@@ -14,7 +14,11 @@ export const ThemeSwitcher = () => {
   const { setTheme } = useTheme();
 
   return (
-    <DropdownMenu>
+    // not modal: a modal menu hides the rest of the page from assistive
+    // technologies (aria-hidden) while the header stays visible. The keyboard
+    // is unchanged (Tab stays in the menu, Escape closes it, back on the
+    // button); a click outside closes the menu and also reaches its target
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"

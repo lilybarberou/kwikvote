@@ -4,7 +4,7 @@ import { cn } from "@/lib/cn";
 import { History, Menu, PlusCircle, SparklesIcon, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ThemeSwitcher } from "../../ThemeSwitcher";
 import { Button } from "../../ui/button";
@@ -17,31 +17,72 @@ import {
 } from "../../ui/tooltip";
 import { ConsultedHistory } from "./ConsultedHistory";
 
-export const Navigation = () => {
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+// outside of Navigation: a component created during render is remounted on
+// every render (react-hooks/static-components)
+const ActiveLink = (props: {
+  href: string;
+  label: string;
+  mobileItem?: boolean;
+  hasBorder?: boolean;
+  closeMobileNav: () => void;
+}) => {
   const pathname = usePathname();
 
-  const ActiveLink = (props: {
-    href: string;
-    label: string;
-    mobileItem?: boolean;
-    hasBorder?: boolean;
-  }) => {
-    return (
-      <Link
-        onClick={() => props.mobileItem && setMobileNavOpen(false)}
-        className={cn(
-          props.mobileItem ? "px-8 py-4 text-xl font-semibold" : "hidden",
-          props.hasBorder && "border-b border-[#ffffff29]",
-          pathname === props.href && "font-semibold",
-          "sm:block",
-        )}
-        href={props.href}
-      >
-        {props.label}
-      </Link>
-    );
-  };
+  return (
+    <Link
+      onClick={() => props.mobileItem && props.closeMobileNav()}
+      className={cn(
+        props.mobileItem ? "px-8 py-4 text-xl font-semibold" : "hidden",
+        props.hasBorder && "border-b border-[#ffffff29]",
+        pathname === props.href && "font-semibold",
+        "sm:block",
+      )}
+      href={props.href}
+    >
+      {props.label}
+    </Link>
+  );
+};
+
+const MOBILE_MENU_ID = "menu-mobile";
+
+export const Navigation = () => {
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const closeMobileNav = () => setMobileNavOpen(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuRef = useRef<HTMLElement>(null);
+
+  // the open mobile menu covers the page: it takes the focus and keeps it
+  // (Tab goes round its links and the button that closes it), and Escape
+  // closes it, back on its button
+  useEffect(() => {
+    const button = menuButtonRef.current;
+    const menu = mobileMenuRef.current;
+    if (!mobileNavOpen || !button || !menu) return;
+
+    const focusables = () => [
+      button,
+      ...menu.querySelectorAll<HTMLElement>("a[href]"),
+    ];
+    focusables()[1]?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      // already handled by an open Radix layer (theme menu, history)
+      if (event.defaultPrevented) return;
+      if (event.key === "Escape") {
+        setMobileNavOpen(false);
+        button.focus();
+      } else if (event.key === "Tab") {
+        event.preventDefault();
+        const items = focusables();
+        const index = items.indexOf(document.activeElement as HTMLElement);
+        const next = index === -1 ? 1 : index + (event.shiftKey ? -1 : 1);
+        items[(next + items.length) % items.length].focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [mobileNavOpen]);
 
   return (
     <>
@@ -70,9 +111,21 @@ export const Navigation = () => {
                 KwikVote
               </div>
             </Link>
-            <ActiveLink label="Accueil" href="/" />
-            <ActiveLink label="Mes sondages" href="/mes-sondages" />
-            <ActiveLink label="FAQ" href="/faq" />
+            <ActiveLink
+              closeMobileNav={closeMobileNav}
+              label="Accueil"
+              href="/"
+            />
+            <ActiveLink
+              closeMobileNav={closeMobileNav}
+              label="Mes sondages"
+              href="/mes-sondages"
+            />
+            <ActiveLink
+              closeMobileNav={closeMobileNav}
+              label="FAQ"
+              href="/faq"
+            />
             <a
               className="hidden sm:block"
               href="https://kwikvote.featurebase.app/fr/roadmap"
@@ -123,12 +176,14 @@ export const Navigation = () => {
               </Link>
             </Button>
             <Button
+              ref={menuButtonRef}
               onClick={() => setMobileNavOpen((prev) => !prev)}
               className="sm:hidden"
               variant="secondary"
               size="icon"
               aria-label={mobileNavOpen ? "Fermer le menu" : "Ouvrir le menu"}
               aria-expanded={mobileNavOpen}
+              aria-controls={MOBILE_MENU_ID}
             >
               {mobileNavOpen ? (
                 <X className="h-5 w-5" />
@@ -139,30 +194,46 @@ export const Navigation = () => {
           </div>
         </div>
       </nav>
-      {mobileNavOpen && (
-        <nav
-          aria-label="Menu"
-          className="fixed left-0 top-[56px] flex h-screen w-full flex-col bg-[#00000068] backdrop-blur-lg"
+      {/* always in the page, so that aria-controls points to it */}
+      <nav
+        ref={mobileMenuRef}
+        id={MOBILE_MENU_ID}
+        aria-label="Menu"
+        hidden={!mobileNavOpen}
+        // Tailwind 3 doesn't make [hidden] win over flex
+        className="fixed left-0 top-[56px] flex h-screen w-full flex-col bg-[#00000068] backdrop-blur-lg [&[hidden]]:hidden"
+      >
+        <ActiveLink
+          closeMobileNav={closeMobileNav}
+          mobileItem
+          hasBorder
+          label="Accueil"
+          href="/"
+        />
+        <ActiveLink
+          closeMobileNav={closeMobileNav}
+          mobileItem
+          hasBorder
+          label="Mes sondages"
+          href="/mes-sondages"
+        />
+        <ActiveLink
+          closeMobileNav={closeMobileNav}
+          mobileItem
+          hasBorder
+          label="FAQ"
+          href="/faq"
+        />
+        <a
+          className="flex items-center gap-2 border-b border-[#ffffff29] px-8 py-4 text-xl font-semibold"
+          href="https://kwikvote.featurebase.app/fr/roadmap"
+          target="_blank"
+          rel="noreferrer"
         >
-          <ActiveLink mobileItem hasBorder label="Accueil" href="/" />
-          <ActiveLink
-            mobileItem
-            hasBorder
-            label="Mes sondages"
-            href="/mes-sondages"
-          />
-          <ActiveLink mobileItem hasBorder label="FAQ" href="/faq" />
-          <a
-            className="flex items-center gap-2 border-b border-[#ffffff29] px-8 py-4 text-xl font-semibold"
-            href="https://kwikvote.featurebase.app/fr/roadmap"
-            target="_blank"
-            rel="noreferrer"
-          >
-            Roadmap
-            <SparklesIcon className="h-4 w-4" />
-          </a>
-        </nav>
-      )}
+          Roadmap
+          <SparklesIcon className="h-4 w-4" />
+        </a>
+      </nav>
     </>
   );
 };
