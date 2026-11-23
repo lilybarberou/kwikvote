@@ -118,16 +118,7 @@ export const getPolls = adminAction
 
     return await prisma.poll.findMany({
       // never the password, even hashed
-      select: {
-        id: true,
-        type: true,
-        title: true,
-        description: true,
-        email: true,
-        timeBeforeAllowedType: true,
-        msBeforeAllowed: true,
-        createdAt: true,
-      },
+      omit: { password: true },
       skip: offset,
       take: limit,
       where: {
