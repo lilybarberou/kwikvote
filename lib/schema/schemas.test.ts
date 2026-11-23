@@ -51,6 +51,40 @@ describe("slotFormSchema", () => {
   });
 });
 
+describe("pollFormSchema", () => {
+  const day = new Date(2026, 5, 12);
+  const form = (endDate: Date, endTime: string) =>
+    pollFormSchema.safeParse({
+      type: "2",
+      title: "Foot",
+      timeBeforeAllowedType: "1",
+      slots: [
+        {
+          startDate: day,
+          startTime: "22:00",
+          endDate,
+          endTime,
+          maxParticipants: "4",
+        },
+      ],
+    });
+
+  test("the end of a slot must be after its start, as when it is edited", () => {
+    expect(form(day, "23:30").success).toBe(true);
+    // over midnight
+    expect(form(new Date(2026, 5, 13), "02:00").success).toBe(true);
+
+    const res = form(day, "02:00");
+    expect(res.success).toBe(false);
+    expect(res.error?.issues).toEqual([
+      expect.objectContaining({
+        path: ["slots", 0, "endTime"],
+        message: "La fin du créneau doit être après son début",
+      }),
+    ]);
+  });
+});
+
 describe("updateSlotSchema", () => {
   test("the dates are sent serialized", () => {
     const res = updateSlotSchema.parse({

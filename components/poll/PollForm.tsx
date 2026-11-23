@@ -293,11 +293,22 @@ export const PollForm = () => {
                       type="time"
                       className="w-fit"
                       aria-label="Heure de début"
+                      aria-invalid={!!errors.slots?.[index]?.startTime}
+                      aria-describedby={
+                        errors.slots?.[index]?.startTime
+                          ? `error-slots.${index}.startTime`
+                          : undefined
+                      }
                       {...field}
                     />
                   )}
                 />
               </div>
+              <FieldError
+                id={`error-slots.${index}.startTime`}
+                show={!!errors.slots?.[index]?.startTime}
+                message="Heure invalide"
+              />
               <Label>Date de fin</Label>
               <div className="flex flex-wrap gap-2">
                 <DatePicker
@@ -313,11 +324,26 @@ export const PollForm = () => {
                       type="time"
                       className="w-fit"
                       aria-label="Heure de fin"
+                      aria-invalid={!!errors.slots?.[index]?.endTime}
+                      aria-describedby={
+                        errors.slots?.[index]?.endTime
+                          ? `error-slots.${index}.endTime`
+                          : undefined
+                      }
                       {...field}
                     />
                   )}
                 />
               </div>
+              <FieldError
+                id={`error-slots.${index}.endTime`}
+                show={!!errors.slots?.[index]?.endTime}
+                message={
+                  errors.slots?.[index]?.endTime?.type === "custom"
+                    ? errors.slots[index].endTime.message!
+                    : "Heure invalide"
+                }
+              />
               {type == "2" && (
                 <>
                   <label htmlFor={`slots.${index}.maxParticipants`}>
