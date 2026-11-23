@@ -20,6 +20,11 @@ const storage = vi.hoisted(() => {
     value: localStorage,
     configurable: true,
   });
+  // zustand 5 reads window.localStorage
+  Object.defineProperty(globalThis, "window", {
+    value: { localStorage },
+    configurable: true,
+  });
   return items;
 });
 const stored = (key: string) => JSON.parse(storage.get(key)!).state;
