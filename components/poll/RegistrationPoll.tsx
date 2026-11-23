@@ -267,8 +267,9 @@ export const RegistrationPoll = ({ poll }: Props) => {
                                 className={cn(
                                   "w-full gap-1 p-2",
                                   isAuthorOfVote &&
-                                    // light theme: bg-primary/80 gave 3.7:1 under the white text
-                                    "bg-primary !text-white hover:bg-primary/90 dark:bg-primary/40 dark:hover:bg-primary/30",
+                                    // light theme: bg-primary/80 gave 3.7:1 under the white text,
+                                    // and a hover at /90 4.3:1
+                                    "bg-primary !text-white hover:bg-[color-mix(in_oklab,hsl(var(--primary)),black_10%)] dark:bg-primary/40 dark:hover:bg-primary/30",
                                 )}
                                 variant="ghost"
                               >
