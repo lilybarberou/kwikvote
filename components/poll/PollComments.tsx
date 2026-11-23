@@ -4,7 +4,7 @@ import { useComment } from "@/hooks/use-comment";
 import {
   COMMENT_AUTHOR_MAX_LENGTH,
   COMMENT_TEXT_MAX_LENGTH,
-} from "@/lib/schema/comment-schema";
+} from "@/lib/schema/limits";
 import { useCommentsStore } from "@/lib/store/commentsStore";
 import { useNotificationsStore } from "@/lib/store/notificationsStore";
 import { format } from "date-fns";

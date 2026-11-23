@@ -1,13 +1,8 @@
-"use client";
-
+// a server component: the theme is chosen by CSS (ThemedImage)
+import { ThemedImage } from "@/components/ThemedImage";
 import { Coffee } from "lucide-react";
-import { useTheme } from "next-themes";
-import Image from "next/image";
 
 export const Footer = () => {
-  // resolvedTheme: theme is "system" by default, which is neither light nor dark
-  const { resolvedTheme: theme } = useTheme();
-
   return (
     <footer className="mt-auto w-full">
       <div className="mt-20 border-t-[0.5px] border-t-[#41414121] bg-gray-100/20 py-2 dark:border-t-[#ffffff21] dark:bg-transparent">
@@ -33,16 +28,14 @@ export const Footer = () => {
                 Lily Barberou
               </a>
             </p>
-            <Image
+            <ThemedImage
               className="w-4"
               width={200}
               height={200}
-              src={
-                theme === "light"
-                  ? "/svg/sparkles-light.svg"
-                  : "/svg/sparkles.svg"
-              }
-              alt="Fini"
+              lightSrc="/svg/sparkles-light.svg"
+              darkSrc="/svg/sparkles.svg"
+              // decorative
+              alt=""
             />
           </div>
         </div>
