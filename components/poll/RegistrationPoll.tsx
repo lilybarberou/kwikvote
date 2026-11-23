@@ -116,7 +116,7 @@ export const RegistrationPoll = ({ poll }: Props) => {
           <div className="my-2 grid grid-cols-[30px,1fr] items-center gap-2 gap-x-2">
             {!!subscription && (
               <>
-                <div className="h-[15px] w-[30px] rounded-sm bg-primary/80 dark:bg-primary/40" />
+                <div className="h-[15px] w-[30px] rounded-sm bg-primary dark:bg-primary/40" />
                 <p className="text-xs text-gray-700 dark:text-gray-400">
                   Votes pour lesquels vous recevez les notifications
                 </p>
@@ -267,7 +267,8 @@ export const RegistrationPoll = ({ poll }: Props) => {
                                 className={cn(
                                   "w-full gap-1 p-2",
                                   isAuthorOfVote &&
-                                    "bg-primary/80 !text-white hover:bg-primary/70 dark:bg-primary/40 dark:hover:bg-primary/30",
+                                    // light theme: bg-primary/80 gave 3.7:1 under the white text
+                                    "bg-primary !text-white hover:bg-primary/90 dark:bg-primary/40 dark:hover:bg-primary/30",
                                 )}
                                 variant="ghost"
                               >

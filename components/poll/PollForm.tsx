@@ -14,6 +14,14 @@ import { Loader2, X } from "lucide-react";
 import Image from "next/image";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 
+// the message of an invalid field, linked to it by aria-describedby
+const FieldError = (props: { id: string; show: boolean; message: string }) =>
+  props.show ? (
+    <p id={props.id} className="text-sm text-destructive dark:text-red-400">
+      {props.message}
+    </p>
+  ) : null;
+
 const slotDefaultValues = {
   startDate: new Date(),
   startTime: "12:00",
@@ -24,7 +32,13 @@ const slotDefaultValues = {
 
 export const PollForm = () => {
   const { createPollMutation } = useCreatePoll();
-  const { register, control, handleSubmit, watch } = useForm<PollFormSchema>({
+  const {
+    register,
+    control,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<PollFormSchema>({
     defaultValues: {
       type: "1",
       timeBeforeAllowedType: "1",
@@ -135,7 +149,18 @@ export const PollForm = () => {
             *
           </span>
         </Label>
-        <Input {...register("title")} id="title" aria-required />
+        <Input
+          {...register("title")}
+          id="title"
+          aria-required
+          aria-invalid={!!errors.title}
+          aria-describedby={errors.title ? "error-title" : undefined}
+        />
+        <FieldError
+          id="error-title"
+          show={!!errors.title}
+          message="Champ requis"
+        />
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor="description">Description</Label>
@@ -154,6 +179,13 @@ export const PollForm = () => {
             id="email"
             inputMode="email"
             autoComplete="email"
+            aria-invalid={!!errors.email}
+            aria-describedby={errors.email ? "error-email" : undefined}
+          />
+          <FieldError
+            id="error-email"
+            show={!!errors.email}
+            message="Email invalide"
           />
         </div>
         <div className="flex flex-col justify-between gap-2">
@@ -205,10 +237,21 @@ export const PollForm = () => {
                       onFocus={() => field.onChange("2")}
                       className="w-14"
                       type="number"
+                      aria-invalid={!!errors.hoursBeforeAllowed}
+                      aria-describedby={
+                        errors.hoursBeforeAllowed
+                          ? "error-hoursBeforeAllowed"
+                          : undefined
+                      }
                       {...register("hoursBeforeAllowed")}
                     />
                     <p>h avant la date de début</p>
                   </Label>
+                  <FieldError
+                    id="error-hoursBeforeAllowed"
+                    show={!!errors.hoursBeforeAllowed}
+                    message="Nombre d'heures invalide"
+                  />
                 </div>
               </RadioGroup>
             )}
@@ -288,9 +331,20 @@ export const PollForm = () => {
                         id={`slots.${index}.maxParticipants`}
                         type="number"
                         className="w-20"
+                        aria-invalid={!!errors.slots?.[index]?.maxParticipants}
+                        aria-describedby={
+                          errors.slots?.[index]?.maxParticipants
+                            ? `error-slots.${index}.maxParticipants`
+                            : undefined
+                        }
                         {...field}
                       />
                     )}
+                  />
+                  <FieldError
+                    id={`error-slots.${index}.maxParticipants`}
+                    show={!!errors.slots?.[index]?.maxParticipants}
+                    message="Nombre invalide"
                   />
                 </>
               )}
